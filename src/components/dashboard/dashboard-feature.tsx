@@ -22,7 +22,7 @@ export default function DashboardFeature() {
 			<AppHero title="gm" subtitle="Say hi to your new Solana dApp." />
 			<div className="max-w-xl mx-auto py-6 sm:px-6 lg:px-8 text-center">
 				<div className="space-y-2">
-					<button className="btn btn-dash btn-accent">Info</button>
+					<button className="btn btn-circle hover:bg-blue-500 hover:scale-125 hover:spin-125">Wide</button>
 					<p>Here are some helpful links to get you started.</p>
 					{links.map((link, index) => (
 						<div key={index}>
