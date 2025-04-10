@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use custom_accounts::*;
 use instructions::*;
 
 mod custom_accounts;

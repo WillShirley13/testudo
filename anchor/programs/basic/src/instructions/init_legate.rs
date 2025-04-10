@@ -1,5 +1,5 @@
 use crate::custom_accounts::legate::Legate;
-use crate::errors::ErrorCode::LegateAlreadyInitialized;
+use crate::errors::ErrorCode::AccountAlreadyInitialized;
 
 use anchor_lang::prelude::*;
 #[derive(Accounts)]
@@ -12,7 +12,7 @@ pub struct InitLegate<'info> {
         seeds = [b"legate".as_ref()],
         bump,
         space = 8 + Legate::INIT_SPACE,
-        constraint = !legate.is_initialized @ LegateAlreadyInitialized,
+        constraint = !legate.is_initialized @ AccountAlreadyInitialized,
     )]
     pub legate: Account<'info, Legate>,
     pub system_program: Program<'info, System>,
