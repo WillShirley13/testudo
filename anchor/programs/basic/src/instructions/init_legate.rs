@@ -1,5 +1,6 @@
 use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::LegateAlreadyInitialized;
+
 use anchor_lang::prelude::*;
 #[derive(Accounts)]
 pub struct InitLegate<'info> {
@@ -20,4 +21,20 @@ pub struct InitLegate<'info> {
 pub fn process_init_legate(ctx: Context<InitLegate>) -> Result<()> {
     let legate_data = &mut ctx.accounts.legate;
     let bump = ctx.bumps.legate;
+
+    legate_data.authority = *ctx.accounts.authority.key;
+    legate_data.bump = bump;
+    legate_data.is_initialized = true;
+
+    // Initially, 'last_updated' set to creation time
+    let last_updated = Clock::get()?.unix_timestamp;
+    legate_data.last_updated = last_updated as u64;
+
+    // Initially, users only allowed a single centurion. Maybe in future
+    // allowed more. Currenlty can't see need for > 1
+    legate_data.max_centurions_per_user = 1;
+    // Initially, space allocated for max of the 30 testudos per user/wallet
+    legate_data.max_testudos_per_user = 30;
+
+    Ok(())
 }

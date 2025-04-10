@@ -5,12 +5,12 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(InitSpace)]
 pub struct Legate {
-    pub authority: Pubkey,       // Admin authority of the program
-    pub bump: u8,                // Bump seed used in PDA derivation
-    is_initialized: bool,        // Whether this account has been initialized
-    last_updated: u64,           // Timestamp of last account update
-    max_centurions_per_user: u8, // Maximum number of centurion accounts per user
-    max_testudos_per_user: u16,  // Maximum number of testudo accounts per user
-                                 // treasury acc for later use?
-                                 // basis points for fees?
+    pub authority: Pubkey,           // Admin authority of the program
+    pub bump: u8,                    // Bump seed used in PDA derivation
+    pub is_initialized: bool,        // Whether this account has been initialized
+    pub last_updated: u64,           // Timestamp of last account update
+    pub max_centurions_per_user: u8, // Maximum number of centurion accounts per user
+    pub max_testudos_per_user: u16,  // Maximum number of testudo accounts per user
+                                     // treasury acc for later use?
+                                     // basis points for fees?
 }
