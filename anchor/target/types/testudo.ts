@@ -14,6 +14,68 @@ export type Testudo = {
   },
   "instructions": [
     {
+      "name": "initCenturion",
+      "discriminator": [
+        58,
+        133,
+        196,
+        61,
+        206,
+        17,
+        58,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "passwordPubkey",
+          "type": "pubkey"
+        },
+        {
+          "name": "backupOwner",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
       "name": "initLegate",
       "discriminator": [
         221,
@@ -60,6 +122,19 @@ export type Testudo = {
   ],
   "accounts": [
     {
+      "name": "centurion",
+      "discriminator": [
+        213,
+        163,
+        239,
+        54,
+        208,
+        69,
+        71,
+        100
+      ]
+    },
+    {
       "name": "legate",
       "discriminator": [
         25,
@@ -76,11 +151,59 @@ export type Testudo = {
   "errors": [
     {
       "code": 6000,
-      "name": "legateAlreadyInitialized",
+      "name": "accountAlreadyInitialized",
       "msg": "Legate account already initialized"
     }
   ],
   "types": [
+    {
+      "name": "centurion",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "backupOwner",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "pubkeyToPassword",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "isInitialized",
+            "type": "bool"
+          },
+          {
+            "name": "createdAt",
+            "type": "u64"
+          },
+          {
+            "name": "lastAccessed",
+            "type": "u64"
+          },
+          {
+            "name": "depositTvl",
+            "type": "u64"
+          },
+          {
+            "name": "testudoPdas",
+            "type": {
+              "vec": "pubkey"
+            }
+          }
+        ]
+      }
+    },
     {
       "name": "legate",
       "type": {

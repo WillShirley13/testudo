@@ -1,0 +1,80 @@
+use crate::custom_accounts::centurion::{Centurion, TestudoData};
+use crate::custom_accounts::legate::Legate;
+use crate::errors::ErrorCode::{
+    AccountAlreadyInitialized, InvalidAuthority,
+    TestudoCreationCannotPreceedCenturionInitialization, UnsupportedTokenMint,
+};
+use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
+
+// Initialize a testudo account (An ATA from the Centurion PDA) for a user.
+
+#[derive(Accounts)]
+pub struct CreateTestudo<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    // Get legate PDA
+    #[account(
+        seeds = [b"legate".as_ref()],
+        bump,
+        constraint = legate.is_initialized @AccountAlreadyInitialized,
+    )]
+    pub legate: Account<'info, Legate>,
+
+    // Get user Centurion PDA
+    #[account(
+        seeds = [b"centurion".as_ref(), authority.key.as_ref()],
+        bump = centurion.bump,
+        constraint = centurion.is_initialized @TestudoCreationCannotPreceedCenturionInitialization,
+        has_one = authority @InvalidAuthority,
+    )]
+    pub centurion: Account<'info, Centurion>,
+
+    // Mint for token the testudo will hold. Must be in legate's whitelist
+    #[account(constraint = legate.testudo_token_whitelist.contains(&mint.key()) @UnsupportedTokenMint)]
+    pub mint: InterfaceAccount<'info, Mint>,
+
+    // token program + verifying token program passed
+    #[account(
+        constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
+    )]
+    pub token_program: Interface<'info, TokenInterface>,
+
+    // Init the ATA (testudo) attached to the Centurion PDA
+    #[account(
+        init,
+        payer = authority,
+        token::mint = mint,
+        token::authority = centurion,
+        token::token_program = token_program,
+        seeds = [centurion.key().as_ref()],
+        bump
+    )]
+    pub centurion_ata: InterfaceAccount<'info, TokenAccount>,
+    // Ensure valid system program is passed
+    #[account(
+        constraint = system_program.key() == anchor_lang::system_program::ID,
+    )]
+    pub system_program: Program<'info, System>,
+    // Ensure valid associated token program is passed
+    #[account(
+        constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
+    )]
+    pub associated_token_program: Program<'info, AssociatedToken>,
+}
+
+pub fn process_create_testudo(ctx: Context<CreateTestudo>) -> Result<()> {
+    let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
+    let testudo_data = TestudoData {
+        token_mint: ctx.accounts.mint.key(),
+        testudo_pubkey: ctx.accounts.centurion_ata.key(),
+        testudo_bump: ctx.bumps.centurion_ata,
+        testudo_token_count: 0,
+    };
+    centurion_data.testudos.push(testudo_data);
+
+    let current_time: i64 = Clock::get()?.unix_timestamp;
+    centurion_data.last_accessed = current_time as u64;
+    Ok(())
+}

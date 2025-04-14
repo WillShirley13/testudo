@@ -1,111 +1,234 @@
 {
-    "address": "6z68wfurCMYkZG51s1Et9BJEd9nJGUusjHXNt4dGbNNF",
-    "metadata": {
-        "name": "testudo",
-        "version": "0.1.0",
-        "spec": "0.1.0",
-        "description": "Created with Anchor"
-    },
-    "instructions": [
+  "address": "6z68wfurCMYkZG51s1Et9BJEd9nJGUusjHXNt4dGbNNF",
+  "metadata": {
+    "name": "testudo",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "init_centurion",
+      "discriminator": [
+        58,
+        133,
+        196,
+        61,
+        206,
+        17,
+        58,
+        64
+      ],
+      "accounts": [
         {
-            "name": "init_legate",
-            "discriminator": [
-                221,
-                211,
-                219,
-                66,
-                207,
-                113,
-                50,
-                227
-            ],
-            "accounts": [
-                {
-                    "name": "authority",
-                    "writable": true,
-                    "signer": true
-                },
-                {
-                    "name": "legate",
-                    "writable": true,
-                    "pda": {
-                        "seeds": [
-                            {
-                                "kind": "const",
-                                "value": [
-                                    108,
-                                    101,
-                                    103,
-                                    97,
-                                    116,
-                                    101
-                                ]
-                            }
-                        ]
-                    }
-                },
-                {
-                    "name": "system_program",
-                    "address": "11111111111111111111111111111111"
-                }
-            ],
-            "args": []
-        }
-    ],
-    "accounts": [
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
         {
-            "name": "Legate",
-            "discriminator": [
-                25,
-                12,
-                152,
-                251,
-                62,
-                237,
-                26,
-                112
-            ]
-        }
-    ],
-    "errors": [
-        {
-            "code": 6000,
-            "name": "LegateAlreadyInitialized",
-            "msg": "Legate account already initialized"
-        }
-    ],
-    "types": [
-        {
-            "name": "Legate",
-            "type": {
-                "kind": "struct",
-                "fields": [
-                    {
-                        "name": "authority",
-                        "type": "pubkey"
-                    },
-                    {
-                        "name": "bump",
-                        "type": "u8"
-                    },
-                    {
-                        "name": "is_initialized",
-                        "type": "bool"
-                    },
-                    {
-                        "name": "last_updated",
-                        "type": "u64"
-                    },
-                    {
-                        "name": "max_centurions_per_user",
-                        "type": "u8"
-                    },
-                    {
-                        "name": "max_testudos_per_user",
-                        "type": "u16"
-                    }
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
                 ]
-            }
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
-    ]
+      ],
+      "args": [
+        {
+          "name": "password_pubkey",
+          "type": "pubkey"
+        },
+        {
+          "name": "backup_owner",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "init_legate",
+      "discriminator": [
+        221,
+        211,
+        219,
+        66,
+        207,
+        113,
+        50,
+        227
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "legate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Centurion",
+      "discriminator": [
+        213,
+        163,
+        239,
+        54,
+        208,
+        69,
+        71,
+        100
+      ]
+    },
+    {
+      "name": "Legate",
+      "discriminator": [
+        25,
+        12,
+        152,
+        251,
+        62,
+        237,
+        26,
+        112
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "AccountAlreadyInitialized",
+      "msg": "Legate account already initialized"
+    }
+  ],
+  "types": [
+    {
+      "name": "Centurion",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "backup_owner",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "pubkey_to_password",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "is_initialized",
+            "type": "bool"
+          },
+          {
+            "name": "created_at",
+            "type": "u64"
+          },
+          {
+            "name": "last_accessed",
+            "type": "u64"
+          },
+          {
+            "name": "deposit_tvl",
+            "type": "u64"
+          },
+          {
+            "name": "testudo_pdas",
+            "type": {
+              "vec": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Legate",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "is_initialized",
+            "type": "bool"
+          },
+          {
+            "name": "last_updated",
+            "type": "u64"
+          },
+          {
+            "name": "max_centurions_per_user",
+            "type": "u8"
+          },
+          {
+            "name": "max_testudos_per_user",
+            "type": "u16"
+          }
+        ]
+      }
+    }
+  ]
 }

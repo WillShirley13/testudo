@@ -1,13 +1,15 @@
 use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::AccountAlreadyInitialized;
 
+// Initialize the admin Legate account.
+
 use anchor_lang::prelude::*;
 #[derive(Accounts)]
 pub struct InitLegate<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
-        init_if_needed,
+        init,
         payer = authority,
         seeds = [b"legate".as_ref()],
         bump,
@@ -19,15 +21,17 @@ pub struct InitLegate<'info> {
 }
 
 pub fn process_init_legate(ctx: Context<InitLegate>) -> Result<()> {
-    let legate_data = &mut ctx.accounts.legate;
-    let bump = ctx.bumps.legate;
+    let legate_data: &mut Account<'_, Legate> = &mut ctx.accounts.legate;
 
-    legate_data.authority = *ctx.accounts.authority.key;
-    legate_data.bump = bump;
+    // double check that the legate account is not already initialized
+    require_eq!(legate_data.is_initialized, false, AccountAlreadyInitialized);
+
+    legate_data.authority = ctx.accounts.authority.key();
+    legate_data.bump = ctx.bumps.legate;
     legate_data.is_initialized = true;
 
     // Initially, 'last_updated' set to creation time
-    let last_updated = Clock::get()?.unix_timestamp;
+    let last_updated: i64 = Clock::get()?.unix_timestamp;
     legate_data.last_updated = last_updated as u64;
 
     // Initially, users only allowed a single centurion. Maybe in future
@@ -35,6 +39,8 @@ pub fn process_init_legate(ctx: Context<InitLegate>) -> Result<()> {
     legate_data.max_centurions_per_user = 1;
     // Initially, space allocated for max of the 30 testudos per user/wallet
     legate_data.max_testudos_per_user = 30;
+    legate_data.testudo_token_whitelist =
+        vec![pubkey!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU")];
 
     Ok(())
 }

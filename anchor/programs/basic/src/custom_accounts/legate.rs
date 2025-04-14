@@ -11,6 +11,8 @@ pub struct Legate {
     pub last_updated: u64,           // Timestamp of last account update
     pub max_centurions_per_user: u8, // Maximum number of centurion accounts per user
     pub max_testudos_per_user: u16,  // Maximum number of testudo accounts per user
+    #[max_len(20)]
+    pub testudo_token_whitelist: Vec<Pubkey>, // List of token mints that can be used with testudos
                                      // treasury acc for later use?
                                      // basis points for fees?
 }
