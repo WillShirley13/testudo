@@ -100,21 +100,3 @@ export class SecureKeypairGenerator {
         return nacl.sign.detached.verify(message, signature, publicKey);
     }
 }
-
-// --- Basic usage example ---
-/*
-// Initialize the secure keypair generator
-const generator = new SecureKeypairGenerator();
-
-// Generate a new random 6-word phrase and keypair
-const randomWords = generator.generateRandomPhrase();
-const { keypair } = generator.deriveKeypairFromWords(randomWords);
-
-console.log("Phrase:", randomWords.join(' '));
-console.log("Public Key:", keypair.publicKey.toBase58());
-
-// Recover keypair from existing words
-const existingWords = ["abandon", "ability", "able", "about", "above", "absent"];
-const { keypair: recoveredKeypair } = generator.deriveKeypairFromWords(existingWords);
-console.log("Recovered Public Key:", recoveredKeypair.publicKey.toBase58());
-*/

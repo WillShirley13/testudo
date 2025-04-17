@@ -1,7 +1,7 @@
-use crate::custom_accounts::centurion::Centurion;
+use crate::custom_accounts::centurion::{Centurion, TestudoData};
 use crate::errors::ErrorCode::{
     ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidATA, InvalidAuthority,
-    InvalidTokenMint,
+    InvalidPasswordSignature, InvalidTokenMint,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface;
@@ -10,11 +10,20 @@ use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface, TransferCh
 // Deposit SPL tokens into a testudo account. authority is the sender and Centurion is the receiver.
 
 #[derive(Accounts)]
-pub struct DepositSplToken<'info> {
+pub struct WithdrawSplToken<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
-    #[account(mut)]
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = authority,
+    )]
     pub authority_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        // Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
+        constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
+    )]
+    pub valid_signer_of_password: Signer<'info>,
     #[account(
         mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
@@ -30,6 +39,7 @@ pub struct DepositSplToken<'info> {
         // Ensure the ATA is for the correct Centurion (User)
         constraint = testudo.owner == centurion.key() @InvalidATA,
     )]
+    // Centurion ATA
     pub testudo: InterfaceAccount<'info, TokenAccount>,
     pub mint: InterfaceAccount<'info, Mint>,
     // Ensure valid token program is passed
@@ -44,8 +54,10 @@ pub struct DepositSplToken<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> Result<()> {
+pub fn process_withdraw_spl_token(ctx: Context<WithdrawSplToken>, amount: u64) -> Result<()> {
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
+    let password_pubkey = centurion_data.pubkey_to_password;
+
     // Ensure the token mint is supported by the Centurion
     require_eq!(
         centurion_data
@@ -56,8 +68,16 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
         InvalidTokenMint
     );
 
+    // (double check)Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
+    require_eq!(
+        password_pubkey,
+        ctx.accounts.valid_signer_of_password.key(),
+        InvalidPasswordSignature
+    );
+    msg!("Password signature is valid");
+
     // Get the amount of tokens the depositor has in their ATA
-    let depositer_token_holdings: u64 = ctx.accounts.authority_ata.amount;
+    let testudo_token_holdings: u64 = ctx.accounts.testudo.amount;
     // Get the number of decimals for the token
     let decimals: u8 = ctx.accounts.mint.decimals;
     // Convert the desired deposit amount to a u64 with the correct number of decimals
@@ -67,7 +87,7 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
 
     // Ensure the depositor has enough tokens in their ATA to cover the deposit
     require_gte!(
-        depositer_token_holdings,
+        testudo_token_holdings,
         amount_to_deposit_with_decimals,
         InsufficientFunds
     );
@@ -80,8 +100,8 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
 
     // Set up the CPI accounts for the transfer
     let cpi_accounts = TransferChecked {
-        from: authority_ata.to_account_info(),
-        to: testudo_ata.to_account_info(),
+        from: testudo_ata.to_account_info(),
+        to: authority_ata.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
         authority: ctx.accounts.authority.to_account_info(),
     };
@@ -96,6 +116,14 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_datetime as u64;
 
-    msg!("Deposit successful");
+    // Update the testudo token count
+    let testudo_data: &mut TestudoData = centurion_data
+        .testudos
+        .iter_mut()
+        .find(|testudo| testudo.token_mint == ctx.accounts.mint.key())
+        .ok_or(InvalidTokenMint)?;
+    testudo_data.testudo_token_count -= amount;
+
+    msg!("Withdrawal successful");
     Ok(())
 }

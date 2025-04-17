@@ -12,7 +12,7 @@ pub mod testudo {
     use super::*;
 
     pub fn init_legate(ctx: Context<InitLegate>) -> Result<()> {
-        instructions::init_legate::process_init_legate(ctx)
+        instructions::process_init_legate(ctx)
     }
 
     pub fn init_centurion(
@@ -20,11 +20,11 @@ pub mod testudo {
         password_pubkey: Pubkey,
         backup_owner: Option<Pubkey>,
     ) -> Result<()> {
-        instructions::init_centurion::process_init_centurion(ctx, password_pubkey, backup_owner)
+        instructions::process_init_centurion(ctx, password_pubkey, backup_owner)
     }
 
     pub fn create_testudo(ctx: Context<CreateTestudo>) -> Result<()> {
-        instructions::create_testudo::process_create_testudo(ctx)
+        instructions::process_create_testudo(ctx)
     }
 
     pub fn deposit_sol(ctx: Context<DepositSol>, amount: u64) -> Result<()> {
@@ -37,5 +37,27 @@ pub mod testudo {
 
     pub fn withdraw_sol(ctx: Context<WithdrawSol>, amount: u64) -> Result<()> {
         instructions::process_withdraw_sol(ctx, amount)
+    }
+
+    pub fn withdraw_spl(ctx: Context<WithdrawSplToken>, amount: u64) -> Result<()> {
+        instructions::process_withdraw_spl_token(ctx, amount)
+    }
+
+    pub fn update_authority(ctx: Context<UpdateAuthority>) -> Result<()> {
+        instructions::process_update_authority(ctx)
+    }
+
+    pub fn update_max_testudos(
+        ctx: Context<UpdateMaxTestudos>,
+        new_max_testudos: u16,
+    ) -> Result<()> {
+        instructions::process_update_max_testudos(ctx, new_max_testudos)
+    }
+
+    pub fn add_mint_testudo(
+        ctx: Context<AddMintToTestudoTokenWhitelist>,
+        mint: custom_accounts::legate::TestudoTokenWhitelist,
+    ) -> Result<()> {
+        instructions::process_add_mint_to_testudo_token_whitelist(ctx, mint)
     }
 }

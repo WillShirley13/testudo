@@ -2,8 +2,10 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Legate account already initialized")]
+    #[msg("Account already initialized")]
     AccountAlreadyInitialized,
+    #[msg("Legate account not initialized")]
+    LegateNotInitialized,
     #[msg("Invalid authority passed")]
     InvalidAuthority,
     #[msg("User's Centurion must be initialized first")]
@@ -22,4 +24,6 @@ pub enum ErrorCode {
     ArithmeticOverflow,
     #[msg("Invalid signature for password")]
     InvalidPasswordSignature,
+    #[msg("Mint already in list")]
+    MintAlreadyInList,
 }

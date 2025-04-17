@@ -12,7 +12,18 @@ pub struct Legate {
     pub max_centurions_per_user: u8, // Maximum number of centurion accounts per user
     pub max_testudos_per_user: u16,  // Maximum number of testudo accounts per user
     #[max_len(20)]
-    pub testudo_token_whitelist: Vec<Pubkey>, // List of token mints that can be used with testudos
-                                     // treasury acc for later use?
-                                     // basis points for fees?
+    pub testudo_token_whitelist: Vec<TestudoTokenWhitelist>, // List of token mints that can be used with testudos
+                                                             // treasury acc for later use?
+                                                             // basis points for fees?
+}
+
+// Data structure for the testudo token whitelist info
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct TestudoTokenWhitelist {
+    pub token_mint: Pubkey,
+    #[max_len(30)]
+    pub token_name: String,
+    #[max_len(10)]
+    pub token_symbol: String,
+    pub token_decimals: u8,
 }

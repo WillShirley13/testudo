@@ -1,7 +1,6 @@
 use crate::custom_accounts::centurion::Centurion;
 use crate::errors::ErrorCode::{CenturionNotInitialized, InsufficientFunds, InvalidAuthority};
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::system_program;
 
 // Deposit native SOL into a testudo account (Note: this is simply the Centurion PDA).

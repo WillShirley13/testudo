@@ -1,8 +1,8 @@
 use crate::custom_accounts::centurion::{Centurion, TestudoData};
 use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
-    AccountAlreadyInitialized, InvalidAuthority,
-    TestudoCreationCannotPreceedCenturionInitialization, UnsupportedTokenMint,
+    InvalidAuthority, LegateNotInitialized, TestudoCreationCannotPreceedCenturionInitialization,
+    UnsupportedTokenMint,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -18,7 +18,7 @@ pub struct CreateTestudo<'info> {
     #[account(
         seeds = [b"legate".as_ref()],
         bump,
-        constraint = legate.is_initialized @AccountAlreadyInitialized,
+        constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
 
@@ -32,7 +32,7 @@ pub struct CreateTestudo<'info> {
     pub centurion: Account<'info, Centurion>,
 
     // Mint for token the testudo will hold. Must be in legate's whitelist
-    #[account(constraint = legate.testudo_token_whitelist.contains(&mint.key()) @UnsupportedTokenMint)]
+    #[account(constraint = legate.testudo_token_whitelist.iter().any(|t| t.token_mint == mint.key()) @UnsupportedTokenMint)]
     pub mint: InterfaceAccount<'info, Mint>,
 
     // token program + verifying token program passed

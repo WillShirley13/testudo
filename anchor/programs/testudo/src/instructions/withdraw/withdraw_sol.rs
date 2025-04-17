@@ -1,7 +1,6 @@
 use crate::custom_accounts::centurion::Centurion;
-use crate::errors::ErrorCode::InsufficientFunds;
 use crate::errors::ErrorCode::{
-    ArithmeticOverflow, CenturionNotInitialized, InvalidAuthority, InvalidPasswordSignature,
+    CenturionNotInitialized, InsufficientFunds, InvalidAuthority, InvalidPasswordSignature,
 };
 use anchor_lang::prelude::*;
 #[derive(Accounts)]

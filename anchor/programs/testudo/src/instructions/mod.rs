@@ -1,17 +1,11 @@
-pub mod init_legate;
-pub use init_legate::*;
+pub mod admin;
+pub use admin::{add_mint_testudo::*, update_authority::*, update_max_testudos::*};
 
-pub mod init_centurion;
-pub use init_centurion::*;
+pub mod init_account;
+pub use init_account::{create_testudo::*, init_centurion::*, init_legate::*};
 
-pub mod create_testudo;
-pub use create_testudo::*;
+pub mod deposit;
+pub use deposit::{deposit_sol::*, deposit_spl::*};
 
-pub mod deposit_sol;
-pub use deposit_sol::*;
-
-pub mod deposit_spl;
-pub use deposit_spl::*;
-
-pub mod withdraw_sol;
-pub use withdraw_sol::*;
+pub mod withdraw;
+pub use withdraw::{withdraw_sol::*, withdraw_spl::*};

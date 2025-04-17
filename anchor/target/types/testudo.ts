@@ -14,6 +14,58 @@ export type Testudo = {
   },
   "instructions": [
     {
+      "name": "addMintTestudo",
+      "discriminator": [
+        200,
+        247,
+        67,
+        235,
+        127,
+        248,
+        93,
+        11
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "legate"
+          ]
+        },
+        {
+          "name": "legate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "mint",
+          "type": {
+            "defined": {
+              "name": "testudoTokenWhitelist"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "createTestudo",
       "discriminator": [
         185,
@@ -188,7 +240,93 @@ export type Testudo = {
         },
         {
           "name": "authorityAta",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
         },
         {
           "name": "centurion",
@@ -221,7 +359,8 @@ export type Testudo = {
           "writable": true
         },
         {
-          "name": "mint"
+          "name": "mint",
+          "writable": true
         },
         {
           "name": "tokenProgram"
@@ -345,6 +484,102 @@ export type Testudo = {
       "args": []
     },
     {
+      "name": "updateAuthority",
+      "discriminator": [
+        32,
+        46,
+        64,
+        28,
+        149,
+        75,
+        243,
+        88
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "legate"
+          ]
+        },
+        {
+          "name": "newAuthority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "legate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "updateMaxTestudos",
+      "discriminator": [
+        183,
+        108,
+        192,
+        5,
+        181,
+        251,
+        228,
+        2
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "legate"
+          ]
+        },
+        {
+          "name": "legate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "newMaxTestudos",
+          "type": "u16"
+        }
+      ]
+    },
+    {
       "name": "withdrawSol",
       "discriminator": [
         145,
@@ -406,6 +641,169 @@ export type Testudo = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "withdrawSpl",
+      "discriminator": [
+        181,
+        154,
+        94,
+        86,
+        62,
+        115,
+        6,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "authorityAta",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "testudo",
+          "writable": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -440,52 +838,62 @@ export type Testudo = {
     {
       "code": 6000,
       "name": "accountAlreadyInitialized",
-      "msg": "Legate account already initialized"
+      "msg": "Account already initialized"
     },
     {
       "code": 6001,
+      "name": "legateNotInitialized",
+      "msg": "Legate account not initialized"
+    },
+    {
+      "code": 6002,
       "name": "invalidAuthority",
       "msg": "Invalid authority passed"
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "testudoCreationCannotPreceedCenturionInitialization",
       "msg": "User's Centurion must be initialized first"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "unsupportedTokenMint",
       "msg": "Unsupported token mint"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "insufficientFunds",
       "msg": "Depositer/Withdrawer has insufficient funds for deposit/withdraw"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "centurionNotInitialized",
       "msg": "Centurion not initialized"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "invalidTokenMint",
       "msg": "Invalid token mint"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "invalidAta",
       "msg": "Invalid associated token account"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "arithmeticOverflow",
       "msg": "Arithmetic overflow"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "invalidPasswordSignature",
       "msg": "Invalid signature for password"
+    },
+    {
+      "code": 6011,
+      "name": "mintAlreadyInList",
+      "msg": "Mint already in list"
     }
   ],
   "types": [
@@ -569,7 +977,11 @@ export type Testudo = {
           {
             "name": "testudoTokenWhitelist",
             "type": {
-              "vec": "pubkey"
+              "vec": {
+                "defined": {
+                  "name": "testudoTokenWhitelist"
+                }
+              }
             }
           }
         ]
@@ -595,6 +1007,30 @@ export type Testudo = {
           {
             "name": "testudoTokenCount",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "testudoTokenWhitelist",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "tokenName",
+            "type": "string"
+          },
+          {
+            "name": "tokenSymbol",
+            "type": "string"
+          },
+          {
+            "name": "tokenDecimals",
+            "type": "u8"
           }
         ]
       }

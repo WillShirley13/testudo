@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use anchor_lang::prelude::*;
 
 // Centurion account acts as umbrella account for all testudo accounts. It stores the pubkey to the user's 'password' private key.

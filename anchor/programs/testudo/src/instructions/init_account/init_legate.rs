@@ -1,4 +1,4 @@
-use crate::custom_accounts::legate::Legate;
+use crate::custom_accounts::legate::{Legate, TestudoTokenWhitelist};
 use crate::errors::ErrorCode::AccountAlreadyInitialized;
 
 // Initialize the admin Legate account.
@@ -14,7 +14,7 @@ pub struct InitLegate<'info> {
         seeds = [b"legate".as_ref()],
         bump,
         space = 8 + Legate::INIT_SPACE,
-        constraint = !legate.is_initialized @ AccountAlreadyInitialized,
+        constraint = !legate.is_initialized @AccountAlreadyInitialized,
     )]
     pub legate: Account<'info, Legate>,
     pub system_program: Program<'info, System>,
@@ -39,8 +39,12 @@ pub fn process_init_legate(ctx: Context<InitLegate>) -> Result<()> {
     legate_data.max_centurions_per_user = 1;
     // Initially, space allocated for max of the 30 testudos per user/wallet
     legate_data.max_testudos_per_user = 30;
-    legate_data.testudo_token_whitelist =
-        vec![pubkey!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU")];
+    legate_data.testudo_token_whitelist = vec![TestudoTokenWhitelist {
+        token_mint: pubkey!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"),
+        token_name: "USD Coin".to_string(),
+        token_symbol: "USDC".to_string(),
+        token_decimals: 6,
+    }];
 
     msg!("Legate account initialized");
     Ok(())
