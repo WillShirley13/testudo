@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/testudo.json`.
  */
 export type Testudo = {
-  "address": "6z68wfurCMYkZG51s1Et9BJEd9nJGUusjHXNt4dGbNNF",
+  "address": "8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U",
   "metadata": {
     "name": "testudo",
     "version": "0.1.0",
@@ -13,6 +13,231 @@ export type Testudo = {
     "description": "Created with Anchor"
   },
   "instructions": [
+    {
+      "name": "createTestudo",
+      "discriminator": [
+        185,
+        80,
+        13,
+        69,
+        80,
+        88,
+        212,
+        32
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "legate",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "centurion",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "centurionAta",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "centurion"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "depositSol",
+      "discriminator": [
+        108,
+        81,
+        78,
+        117,
+        125,
+        155,
+        56,
+        200
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "depositSpl",
+      "discriminator": [
+        224,
+        0,
+        198,
+        175,
+        198,
+        47,
+        105,
+        204
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "authorityAta",
+          "writable": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "testudo",
+          "writable": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
     {
       "name": "initCenturion",
       "discriminator": [
@@ -118,6 +343,69 @@ export type Testudo = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "withdrawSol",
+      "discriminator": [
+        145,
+        131,
+        74,
+        136,
+        65,
+        137,
+        42,
+        38
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -153,6 +441,51 @@ export type Testudo = {
       "code": 6000,
       "name": "accountAlreadyInitialized",
       "msg": "Legate account already initialized"
+    },
+    {
+      "code": 6001,
+      "name": "invalidAuthority",
+      "msg": "Invalid authority passed"
+    },
+    {
+      "code": 6002,
+      "name": "testudoCreationCannotPreceedCenturionInitialization",
+      "msg": "User's Centurion must be initialized first"
+    },
+    {
+      "code": 6003,
+      "name": "unsupportedTokenMint",
+      "msg": "Unsupported token mint"
+    },
+    {
+      "code": 6004,
+      "name": "insufficientFunds",
+      "msg": "Depositer/Withdrawer has insufficient funds for deposit/withdraw"
+    },
+    {
+      "code": 6005,
+      "name": "centurionNotInitialized",
+      "msg": "Centurion not initialized"
+    },
+    {
+      "code": 6006,
+      "name": "invalidTokenMint",
+      "msg": "Invalid token mint"
+    },
+    {
+      "code": 6007,
+      "name": "invalidAta",
+      "msg": "Invalid associated token account"
+    },
+    {
+      "code": 6008,
+      "name": "arithmeticOverflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6009,
+      "name": "invalidPasswordSignature",
+      "msg": "Invalid signature for password"
     }
   ],
   "types": [
@@ -162,7 +495,7 @@ export type Testudo = {
         "kind": "struct",
         "fields": [
           {
-            "name": "owner",
+            "name": "authority",
             "type": "pubkey"
           },
           {
@@ -192,13 +525,13 @@ export type Testudo = {
             "type": "u64"
           },
           {
-            "name": "depositTvl",
-            "type": "u64"
-          },
-          {
-            "name": "testudoPdas",
+            "name": "testudos",
             "type": {
-              "vec": "pubkey"
+              "vec": {
+                "defined": {
+                  "name": "testudoData"
+                }
+              }
             }
           }
         ]
@@ -232,6 +565,36 @@ export type Testudo = {
           {
             "name": "maxTestudosPerUser",
             "type": "u16"
+          },
+          {
+            "name": "testudoTokenWhitelist",
+            "type": {
+              "vec": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "testudoData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tokenMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "testudoPubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "testudoBump",
+            "type": "u8"
+          },
+          {
+            "name": "testudoTokenCount",
+            "type": "u64"
           }
         ]
       }

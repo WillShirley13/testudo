@@ -11,6 +11,7 @@ pub struct DepositSol<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
+        mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
         bump,
         constraint = centurion.is_initialized @CenturionNotInitialized,
@@ -21,14 +22,14 @@ pub struct DepositSol<'info> {
 }
 
 // param 'amount' is in SOL
-pub fn process_deposit_sol(ctx: Context<DepositSol>, amount: u64) -> Result<()> {
+pub fn process_deposit_sol(ctx: Context<DepositSol>, amount_in_lamports: u64) -> Result<()> {
     let authority_sol_balance: u64 = ctx.accounts.authority.get_lamports();
-    let amount_in_lamports = amount
-        .checked_mul(LAMPORTS_PER_SOL)
-        .ok_or(InsufficientFunds)?;
 
+    // Ensure the authority has enough funds to deposit
     require_gte!(authority_sol_balance, amount_in_lamports, InsufficientFunds);
+    msg!("Authority has enough funds to deposit");
 
+    // Transfer the funds from the authority to the centurion
     let cpi_accounts = system_program::Transfer {
         from: ctx.accounts.authority.to_account_info(),
         to: ctx.accounts.centurion.to_account_info(),
@@ -42,5 +43,6 @@ pub fn process_deposit_sol(ctx: Context<DepositSol>, amount: u64) -> Result<()> 
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
     centurion_data.last_accessed = current_datetime as u64;
 
+    msg!("Deposit successful");
     Ok(())
 }

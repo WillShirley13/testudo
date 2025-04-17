@@ -12,3 +12,6 @@ pub use deposit_sol::*;
 
 pub mod deposit_spl;
 pub use deposit_spl::*;
+
+pub mod withdraw_sol;
+pub use withdraw_sol::*;

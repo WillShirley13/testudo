@@ -42,5 +42,6 @@ pub fn process_init_legate(ctx: Context<InitLegate>) -> Result<()> {
     legate_data.testudo_token_whitelist =
         vec![pubkey!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU")];
 
+    msg!("Legate account initialized");
     Ok(())
 }

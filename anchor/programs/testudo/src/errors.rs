@@ -10,7 +10,7 @@ pub enum ErrorCode {
     TestudoCreationCannotPreceedCenturionInitialization,
     #[msg("Unsupported token mint")]
     UnsupportedTokenMint,
-    #[msg("Depositer has insufficient funds for deposit")]
+    #[msg("Depositer/Withdrawer has insufficient funds for deposit/withdraw")]
     InsufficientFunds,
     #[msg("Centurion not initialized")]
     CenturionNotInitialized,
@@ -20,4 +20,6 @@ pub enum ErrorCode {
     InvalidATA,
     #[msg("Arithmetic overflow")]
     ArithmeticOverflow,
+    #[msg("Invalid signature for password")]
+    InvalidPasswordSignature,
 }

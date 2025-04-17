@@ -5,7 +5,7 @@ mod custom_accounts;
 mod errors;
 mod instructions;
 
-declare_id!("6z68wfurCMYkZG51s1Et9BJEd9nJGUusjHXNt4dGbNNF");
+declare_id!("8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U");
 
 #[program]
 pub mod testudo {
@@ -33,5 +33,9 @@ pub mod testudo {
 
     pub fn deposit_spl(ctx: Context<DepositSplToken>, amount: u64) -> Result<()> {
         instructions::process_deposit_spl_token(ctx, amount)
+    }
+
+    pub fn withdraw_sol(ctx: Context<WithdrawSol>, amount: u64) -> Result<()> {
+        instructions::process_withdraw_sol(ctx, amount)
     }
 }

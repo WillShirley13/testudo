@@ -16,6 +16,7 @@ pub struct DepositSplToken<'info> {
     #[account(mut)]
     pub authority_ata: InterfaceAccount<'info, TokenAccount>,
     #[account(
+        mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
         bump,
         constraint = centurion.is_initialized @CenturionNotInitialized,
@@ -70,6 +71,7 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
         amount_to_deposit_with_decimals,
         InsufficientFunds
     );
+    msg!("Depositor has enough tokens to cover the deposit");
 
     // Get the testudo account for the token
     let testudo_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.testudo;
@@ -94,5 +96,6 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_datetime as u64;
 
+    msg!("Deposit successful");
     Ok(())
 }

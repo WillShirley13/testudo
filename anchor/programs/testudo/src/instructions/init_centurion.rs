@@ -45,5 +45,7 @@ pub fn process_init_centurion(
     centurion_data.last_accessed = current_time as u64;
     centurion_data.testudos = Vec::new();
 
+    msg!("Centurion account initialized");
+
     Ok(())
 }
