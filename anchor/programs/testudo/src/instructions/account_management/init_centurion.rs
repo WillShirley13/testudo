@@ -12,7 +12,7 @@ pub struct InitCenturion<'info> {
         init,
         payer = authority,
         space =  8 + Centurion::INIT_SPACE,
-        seeds = [b"centurion".as_ref(), authority.key.as_ref()],
+        seeds = [b"centurion", authority.key.as_ref()],
         bump,
         constraint = !centurion.is_initialized @AccountAlreadyInitialized
     )]

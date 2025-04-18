@@ -1,5 +1,7 @@
 use crate::custom_accounts::legate::{Legate, TestudoTokenWhitelist};
-use crate::errors::ErrorCode::{InvalidAuthority, LegateNotInitialized, MintAlreadyInList};
+use crate::errors::ErrorCode::{
+    InvalidAuthority, LegateNotInitialized, MaxWhitelistedMintsReached, MintAlreadyInList,
+};
 use anchor_lang::prelude::*;
 #[derive(Accounts)]
 pub struct AddMintToTestudoTokenWhitelist<'info> {
@@ -38,6 +40,13 @@ pub fn process_add_mint_to_testudo_token_whitelist(
     {
         return Err(MintAlreadyInList.into());
     }
+    // Ensure max whitelisted mints is not reached
+    require_gt!(
+        legate.max_whitelisted_mints,
+        legate.testudo_token_whitelist.len() as u16,
+        MaxWhitelistedMintsReached
+    );
+
     let mint_key = mint.token_mint;
     legate.testudo_token_whitelist.push(mint);
     msg!("Mint ({}) added to testudo token whitelist", mint_key);

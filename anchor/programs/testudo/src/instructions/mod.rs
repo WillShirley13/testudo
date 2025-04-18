@@ -1,11 +1,16 @@
-pub mod admin;
-pub use admin::{add_mint_testudo::*, update_authority::*, update_max_testudos::*};
+pub mod legate_admin;
+pub use legate_admin::{
+    add_mint_testudo::*, update_authority::*, update_max_testudos::*,
+    update_max_whitelisted_mints::*,
+};
 
-pub mod init_account;
-pub use init_account::{create_testudo::*, init_centurion::*, init_legate::*};
+pub mod account_management;
+pub use account_management::{
+    create_testudo::*, delete_testudo::*, init_centurion::*, init_legate::*,
+};
 
 pub mod deposit;
 pub use deposit::{deposit_sol::*, deposit_spl::*};
 
 pub mod withdraw;
-pub use withdraw::{withdraw_sol::*, withdraw_spl::*};
+pub use withdraw::{withdraw_sol::*, withdraw_spl::*, withdraw_to_backup::*};

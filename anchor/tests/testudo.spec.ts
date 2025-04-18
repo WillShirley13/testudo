@@ -14,6 +14,7 @@ describe("Legate account related tests", () => {
 	anchor.setProvider(anchor.AnchorProvider.env());
 
 	const program = anchor.workspace.Testudo as Program<Testudo>;
+
     console.log(`Program ID: ${program.programId.toBase58()}`);
 	const provider = anchor.getProvider() as anchor.AnchorProvider;
 	const connection = new Connection("http://localhost:8899", "confirmed");
@@ -66,7 +67,62 @@ describe("Legate account related tests", () => {
         ).to.throw;
         console.log("Test: Legate already initialized - passed");
     })
+    it("Update legate max testudos per user", async () => {
+        const newMaxTestudosPerUser = 50;
+        const [legatePDA, _] = PublicKey.findProgramAddressSync(
+            [Buffer.from("legate")],
+            program.programId
+        );
+        const legate = await program.account.legate.fetch(legatePDA);
+        console.log(`Legate max testudos per user (before update): ${legate.maxTestudosPerUser}`);
+        const tx = await program.methods.updateMaxTestudos(newMaxTestudosPerUser).accounts({
+            authority: legateAuthority.publicKey,
+        })
+        .signers([legateAuthority])
+        .rpc();
+        console.log(`Update max testudos per user tx: ${tx}`);
+        const legateAfterUpdate = await program.account.legate.fetch(legatePDA);
+        console.log(`Legate max testudos per user (after update): ${legateAfterUpdate.maxTestudosPerUser}`);
+        expect(legateAfterUpdate.maxTestudosPerUser, "Max testudos per user should match new value").to.equal(newMaxTestudosPerUser);
+        console.log("Test: Max testudos per user updated - passed");
+    })
 
+    it("Update legate max whitelisted mints", async () => {
+        const newMaxWhitelistedMints = 100;
+        const [legatePDA, _] = PublicKey.findProgramAddressSync(
+            [Buffer.from("legate")],
+            program.programId
+        );
+        const legate = await program.account.legate.fetch(legatePDA);
+        console.log(`Legate max whitelisted mints (before update): ${legate.maxWhitelistedMints}`);
+
+        let oldSize = (await connection.getAccountInfo(legatePDA))?.data.length;
+        console.log(`Size of legate before update: ${oldSize}`);
+
+        const tx = await program.methods.updateMaxWhitelistedMints(newMaxWhitelistedMints).accounts({
+            authority: legateAuthority.publicKey,
+        })
+        .signers([legateAuthority])
+        .rpc();
+        await connection.confirmTransaction({
+            signature: tx,
+            blockhash: (await connection.getLatestBlockhash()).blockhash,
+            lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
+        }, "confirmed");
+
+        console.log(`Update max whitelisted mints tx: ${tx}`);
+
+        const legateAfterUpdate = await program.account.legate.fetch(legatePDA);
+        console.log(`Legate max whitelisted mints (after update): ${legateAfterUpdate.maxWhitelistedMints}`);
+        let newSize = (await connection.getAccountInfo(legatePDA))?.data.length;
+        console.log(`Size of legate after update: ${newSize}`);
+
+        expect(legateAfterUpdate.maxWhitelistedMints, "Max whitelisted mints should match new value").to.equal(newMaxWhitelistedMints);
+        expect(newSize, "New size of legate should be 8159 bytes").to.equal(8159);
+        console.log("Test: Max whitelisted mints updated - passed");
+    })
+
+    
     it("Update Legate authority", async () => {
         const newAuthority = anchor.web3.Keypair.generate();
         console.log(`New authority: ${newAuthority.publicKey.toBase58()}`);
@@ -109,6 +165,7 @@ describe("Legate account related tests", () => {
             console.log("Test: Wrong current authority when updating legate authority - passed");
         }
     })
+
 })
 
     // it("Create 5 word keypair", async () => {

@@ -1,6 +1,11 @@
 use crate::custom_accounts::legate::Legate;
-use crate::errors::ErrorCode::{InvalidAuthority, LegateNotInitialized};
+use crate::errors::ErrorCode::{
+    CannotUpdateMaxTestudosToLessThanCurrentNumberOfTestudos, InvalidAuthority,
+    LegateNotInitialized,
+};
 use anchor_lang::prelude::*;
+
+/// NEED TO REALLOCATE THE CENTURION ACCOUNTS TO THE NEW MAX TESTUDOS
 
 #[derive(Accounts)]
 pub struct UpdateMaxTestudos<'info> {
@@ -29,6 +34,13 @@ pub fn process_update_max_testudos(
         legate.authority,
         ctx.accounts.authority.key(),
         InvalidAuthority
+    );
+
+    // check that the new max testudos is greater than the current number of testudos
+    require_gt!(
+        new_max_testudos,
+        legate.max_testudos_per_user,
+        CannotUpdateMaxTestudosToLessThanCurrentNumberOfTestudos
     );
 
     // update the max testudos

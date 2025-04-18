@@ -14,7 +14,7 @@ pub struct WithdrawSol<'info> {
     pub valid_signer_of_password: Signer<'info>,
     #[account(
         mut,
-        seeds = [b"centurion".as_ref(), authority.key.as_ref()],
+        seeds = [b"centurion", authority.key.as_ref()],
         bump,
         constraint = centurion.is_initialized @CenturionNotInitialized,
         has_one = authority @InvalidAuthority,
@@ -24,7 +24,7 @@ pub struct WithdrawSol<'info> {
 }
 
 pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) -> Result<()> {
-    let password_pubkey = ctx.accounts.centurion.pubkey_to_password;
+    let password_pubkey: Pubkey = ctx.accounts.centurion.pubkey_to_password;
 
     // (double check)Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
     require_eq!(

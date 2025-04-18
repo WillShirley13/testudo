@@ -143,6 +143,10 @@ export type Testudo = {
               {
                 "kind": "account",
                 "path": "centurion"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
               }
             ]
           }
@@ -154,6 +158,143 @@ export type Testudo = {
         {
           "name": "associatedTokenProgram",
           "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deleteTestudo",
+      "discriminator": [
+        220,
+        125,
+        185,
+        47,
+        248,
+        252,
+        238,
+        110
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "authorityAta",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "tokenProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "testudo",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "centurion"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
@@ -248,41 +389,8 @@ export type Testudo = {
                 "path": "authority"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "tokenProgram"
               },
               {
                 "kind": "account",
@@ -356,7 +464,19 @@ export type Testudo = {
         },
         {
           "name": "testudo",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "centurion"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
         },
         {
           "name": "mint",
@@ -580,6 +700,58 @@ export type Testudo = {
       ]
     },
     {
+      "name": "updateMaxWhitelistedMints",
+      "discriminator": [
+        202,
+        184,
+        37,
+        142,
+        189,
+        21,
+        26,
+        193
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "legate"
+          ]
+        },
+        {
+          "name": "legate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "newMaxWhitelistedMints",
+          "type": "u16"
+        }
+      ]
+    },
+    {
       "name": "withdrawSol",
       "discriminator": [
         145,
@@ -673,41 +845,8 @@ export type Testudo = {
                 "path": "authority"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "tokenProgram"
               },
               {
                 "kind": "account",
@@ -785,7 +924,19 @@ export type Testudo = {
         },
         {
           "name": "testudo",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "centurion"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
         },
         {
           "name": "mint"
@@ -804,6 +955,152 @@ export type Testudo = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "withdrawToBackup",
+      "discriminator": [
+        36,
+        27,
+        114,
+        22,
+        47,
+        242,
+        235,
+        148
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "testudo",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "centurion"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "backupAccount",
+          "writable": true
+        },
+        {
+          "name": "backupAta",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "backupAccount"
+              },
+              {
+                "kind": "account",
+                "path": "tokenProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -894,6 +1191,41 @@ export type Testudo = {
       "code": 6011,
       "name": "mintAlreadyInList",
       "msg": "Mint already in list"
+    },
+    {
+      "code": 6012,
+      "name": "noBackupAccountStored",
+      "msg": "No backup account stored"
+    },
+    {
+      "code": 6013,
+      "name": "invalidBackupAccount",
+      "msg": "Invalid backup account passed"
+    },
+    {
+      "code": 6014,
+      "name": "maxTestudosReached",
+      "msg": "Max testudos reached"
+    },
+    {
+      "code": 6015,
+      "name": "cannotUpdateMaxTestudosToLessThanCurrentNumberOfTestudos",
+      "msg": "Cannot update max testudos to less than current number of testudos"
+    },
+    {
+      "code": 6016,
+      "name": "maxWhitelistedMintsReached",
+      "msg": "Max whitelisted mints reached"
+    },
+    {
+      "code": 6017,
+      "name": "cannotUpdateMaxWhitelistedMintsToLessThanCurrentNumberOfWhitelistedMints",
+      "msg": "Cannot update max whitelisted mints to less than current number of whitelisted mints"
+    },
+    {
+      "code": 6018,
+      "name": "errorTransferringAllTokensOutOfTestudo",
+      "msg": "Error while transferring all tokens out of Testudo"
     }
   ],
   "types": [
@@ -972,6 +1304,10 @@ export type Testudo = {
           },
           {
             "name": "maxTestudosPerUser",
+            "type": "u16"
+          },
+          {
+            "name": "maxWhitelistedMints",
             "type": "u16"
           },
           {

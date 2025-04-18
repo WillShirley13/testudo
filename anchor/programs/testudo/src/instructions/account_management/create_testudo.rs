@@ -1,8 +1,8 @@
 use crate::custom_accounts::centurion::{Centurion, TestudoData};
 use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
-    InvalidAuthority, LegateNotInitialized, TestudoCreationCannotPreceedCenturionInitialization,
-    UnsupportedTokenMint,
+    InvalidAuthority, LegateNotInitialized, MaxTestudosReached,
+    TestudoCreationCannotPreceedCenturionInitialization, UnsupportedTokenMint,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -16,7 +16,7 @@ pub struct CreateTestudo<'info> {
     pub authority: Signer<'info>,
     // Get legate PDA
     #[account(
-        seeds = [b"legate".as_ref()],
+        seeds = [b"legate"],
         bump,
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
@@ -24,7 +24,7 @@ pub struct CreateTestudo<'info> {
 
     // Get user Centurion PDA
     #[account(
-        seeds = [b"centurion".as_ref(), authority.key.as_ref()],
+        seeds = [b"centurion", authority.key.as_ref()],
         bump = centurion.bump,
         constraint = centurion.is_initialized @TestudoCreationCannotPreceedCenturionInitialization,
         has_one = authority @InvalidAuthority,
@@ -48,7 +48,7 @@ pub struct CreateTestudo<'info> {
         token::mint = mint,
         token::authority = centurion,
         token::token_program = token_program,
-        seeds = [centurion.key().as_ref()],
+        seeds = [centurion.key().as_ref(), mint.key().as_ref()],
         bump
     )]
     pub centurion_ata: InterfaceAccount<'info, TokenAccount>,
@@ -72,6 +72,12 @@ pub fn process_create_testudo(ctx: Context<CreateTestudo>) -> Result<()> {
         testudo_bump: ctx.bumps.centurion_ata,
         testudo_token_count: 0,
     };
+
+    require_gt!(
+        ctx.accounts.legate.max_testudos_per_user,
+        centurion_data.testudos.len() as u16,
+        MaxTestudosReached
+    );
     centurion_data.testudos.push(testudo_data);
 
     let current_time: i64 = Clock::get()?.unix_timestamp;

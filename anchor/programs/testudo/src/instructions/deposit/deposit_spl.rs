@@ -17,6 +17,7 @@ pub struct DepositSplToken<'info> {
         mut,
         associated_token::mint = mint,
         associated_token::authority = authority,
+        associated_token::token_program = token_program,
     )]
     pub authority_ata: InterfaceAccount<'info, TokenAccount>,
     #[account(
@@ -29,6 +30,11 @@ pub struct DepositSplToken<'info> {
     pub centurion: Account<'info, Centurion>,
     #[account(
         mut,
+        token::mint = mint,
+        token::authority = centurion,
+        token::token_program = token_program,
+        seeds = [centurion.key().as_ref(), mint.key().as_ref()],
+        bump,
         // Ensure the ATA is for the correct token mint
         constraint = testudo.mint == mint.key() @InvalidTokenMint,
         // Ensure the ATA is for the correct Centurion (User)

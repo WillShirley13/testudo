@@ -27,6 +27,10 @@ pub mod testudo {
         instructions::process_create_testudo(ctx)
     }
 
+    pub fn delete_testudo(ctx: Context<DeleteTestudo>) -> Result<()> {
+        instructions::process_delete_testudo(ctx)
+    }
+
     pub fn deposit_sol(ctx: Context<DepositSol>, amount: u64) -> Result<()> {
         instructions::process_deposit_sol(ctx, amount)
     }
@@ -43,6 +47,10 @@ pub mod testudo {
         instructions::process_withdraw_spl_token(ctx, amount)
     }
 
+    pub fn withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> {
+        instructions::process_withdraw_to_backup(ctx)
+    }
+
     pub fn update_authority(ctx: Context<UpdateAuthority>) -> Result<()> {
         instructions::process_update_authority(ctx)
     }
@@ -52,6 +60,13 @@ pub mod testudo {
         new_max_testudos: u16,
     ) -> Result<()> {
         instructions::process_update_max_testudos(ctx, new_max_testudos)
+    }
+
+    pub fn update_max_whitelisted_mints(
+        ctx: Context<UpdateMaxWhitelistedMints>,
+        new_max_whitelisted_mints: u16,
+    ) -> Result<()> {
+        instructions::process_update_max_whitelisted_mints(ctx, new_max_whitelisted_mints)
     }
 
     pub fn add_mint_testudo(

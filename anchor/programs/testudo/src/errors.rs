@@ -26,4 +26,18 @@ pub enum ErrorCode {
     InvalidPasswordSignature,
     #[msg("Mint already in list")]
     MintAlreadyInList,
+    #[msg("No backup account stored")]
+    NoBackupAccountStored,
+    #[msg("Invalid backup account passed")]
+    InvalidBackupAccount,
+    #[msg("Max testudos reached")]
+    MaxTestudosReached,
+    #[msg("Cannot update max testudos to less than current number of testudos")]
+    CannotUpdateMaxTestudosToLessThanCurrentNumberOfTestudos,
+    #[msg("Max whitelisted mints reached")]
+    MaxWhitelistedMintsReached,
+    #[msg("Cannot update max whitelisted mints to less than current number of whitelisted mints")]
+    CannotUpdateMaxWhitelistedMintsToLessThanCurrentNumberOfWhitelistedMints,
+    #[msg("Error while transferring all tokens out of Testudo")]
+    ErrorTransferringAllTokensOutOfTestudo,
 }
