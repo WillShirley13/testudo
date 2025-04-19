@@ -43,6 +43,7 @@ pub fn process_init_centurion(
     let current_time: i64 = Clock::get()?.unix_timestamp;
     centurion_data.created_at = current_time as u64;
     centurion_data.last_accessed = current_time as u64;
+    centurion_data.lamport_balance = 0;
     centurion_data.testudos = Vec::new();
 
     msg!("Centurion account initialized");

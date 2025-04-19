@@ -1,5 +1,7 @@
 use crate::custom_accounts::centurion::Centurion;
-use crate::errors::ErrorCode::{CenturionNotInitialized, InsufficientFunds, InvalidAuthority};
+use crate::errors::ErrorCode::{
+    ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidAuthority,
+};
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
@@ -37,6 +39,13 @@ pub fn process_deposit_sol(ctx: Context<DepositSol>, amount_in_lamports: u64) ->
         CpiContext::new(ctx.accounts.system_program.to_account_info(), cpi_accounts),
         amount_in_lamports,
     )?;
+
+    ctx.accounts.centurion.lamport_balance = ctx
+        .accounts
+        .centurion
+        .lamport_balance
+        .checked_add(amount_in_lamports)
+        .ok_or(ArithmeticOverflow)?;
 
     let current_datetime = Clock::get()?.unix_timestamp;
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;

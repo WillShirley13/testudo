@@ -291,10 +291,6 @@ export type Testudo = {
         },
         {
           "name": "tokenProgram"
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
@@ -1262,6 +1258,10 @@ export type Testudo = {
           },
           {
             "name": "lastAccessed",
+            "type": "u64"
+          },
+          {
+            "name": "lamportBalance",
             "type": "u64"
           },
           {

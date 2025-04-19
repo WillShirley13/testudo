@@ -2,6 +2,8 @@ use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{InvalidAuthority, LegateNotInitialized};
 use anchor_lang::prelude::*;
 
+// Update the authority of the legate account
+
 #[derive(Accounts)]
 pub struct UpdateAuthority<'info> {
     #[account(mut)]

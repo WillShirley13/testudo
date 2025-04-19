@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+// Update the backup account for a Centurion account
+
 #[derive(Accounts)]
 pub struct UpdateBackUpAccount<'info> {
     #[account(mut)]

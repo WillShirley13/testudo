@@ -1,8 +1,11 @@
 use crate::custom_accounts::centurion::Centurion;
 use crate::errors::ErrorCode::{
-    CenturionNotInitialized, InsufficientFunds, InvalidAuthority, InvalidPasswordSignature,
+    ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidAuthority,
+    InvalidPasswordSignature,
 };
 use anchor_lang::prelude::*;
+
+// Withdraw native SOL from a Centurion account
 #[derive(Accounts)]
 pub struct WithdrawSol<'info> {
     #[account(mut)]
@@ -45,21 +48,19 @@ pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) 
     // Replace CpiContext transfer with direct lamport manipulation
     let withdraw_amount = amount_in_lamports;
 
-    msg!(
-        "Centurion balance before withdraw: {}",
-        ctx.accounts.centurion.get_lamports()
-    );
-
     // Debit from centurion account
     ctx.accounts.centurion.sub_lamports(withdraw_amount)?;
 
     // Credit to authority account
     ctx.accounts.authority.add_lamports(withdraw_amount)?;
 
-    msg!(
-        "Centurion balance after withdraw: {}",
-        ctx.accounts.centurion.get_lamports()
-    );
+    ctx.accounts.centurion.lamport_balance = ctx
+        .accounts
+        .centurion
+        .lamport_balance
+        .checked_sub(withdraw_amount)
+        .ok_or(ArithmeticOverflow)?;
+
     // Update last accessed timestamp (keep this part)
     let current_datetime = Clock::get()?.unix_timestamp;
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;

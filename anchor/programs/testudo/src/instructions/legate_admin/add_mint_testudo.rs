@@ -3,6 +3,9 @@ use crate::errors::ErrorCode::{
     InvalidAuthority, LegateNotInitialized, MaxWhitelistedMintsReached, MintAlreadyInList,
 };
 use anchor_lang::prelude::*;
+
+// Add a mint to the testudo token whitelist
+
 #[derive(Accounts)]
 pub struct AddMintToTestudoTokenWhitelist<'info> {
     #[account(mut)]

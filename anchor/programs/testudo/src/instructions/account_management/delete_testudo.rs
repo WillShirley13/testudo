@@ -1,4 +1,4 @@
-use crate::custom_accounts::centurion::{Centurion, TestudoData};
+use crate::custom_accounts::centurion::Centurion;
 use crate::errors::ErrorCode::{
     CenturionNotInitialized, ErrorTransferringAllTokensOutOfTestudo, InvalidATA, InvalidAuthority,
     InvalidPasswordSignature, InvalidTokenMint,
@@ -8,6 +8,8 @@ use anchor_spl::token_interface::{
     close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
     TransferChecked,
 };
+
+// Delete a testudo account
 
 #[derive(Accounts)]
 pub struct DeleteTestudo<'info> {
@@ -55,11 +57,6 @@ pub struct DeleteTestudo<'info> {
         constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
     )]
     pub token_program: Interface<'info, TokenInterface>,
-    // Ensure valid system program is passed
-    #[account(
-        constraint = system_program.key() == anchor_lang::system_program::ID,
-    )]
-    pub system_program: Program<'info, System>,
 }
 
 pub fn process_delete_testudo(ctx: Context<DeleteTestudo>) -> Result<()> {
@@ -68,7 +65,6 @@ pub fn process_delete_testudo(ctx: Context<DeleteTestudo>) -> Result<()> {
     let authority: &Signer<'_> = &ctx.accounts.authority;
     let authority_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.authority_ata;
     let token_program: &Interface<'_, TokenInterface> = &ctx.accounts.token_program;
-    let system_program: &Program<'_, System> = &ctx.accounts.system_program;
     let password_pubkey: Pubkey = centurion.pubkey_to_password;
 
     // Ensure the token mint is supported by the Centurion

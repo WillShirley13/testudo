@@ -7,6 +7,8 @@ use anchor_lang::prelude::*;
 
 /// NEED TO REALLOCATE THE CENTURION ACCOUNTS TO THE NEW MAX TESTUDOS
 
+// Update the max testudos for a Centurion account
+
 #[derive(Accounts)]
 pub struct UpdateMaxTestudos<'info> {
     #[account(mut)]

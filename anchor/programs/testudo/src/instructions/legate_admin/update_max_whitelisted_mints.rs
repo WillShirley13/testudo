@@ -6,7 +6,7 @@ use crate::errors::ErrorCode::{
 };
 use anchor_lang::prelude::*;
 
-/// NEED TO REALLOCATE THE CENTURION ACCOUNTS TO THE NEW MAX TESTUDOS
+// Update the max whitelisted mints for a legate account
 
 #[derive(Accounts)]
 #[instruction(new_max_whitelisted_mints: u16)]

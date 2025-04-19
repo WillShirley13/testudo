@@ -12,6 +12,7 @@ pub struct Centurion {
     pub is_initialized: bool,         // Whether this account has been initialized
     pub created_at: u64,              // Timestamp of account creation
     pub last_accessed: u64,           // Timestamp of last account access
+    pub lamport_balance: u64,         // Balance of SOL in the centurion account
     #[max_len(30)]
     pub testudos: Vec<TestudoData>, // List of testudo account data
 }
