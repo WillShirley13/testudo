@@ -136,7 +136,7 @@ export type Testudo = {
           "name": "tokenProgram"
         },
         {
-          "name": "centurionAta",
+          "name": "testudo",
           "writable": true,
           "pda": {
             "seeds": [

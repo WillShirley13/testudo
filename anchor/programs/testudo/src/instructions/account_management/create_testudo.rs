@@ -17,7 +17,7 @@ pub struct CreateTestudo<'info> {
     // Get legate PDA
     #[account(
         seeds = [b"legate"],
-        bump,
+        bump = legate.bump,
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
@@ -32,7 +32,7 @@ pub struct CreateTestudo<'info> {
     pub centurion: Account<'info, Centurion>,
 
     // Mint for token the testudo will hold. Must be in legate's whitelist
-    #[account(constraint = legate.testudo_token_whitelist.iter().any(|t| t.token_mint == mint.key()) @UnsupportedTokenMint)]
+    #[account(constraint = legate.testudo_token_whitelist.iter().any(|t| t.token_mint.eq(&mint.key())) @UnsupportedTokenMint)]
     pub mint: InterfaceAccount<'info, Mint>,
 
     // token program + verifying token program passed
@@ -51,12 +51,14 @@ pub struct CreateTestudo<'info> {
         seeds = [centurion.key().as_ref(), mint.key().as_ref()],
         bump
     )]
-    pub centurion_ata: InterfaceAccount<'info, TokenAccount>,
+    pub testudo: InterfaceAccount<'info, TokenAccount>,
+
     // Ensure valid system program is passed
     #[account(
         constraint = system_program.key() == anchor_lang::system_program::ID,
     )]
     pub system_program: Program<'info, System>,
+
     // Ensure valid associated token program is passed
     #[account(
         constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
@@ -68,8 +70,8 @@ pub fn process_create_testudo(ctx: Context<CreateTestudo>) -> Result<()> {
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
     let testudo_data = TestudoData {
         token_mint: ctx.accounts.mint.key(),
-        testudo_pubkey: ctx.accounts.centurion_ata.key(),
-        testudo_bump: ctx.bumps.centurion_ata,
+        testudo_pubkey: ctx.accounts.testudo.key(),
+        testudo_bump: ctx.bumps.testudo,
         testudo_token_count: 0,
     };
 

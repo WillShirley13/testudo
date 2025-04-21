@@ -130,7 +130,7 @@
           "name": "token_program"
         },
         {
-          "name": "centurion_ata",
+          "name": "testudo",
           "writable": true,
           "pda": {
             "seeds": [
