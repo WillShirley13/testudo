@@ -11,11 +11,12 @@ import {
 	createMint,
 	getOrCreateAssociatedTokenAccount,
 	mintTo,
+    TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import { SecureKeypairGenerator } from "./keypair_functions";
 
 import { expect } from "chai";
-import { assert } from "console";
+import { assert, log } from "console";
 
 // Main test suite
 describe("Testudo Tests", () => {
@@ -173,7 +174,7 @@ describe("Testudo Tests", () => {
 				[Buffer.from("legate")],
 				program.programId
 			);
-			const legate = await program.account.legate.fetch(legatePDA);
+			let legate = await program.account.legate.fetch(legatePDA);
 			console.log(
 				`Legate max testudos per user (before update): ${legate.maxTestudosPerUser}`
 			);
@@ -185,8 +186,20 @@ describe("Testudo Tests", () => {
 				})
 				.signers([legateAuthority])
 				.rpc();
-				
+			await connection.confirmTransaction(
+				{
+					signature: tx,
+					blockhash: (await connection.getLatestBlockhash()).blockhash,
+					lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
+				},
+				"confirmed"
+			);
 			const legateAfterUpdate = await program.account.legate.fetch(legatePDA);
+
+            legate = await program.account.legate.fetch(legatePDA);
+			console.log(
+				`Legate max testudos per user (after update): ${legate.maxTestudosPerUser}`
+			);
 			
 			// Test that the maxTestudosPerUser value has been updated correctly
 			expect(
@@ -337,6 +350,37 @@ describe("Testudo Tests", () => {
 				legate.testudoTokenWhitelist[1].tokenMint.toBase58()
 			).to.equal(mintPubkey.toBase58());
 		});
+
+        it("Attempt to add the same mint to the whitelist again", async () => {
+            const [legatePDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("legate")],
+				program.programId
+			);
+            const legate = await program.account.legate.fetch(legatePDA);
+            
+            try {
+                await program.methods
+                    .addMintTestudo({
+                        tokenMint: mintPubkey,
+                        tokenName: "TesterToken",
+                        tokenSymbol: "TT",
+                        tokenDecimals: token_info.value.decimals
+                    })
+                    .accounts({
+                        authority: legateAuthority.publicKey
+                    })
+                    .signers([legateAuthority])
+                    .rpc();
+                expect.fail("Should have thrown an error");
+            } catch (error) {
+                console.log(`Error successfully thrown when adding the same mint to the whitelist again: ${error}`);
+                console.log("Approved tokens:");
+                legate.testudoTokenWhitelist.forEach((whitelist) => {
+                    console.log(`Token mint: ${whitelist.tokenMint.toBase58()}`);
+                    console.log(`Token name: ${whitelist.tokenName}\n`);
+                });
+            }
+        });
 	});
 
 	// Group 2: Centurion Account Tests
@@ -345,6 +389,11 @@ describe("Testudo Tests", () => {
 		before(async () => {
 			console.log("\n==== STARTING CENTURION ACCOUNT TESTS ====");
 		});
+
+        var [centurionPDA, _] = PublicKey.findProgramAddressSync(
+            [Buffer.from("centurion"), testUser.publicKey.toBuffer()],
+            program.programId
+        );
 		
 		it("Create Centurion account", async () => {
 			// Initializes a user account (Centurion) for the test user with password protection
@@ -375,16 +424,15 @@ describe("Testudo Tests", () => {
 		});
 
 		it("Deposit SOL to Centurion account", async () => {
-			let [centurionPDA] = PublicKey.findProgramAddressSync(
-				[Buffer.from("centurion"), testUser.publicKey.toBuffer()],
-				program.programId
-			);
 			let centurionLamports = await connection.getBalance(centurionPDA);
 			console.log(
 				`Centurion balance BEFORE deposit: ${
 					centurionLamports / web3.LAMPORTS_PER_SOL
 				} SOL`
 			);
+
+            let centurionBeforeDeposit = await program.account.centurion.fetch(centurionPDA);
+            console.log(`Last accessed BEFORE deposit: ${centurionBeforeDeposit.lastAccessed}`);
 
 			let depositSolTx = await program.methods
 				.depositSol(new anchor.BN(1.5 * web3.LAMPORTS_PER_SOL))
@@ -411,6 +459,9 @@ describe("Testudo Tests", () => {
 					web3.LAMPORTS_PER_SOL
 				} SOL`
 			);
+
+            let centurionAfterDeposit = await program.account.centurion.fetch(centurionPDA);
+            console.log(`Last accessed AFTER deposit: ${centurionAfterDeposit.lastAccessed}`);
 
 			// Verify the deposit was successful
 			expect(
@@ -446,23 +497,13 @@ describe("Testudo Tests", () => {
 		});
 
 		it("Withdraw SOL from Centurion account with password authentication", async () => {
-			let [centurionPDA] = PublicKey.findProgramAddressSync(
-				[Buffer.from("centurion"), testUser.publicKey.toBuffer()],
-				program.programId
-			);
-
 			console.log(
 				`Test User Balance BEFORE withdraw: ${
 					(await connection.getBalance(testUser.publicKey)) /
 					web3.LAMPORTS_PER_SOL
 				} SOL`
 			);
-			console.log(
-				`Centurion balance BEFORE withdraw: ${
-					(await connection.getBalance(centurionPDA)) /
-					web3.LAMPORTS_PER_SOL
-				} SOL`
-			);
+			
 
 			// Withdraw SOL requiring both account owner and password signatures
 			let withdrawSolTx = await program.methods
@@ -504,5 +545,90 @@ describe("Testudo Tests", () => {
 				"Centurion account data should show 0.8 SOL"
 			).to.equal(0.8 * web3.LAMPORTS_PER_SOL);
 		});
+
+        it("Should fail when withdrawing with incorrect password signer", async () => {
+            const incorrectPasswordSigner = anchor.web3.Keypair.generate();
+            
+            try {
+                await program.methods
+                    .withdrawSol(new anchor.BN(0.1 * web3.LAMPORTS_PER_SOL))
+                    .accountsPartial({
+                        authority: testUser.publicKey,
+                        validSignerOfPassword: incorrectPasswordSigner.publicKey,
+                    })
+                    .signers([testUser, incorrectPasswordSigner])
+                    .rpc();
+                expect.fail("Should have thrown an error");
+            } catch (error) {
+                console.log(`Error successfully thrown when withdrawing with incorrect password signer: ${error}`);
+            }
+        });
+
+        it("Create a Centurion Testudo (SPL Token) account", async () => {            
+            console.log(`Mint pubkey: ${mintPubkey}`);
+            let accountTokenInfo = await connection.getTokenAccountBalance(ata.address);
+            console.log(`Token info: ${JSON.stringify(accountTokenInfo)}`);
+    
+            let centurion = await program.account.centurion.fetch(centurionPDA);
+            console.log(`Centurion current testudos BEFORE creation: ${centurion.testudos}`);
+            console.log(`Last accessed: ${centurion.lastAccessed}`);
+    
+            let tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
+            console.log(`Token program: ${tokenProgram}`);
+            let token2022Program = new PublicKey(TOKEN_2022_PROGRAM_ID);
+            console.log(`Token 2022 program: ${token2022Program}`);
+            let mintOwner = (await connection.getAccountInfo(mintPubkey))?.owner;
+            console.log(`Mint owner: ${mintOwner}`);
+            let createTokenAccountTx;
+
+            if (mintOwner.toBase58() === tokenProgram.toBase58()) {
+                console.log("Creating Testudo with Token Program");
+                createTokenAccountTx = await program.methods.createTestudo()
+                        .accounts({
+                            authority: testUser.publicKey,
+                            mint: mintPubkey,
+                            tokenProgram: tokenProgram,
+                        })
+                        .signers([testUser])
+                        .rpc();
+            } else if (mintOwner.toBase58() === token2022Program.toBase58()) {
+                console.log("Creating Testudo with Token 2022 Program");
+                createTokenAccountTx = await program.methods.createTestudo()
+                        .accounts({
+                            authority: testUser.publicKey,
+                            mint: mintPubkey,
+                            tokenProgram: token2022Program,
+                        })
+                        .signers([testUser])
+                        .rpc();
+            }
+
+            console.log(`Create Testudo tx: ${createTokenAccountTx}`);
+    
+            await connection.confirmTransaction(
+                {
+                    signature: createTokenAccountTx,
+                    blockhash: (await connection.getLatestBlockhash()).blockhash,
+                    lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
+                },
+                "confirmed"
+            );
+    
+            const centurionData = await program.account.centurion.fetch(centurionPDA, "confirmed");
+            console.log(`Last accessed: ${centurionData.lastAccessed}`);
+            console.log(centurionData);
+
+            let testudoPDA = PublicKey.findProgramAddressSync(
+                [centurionPDA.toBuffer(), mintPubkey.toBuffer()],
+                program.programId
+            )[0];
+
+            // Verify the testudo was created correctly and added to the centurion account
+            expect(centurionData.testudos.length).to.equal(1);
+            // Verify the token mint is correct
+            expect(centurionData.testudos[0].tokenMint.toBase58()).to.equal(mintPubkey.toBase58());
+            // Verify the testudo pubkey is correct
+            expect(centurionData.testudos[0].testudoPubkey.toBase58()).to.equal(testudoPDA.toBase58());
+        });
 	});
 });

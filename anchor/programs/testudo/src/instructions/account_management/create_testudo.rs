@@ -5,7 +5,6 @@ use crate::errors::ErrorCode::{
     TestudoCreationCannotPreceedCenturionInitialization, UnsupportedTokenMint,
 };
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 // Initialize a testudo account (An ATA from the Centurion PDA) for a user.
@@ -24,8 +23,9 @@ pub struct CreateTestudo<'info> {
 
     // Get user Centurion PDA
     #[account(
+        mut,
         seeds = [b"centurion", authority.key.as_ref()],
-        bump = centurion.bump,
+        bump,
         constraint = centurion.is_initialized @TestudoCreationCannotPreceedCenturionInitialization,
         has_one = authority @InvalidAuthority,
     )]
@@ -51,36 +51,36 @@ pub struct CreateTestudo<'info> {
         seeds = [centurion.key().as_ref(), mint.key().as_ref()],
         bump
     )]
-    pub centurion_ata: InterfaceAccount<'info, TokenAccount>,
+    pub testudo: InterfaceAccount<'info, TokenAccount>,
     // Ensure valid system program is passed
     #[account(
         constraint = system_program.key() == anchor_lang::system_program::ID,
     )]
     pub system_program: Program<'info, System>,
-    // Ensure valid associated token program is passed
-    #[account(
-        constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
-    )]
-    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn process_create_testudo(ctx: Context<CreateTestudo>) -> Result<()> {
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
-    let testudo_data = TestudoData {
+    let testudo_data: TestudoData = TestudoData {
         token_mint: ctx.accounts.mint.key(),
-        testudo_pubkey: ctx.accounts.centurion_ata.key(),
-        testudo_bump: ctx.bumps.centurion_ata,
+        testudo_pubkey: ctx.accounts.testudo.key(),
+        testudo_bump: ctx.bumps.testudo,
         testudo_token_count: 0,
     };
 
+    // Check if the user has reached the max number of testudos
     require_gt!(
         ctx.accounts.legate.max_testudos_per_user,
         centurion_data.testudos.len() as u16,
         MaxTestudosReached
     );
+
     centurion_data.testudos.push(testudo_data);
 
     let current_time: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_time as u64;
+
+    msg!("Centurion data: {:?}", centurion_data.testudos);
+    msg!("Testudo created successfully");
     Ok(())
 }

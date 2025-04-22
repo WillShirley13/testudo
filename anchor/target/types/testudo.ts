@@ -106,6 +106,7 @@ export type Testudo = {
         },
         {
           "name": "centurion",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -136,7 +137,7 @@ export type Testudo = {
           "name": "tokenProgram"
         },
         {
-          "name": "centurionAta",
+          "name": "testudo",
           "writable": true,
           "pda": {
             "seeds": [
@@ -154,10 +155,6 @@ export type Testudo = {
         {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": []
