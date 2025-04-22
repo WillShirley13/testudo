@@ -1142,7 +1142,7 @@
     {
       "code": 6004,
       "name": "UnsupportedTokenMint",
-      "msg": "Unsupported token mint"
+      "msg": "Unsupported token mint. Legate must whitelist the token mint before Testudo creation"
     },
     {
       "code": 6005,

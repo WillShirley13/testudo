@@ -10,7 +10,7 @@ pub enum ErrorCode {
     InvalidAuthority,
     #[msg("User's Centurion must be initialized first")]
     TestudoCreationCannotPreceedCenturionInitialization,
-    #[msg("Unsupported token mint")]
+    #[msg("Unsupported token mint. Legate must whitelist the token mint before Testudo creation")]
     UnsupportedTokenMint,
     #[msg("Depositer/Withdrawer has insufficient funds for deposit/withdraw")]
     InsufficientFunds,

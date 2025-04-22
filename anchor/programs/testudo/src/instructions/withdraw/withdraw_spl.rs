@@ -60,7 +60,10 @@ pub struct WithdrawSplToken<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn process_withdraw_spl_token(ctx: Context<WithdrawSplToken>, amount: u64) -> Result<()> {
+pub fn process_withdraw_spl_token(
+    ctx: Context<WithdrawSplToken>,
+    amount_in_decimals: u64,
+) -> Result<()> {
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
     let password_pubkey: Pubkey = centurion_data.pubkey_to_password;
 
@@ -84,17 +87,11 @@ pub fn process_withdraw_spl_token(ctx: Context<WithdrawSplToken>, amount: u64) -
 
     // Get the amount of tokens the depositor has in their ATA
     let testudo_token_holdings: u64 = ctx.accounts.testudo.amount;
-    // Get the number of decimals for the token
-    let decimals: u8 = ctx.accounts.mint.decimals;
-    // Convert the desired deposit amount to a u64 with the correct number of decimals
-    let amount_to_deposit_with_decimals: u64 = amount
-        .checked_mul(10u64.pow(decimals as u32))
-        .ok_or(ArithmeticOverflow)?;
 
     // Ensure the depositor has enough tokens in their ATA to cover the deposit
     require_gte!(
         testudo_token_holdings,
-        amount_to_deposit_with_decimals,
+        amount_in_decimals,
         InsufficientFunds
     );
     msg!("Depositor has enough tokens to cover the deposit");
@@ -109,20 +106,24 @@ pub fn process_withdraw_spl_token(ctx: Context<WithdrawSplToken>, amount: u64) -
         from: testudo_ata.to_account_info(),
         to: authority_ata.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
-        authority: ctx.accounts.authority.to_account_info(),
+        authority: centurion_data.to_account_info(),
     };
 
+    // Get the number of decimals for the token
+    let decimals: u8 = ctx.accounts.mint.decimals;
     // Define seeds first
     let authority_key_ref = ctx.accounts.authority.key.as_ref();
     let bump = &[ctx.bumps.centurion];
     let signer_seeds: &[&[&[u8]]] = &[&[b"centurion", authority_key_ref, bump]];
+
     let cpi_context = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
         cpi_accounts,
         signer_seeds,
     );
+
     // Perform the transfer
-    token_interface::transfer_checked(cpi_context, amount_to_deposit_with_decimals, decimals)?;
+    token_interface::transfer_checked(cpi_context, amount_in_decimals, decimals)?;
 
     // Update the last accessed timestamp
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
@@ -134,7 +135,7 @@ pub fn process_withdraw_spl_token(ctx: Context<WithdrawSplToken>, amount: u64) -
         .iter_mut()
         .find(|testudo| testudo.token_mint == ctx.accounts.mint.key())
         .ok_or(InvalidTokenMint)?;
-    testudo_data.testudo_token_count -= amount;
+    testudo_data.testudo_token_count -= amount_in_decimals;
 
     msg!("Withdrawal successful");
     Ok(())

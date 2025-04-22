@@ -1148,7 +1148,7 @@ export type Testudo = {
     {
       "code": 6004,
       "name": "unsupportedTokenMint",
-      "msg": "Unsupported token mint"
+      "msg": "Unsupported token mint. Legate must whitelist the token mint before Testudo creation"
     },
     {
       "code": 6005,

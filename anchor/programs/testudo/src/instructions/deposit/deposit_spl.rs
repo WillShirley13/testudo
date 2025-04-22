@@ -55,7 +55,10 @@ pub struct DepositSplToken<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> Result<()> {
+pub fn process_deposit_spl_token(
+    ctx: Context<DepositSplToken>,
+    amount_with_decimals: u64,
+) -> Result<()> {
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
     // Ensure the token mint is supported by the Centurion
     require_eq!(
@@ -70,16 +73,16 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
     // Get the amount of tokens the depositor has in their ATA
     let depositer_token_holdings: u64 = ctx.accounts.authority_ata.amount;
     // Get the number of decimals for the token
-    let decimals: u8 = ctx.accounts.mint.decimals;
-    // Convert the desired deposit amount to a u64 with the correct number of decimals
-    let amount_to_deposit_with_decimals: u64 = amount
-        .checked_mul(10u64.pow(decimals as u32))
-        .ok_or(ArithmeticOverflow)?;
+    // let decimals: u8 = ctx.accounts.mint.decimals;
+    // // Convert the desired deposit amount to a u64 with the correct number of decimals
+    // let amount_to_deposit_with_decimals: u64 = amount
+    //     .checked_mul(10u64.pow(decimals as u32))
+    //     .ok_or(ArithmeticOverflow)?;
 
     // Ensure the depositor has enough tokens in their ATA to cover the deposit
     require_gte!(
         depositer_token_holdings,
-        amount_to_deposit_with_decimals,
+        amount_with_decimals,
         InsufficientFunds
     );
     msg!("Depositor has enough tokens to cover the deposit");
@@ -97,11 +100,13 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
         authority: ctx.accounts.authority.to_account_info(),
     };
 
+    let decimals: u8 = ctx.accounts.mint.decimals;
+
     // Set up the CPI context for the transfer
     let cpi_context: CpiContext<'_, '_, '_, '_, TransferChecked<'_>> =
         CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts);
     // Perform the transfer
-    token_interface::transfer_checked(cpi_context, amount_to_deposit_with_decimals, decimals)?;
+    token_interface::transfer_checked(cpi_context, amount_with_decimals, decimals)?;
 
     // Update the last accessed timestamp
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
@@ -113,7 +118,7 @@ pub fn process_deposit_spl_token(ctx: Context<DepositSplToken>, amount: u64) -> 
         .iter_mut()
         .find(|testudo| testudo.token_mint == ctx.accounts.mint.key())
         .ok_or(InvalidTokenMint)?;
-    testudo_data.testudo_token_count += amount;
+    testudo_data.testudo_token_count += amount_with_decimals;
 
     msg!("Deposit successful");
     Ok(())
