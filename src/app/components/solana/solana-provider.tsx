@@ -13,7 +13,7 @@ import {
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { ReactNode, useCallback, useMemo } from "react";
 import { useCluster } from "../cluster/cluster-data-access";
-
+import { getTestudoProgram } from "../../../../anchor/src/testudo-exports";
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 export const WalletButton = dynamic(
@@ -47,4 +47,9 @@ export function useAnchorProvider() {
 	return new AnchorProvider(connection, wallet as AnchorWallet, {
 		commitment: "confirmed",
 	});
+}
+
+export function useTestudoProgram() {
+	const provider = useAnchorProvider();
+	return getTestudoProgram(provider);
 }

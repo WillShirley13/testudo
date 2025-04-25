@@ -1,37 +1,110 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @config '../../tailwind.config.ts';
+
+/* Define layer order explicitly */
+@layer tw, tw.theme, tw.base, tw.components, tw.utilities, custom;
+
+/* Import Tailwind as a whole */
+@import "tailwindcss" layer(tw);
+
+/* Custom preflight instead of default */
+@layer tw.base {
+	/* Reset styles for Tailwind v4 */
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+		padding: 0;
+		margin: 0;
+	}
+	
+	/* Custom styles for the app */
+	html,
+	body {
+		min-height: 100vh;
+		background-color: #0c1221;
+		color: #e5e7eb;
+	}
+
+	/* Better background for dark mode */
+	body::before {
+		content: "";
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: radial-gradient(
+				circle at top right,
+				rgba(30, 41, 59, 0.2),
+				transparent 60%
+			),
+			radial-gradient(
+				circle at bottom left,
+				rgba(23, 30, 46, 0.3),
+				transparent 50%
+			);
+		pointer-events: none;
+		z-index: -1;
+	}
+}
+
+/* Plugin imports */
 @plugin "daisyui";
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+/* Custom utilities in the custom layer */
+@layer custom {
+	/* Gold accent line for section divisions */
+	.section-divider {
+		height: 1px;
+		width: 100%;
+		background: linear-gradient(
+			to right,
+			rgba(217, 119, 6, 0.05),
+			rgba(245, 158, 11, 0.3),
+			rgba(217, 119, 6, 0.05)
+		);
+	}
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
+	/* Smooth transitions between sections */
+	section {
+		position: relative;
+		width: 100%;
+	}
+
+	/* Container for content sections */
+	.content-container {
+		width: 90%;
+		max-width: 1400px;
+		margin: 0 auto;
+	}
+
+	@media (max-width: 768px) {
+		.content-container {
+			width: 95%;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.max-w-\[90\%\] {
+			max-width: 95%;
+		}
+	}
+
+	/* Add this class to hide scrollbars while keeping functionality */
+	.scrollbar-hide {
+		-ms-overflow-style: none;  /* IE and Edge */
+		scrollbar-width: none;  /* Firefox */
+	}
+
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;  /* Chrome, Safari and Opera */
+	}
 }
 
-html,
-body {
-  height: 100%;
-}
-
-.wallet-adapter-button-trigger {
-  background: rgb(100, 26, 230) !important;
-  border-radius: 8px !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
-}
-.wallet-adapter-dropdown-list,
-.wallet-adapter-button {
-  font-family: inherit !important;
+/* Web component compatibility fix */
+:host {
+	/* Ensuring elements can receive their own margin/padding */
+	margin: initial;
+	padding: initial;
 }
