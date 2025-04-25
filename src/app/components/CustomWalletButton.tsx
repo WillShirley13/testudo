@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletName } from "@solana/wallet-adapter-base";
 import type { Wallet } from "@solana/wallet-adapter-react";
+import Image from "next/image";
 
 const CustomWalletButton = () => {
 	const [walletModalOpen, setWalletModalOpen] = useState(false);
@@ -97,10 +98,12 @@ const CustomWalletButton = () => {
 									onClick={(e) => handleSelectWallet(wallet.adapter.name, e)}
 								>
 									{wallet.adapter.icon && (
-										<img
+										<Image
 											src={wallet.adapter.icon}
 											alt={`${wallet.adapter.name} icon`}
 											className="wallet-icon"
+											width={24}
+											height={24}
 										/>
 									)}
 									<span>{wallet.adapter.name}</span>

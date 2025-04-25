@@ -1,14 +1,18 @@
 @import "tailwindcss";
 @config '../../tailwind.config.ts';
 
-/* Define layer order explicitly */
-@layer tw, tw.theme, tw.base, tw.components, tw.utilities, custom;
+/* Define standard Tailwind v4 layer structure */
+@layer theme, base, components, utilities;
 
-/* Import Tailwind as a whole */
-@import "tailwindcss" layer(tw);
+/* Theme configuration */
+@layer theme {
+	:root {
+		--spacing: 0.25rem;
+	}
+}
 
-/* Custom preflight instead of default */
-@layer tw.base {
+/* Base styles */
+@layer base {
 	/* Reset styles for Tailwind v4 */
 	*,
 	*::before,
@@ -52,26 +56,8 @@
 /* Plugin imports */
 @plugin "daisyui";
 
-/* Custom utilities in the custom layer */
-@layer custom {
-	/* Gold accent line for section divisions */
-	.section-divider {
-		height: 1px;
-		width: 100%;
-		background: linear-gradient(
-			to right,
-			rgba(217, 119, 6, 0.05),
-			rgba(245, 158, 11, 0.3),
-			rgba(217, 119, 6, 0.05)
-		);
-	}
-
-	/* Smooth transitions between sections */
-	section {
-		position: relative;
-		width: 100%;
-	}
-
+/* Components layer for reusable patterns */
+@layer components {
 	/* Container for content sections */
 	.content-container {
 		width: 90%;
@@ -89,6 +75,27 @@
 		.max-w-\[90\%\] {
 			max-width: 95%;
 		}
+	}
+}
+
+/* Utilities layer for single-purpose classes */
+@layer utilities {
+	/* Gold accent line for section divisions */
+	.section-divider {
+		height: 1px;
+		width: 100%;
+		background: linear-gradient(
+			to right,
+			rgba(217, 119, 6, 0.05),
+			rgba(245, 158, 11, 0.3),
+			rgba(217, 119, 6, 0.05)
+		);
+	}
+
+	/* Smooth transitions between sections */
+	section {
+		position: relative;
+		width: 100%;
 	}
 
 	/* Add this class to hide scrollbars while keeping functionality */
@@ -108,3 +115,5 @@
 	margin: initial;
 	padding: initial;
 }
+
+/* Any custom CSS, if any, after this */

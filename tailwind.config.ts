@@ -8,7 +8,7 @@ const config: Config = {
 	],
 	theme: {
 		extend: {},
-		breakpoints: {
+		screens: {
 			sm: "640px",
 			md: "768px",
 			lg: "1024px",

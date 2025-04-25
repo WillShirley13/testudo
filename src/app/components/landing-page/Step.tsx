@@ -40,7 +40,7 @@ export function Step({
 					{description}
 				</p>
 				
-				<div className="ml-6 mt-6 bg-amber-500/10 p-6 rounded-lg border border-amber-500/30 shadow-sm shadow-amber-500/10 transition-all duration-300 hover:border-amber-500/50 hover:shadow-md hover:shadow-amber-500/20">
+				<div className="ml-6 mt-6 bg-amber-500/10 p-10 rounded-lg border border-amber-500/30 shadow-sm shadow-amber-500/10 transition-all duration-300 hover:border-amber-500/50 hover:shadow-md hover:shadow-amber-500/20">
 					<div className="flex items-start">
 						<div className="flex-shrink-0 m-2">
 							<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 px-1 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
