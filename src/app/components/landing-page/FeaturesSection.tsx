@@ -84,8 +84,8 @@ export function FeaturesSection() {
 					</h2>
 					<p className="text-gray-400 max-w-3xl mx-auto">
 						Testudo implements a revolutionary dual-signature
-						system, providing you with enhanced security for
-						your Solana tokens.
+						system, providing you with enhanced security 
+                        without sacrificing ease of access.
 					</p>
 				</div>
 

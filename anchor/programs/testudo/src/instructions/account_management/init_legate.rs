@@ -41,7 +41,7 @@ pub fn process_init_legate(ctx: Context<InitLegate>) -> Result<()> {
     legate_data.max_testudos_per_user = 30;
     legate_data.max_whitelisted_mints = 50;
     legate_data.testudo_token_whitelist = vec![TestudoTokenWhitelist {
-        token_mint: pubkey!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"),
+        token_mint: pubkey!("Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr"),
         token_name: "USD Coin".to_string(),
         token_symbol: "USDC".to_string(),
         token_decimals: 6,

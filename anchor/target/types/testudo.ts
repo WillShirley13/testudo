@@ -645,6 +645,65 @@ export type Testudo = {
       "args": []
     },
     {
+      "name": "updateBackUpAccount",
+      "discriminator": [
+        238,
+        120,
+        102,
+        92,
+        157,
+        240,
+        77,
+        118
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "backupAccount",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "updateMaxTestudos",
       "discriminator": [
         183,

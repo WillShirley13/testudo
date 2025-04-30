@@ -14,3 +14,6 @@ pub use deposit::{deposit_sol::*, deposit_spl::*};
 
 pub mod withdraw;
 pub use withdraw::{withdraw_sol::*, withdraw_spl::*, withdraw_to_backup::*};
+
+pub mod centurion_config;
+pub use centurion_config::update_back_up_account::*;

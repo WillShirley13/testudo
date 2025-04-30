@@ -5,11 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Baskervville } from "next/font/google";
 import { useState, useEffect } from "react";
-import CustomWalletButton from "./CustomWalletButton";
+import dynamic from "next/dynamic";
 
 // Import wallet styles
 import "@solana/wallet-adapter-react-ui/styles.css";
 import "../styles/wallet.css";
+
+const CustomWalletButton = dynamic(
+	() => import("./CustomWalletButton"),
+	{ ssr: false }
+);
+
+const NetworkIndicatorDynamic = dynamic(
+	() => import("./solana/NetworkIndicator").then(mod => mod.NetworkIndicator),
+	{ ssr: false }
+);
 
 const baskervville = Baskervville({
 	weight: ["400"],
@@ -116,6 +126,11 @@ export function Header() {
 						))}
 					</div>
 
+					{/* Network Indicator */}
+					<div className="mr-4">
+						<NetworkIndicatorDynamic />
+					</div>
+
 					{/* Custom Connect Wallet Button - Desktop */}
 					<CustomWalletButton />
 				</nav>
@@ -182,6 +197,10 @@ export function Header() {
 							))}
 						</ul>
 						<div className="mt-10 pt-6 border-t border-gray-800/50">
+							{/* Network Indicator - Mobile */}
+							<div className="mb-4">
+								<NetworkIndicatorDynamic />
+							</div>
 							{/* Custom Connect Wallet Button - Mobile */}
 							<div onClick={(e) => e.stopPropagation()}>
 								<CustomWalletButton />

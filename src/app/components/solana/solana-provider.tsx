@@ -31,9 +31,13 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
 		console.error(error);
 	}, []);
 
+	// Using empty wallets array with wallet-adapter since we're relying on the Wallet Standard
+	// which auto-detects available wallet adapters from the browser
+	const wallets = useMemo(() => [], []);
+
 	return (
 		<ConnectionProvider endpoint={endpoint}>
-			<WalletProvider wallets={[]} onError={onError} autoConnect={true}>
+			<WalletProvider wallets={wallets} onError={onError} autoConnect={true}>
 				<WalletModalProvider>{children}</WalletModalProvider>
 			</WalletProvider>
 		</ConnectionProvider>
@@ -44,12 +48,17 @@ export function useAnchorProvider() {
 	const { connection } = useConnection();
 	const wallet = useWallet();
 
-	return new AnchorProvider(connection, wallet as AnchorWallet, {
-		commitment: "confirmed",
-	});
+	// Use useMemo to create a stable provider that doesn't change unnecessarily
+	return useMemo(
+		() => new AnchorProvider(connection, wallet as AnchorWallet, {
+			commitment: "confirmed",
+		}),
+		[connection, wallet]
+	);
 }
 
 export function useTestudoProgram() {
 	const provider = useAnchorProvider();
-	return getTestudoProgram(provider);
+	// Memoize the program instance to prevent unnecessary re-renders
+	return useMemo(() => getTestudoProgram(provider), [provider]);
 }

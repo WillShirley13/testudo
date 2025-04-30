@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletName } from "@solana/wallet-adapter-base";
 import type { Wallet } from "@solana/wallet-adapter-react";
@@ -8,6 +8,7 @@ import Image from "next/image";
 
 const CustomWalletButton = () => {
 	const [walletModalOpen, setWalletModalOpen] = useState(false);
+	const [mounted, setMounted] = useState(false);
 	const {
 		wallets,
 		select,
@@ -18,6 +19,15 @@ const CustomWalletButton = () => {
 		connected,
 		wallet,
 	} = useWallet();
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	// Return null during SSR and initial render
+	if (!mounted) {
+		return null;
+	}
 
 	let buttonText;
 	let buttonClass = "wallet-custom-button";

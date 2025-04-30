@@ -4,6 +4,7 @@ import { SolanaProvider } from "@/app/components/solana/solana-provider";
 
 import { ReactQueryProvider } from "./react-query-provider";
 import { Header } from "@/app/components/Header";
+import { Footer } from "@/app/components/Footer";
 import { Baskervville } from "next/font/google";
 
 const baskervville = Baskervville({
@@ -38,6 +39,7 @@ export default function RootLayout({
 								<main className="flex-grow pt-28">
 									{children}
 								</main>
+								<Footer />
 							</div>
 						</SolanaProvider>
 					</ClusterProvider>

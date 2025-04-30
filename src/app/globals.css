@@ -1,27 +1,9 @@
-@import "tailwindcss";
-@config '../../tailwind.config.ts';
-
-/* Define standard Tailwind v4 layer structure */
-@layer theme, base, components, utilities;
-
-/* Theme configuration */
-@layer theme {
-	:root {
-		--spacing: 0.25rem;
-	}
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Base styles */
 @layer base {
-	/* Reset styles for Tailwind v4 */
-	*,
-	*::before,
-	*::after {
-		box-sizing: border-box;
-		padding: 0;
-		margin: 0;
-	}
-	
 	/* Custom styles for the app */
 	html,
 	body {
@@ -52,9 +34,6 @@
 		z-index: -1;
 	}
 }
-
-/* Plugin imports */
-@plugin "daisyui";
 
 /* Components layer for reusable patterns */
 @layer components {
@@ -109,11 +88,4 @@
 	}
 }
 
-/* Web component compatibility fix */
-:host {
-	/* Ensuring elements can receive their own margin/padding */
-	margin: initial;
-	padding: initial;
-}
 
-/* Any custom CSS, if any, after this */

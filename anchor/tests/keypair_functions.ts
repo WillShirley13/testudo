@@ -4,7 +4,7 @@ import * as bip39 from 'bip39';
 import * as nacl from 'tweetnacl';
 
 /**
- * Core functions for secure 6-word phrase keypair generation
+ * Core functions for secure mnemonic phrase keypair generation
  */
 export class SecureKeypairGenerator {
     // Use the standard BIP39 wordlist (2048 words)
@@ -12,23 +12,46 @@ export class SecureKeypairGenerator {
     
     // Security parameters
     private readonly PBKDF2_ITERATIONS = 250000;
-    private readonly SALT_PREFIX = 'secure-six-word-solana-keypair-v1';
+    private readonly SALT_PREFIX = 'secure-mnemonic-solana-keypair-v1';
+    
+    // Security information for different word lengths
+    public readonly securityInfo = {
+        4: {
+            combinations: Math.pow(2048, 4),
+            bitsOfEntropy: Math.log2(Math.pow(2048, 4)),
+            description: "Basic security - suitable for small amounts. With 2048 possible words, a 4-word phrase provides approximately 44 bits of entropy."
+        },
+        5: {
+            combinations: Math.pow(2048, 5),
+            bitsOfEntropy: Math.log2(Math.pow(2048, 5)),
+            description: "Medium security - good for moderate amounts. A 5-word phrase provides approximately 55 bits of entropy."
+        },
+        6: {
+            combinations: Math.pow(2048, 6),
+            bitsOfEntropy: Math.log2(Math.pow(2048, 6)),
+            description: "High security - recommended for large amounts. A 6-word phrase provides approximately 66 bits of entropy."
+        }
+    };
     
     /**
-     * Generate a random 6-word phrase with maximum entropy
+     * Generate a random phrase with specified length and maximum entropy
      */
-    generateRandomPhrase(): string[] {
+    generateRandomPhrase(length: 4 | 5 | 6): string[] {
         // Ensure we have a wordlist
         if (!this.wordlist || this.wordlist.length === 0) {
             throw new Error("Wordlist not available");
         }
         
-        // Generate 6 truly random words using cryptographically secure randomness
+        if (![4, 5, 6].includes(length)) {
+            throw new Error("Phrase length must be 4, 5, or 6 words");
+        }
+        
+        // Generate N truly random words using cryptographically secure randomness
         const words: string[] = [];
         const usedIndices = new Set<number>();
         
         // Use crypto.randomBytes for better randomness than Math.random()
-        while (words.length < 6) {
+        while (words.length < length) {
             // Generate 2 bytes (16 bits) of randomness for each word index
             const randomBuffer = crypto.randomBytes(2);
             // Convert to number between 0-2047
@@ -45,12 +68,12 @@ export class SecureKeypairGenerator {
     }
     
     /**
-     * Derive a keypair from a 6-word phrase using enhanced security techniques
+     * Derive a keypair from a mnemonic phrase using enhanced security techniques
      */
     deriveKeypairFromWords(words: string[]): { keypair: Keypair, words: string[] } {
         // Validate input
-        if (!Array.isArray(words) || words.length !== 6) {
-            throw new Error("Exactly 6 words are required");
+        if (!Array.isArray(words) || ![4, 5, 6].includes(words.length)) {
+            throw new Error("Phrase must be 4, 5, or 6 words");
         }
         
         // Check that all words are in the wordlist
@@ -69,7 +92,7 @@ export class SecureKeypairGenerator {
         
         // Use PBKDF2 for key stretching - makes brute-force attacks much slower
         const derivedKey = crypto.pbkdf2Sync(
-            phrase,                 // Password (the 6-word phrase)
+            phrase,                 // Password (the mnemonic phrase)
             salt,                   // Salt (unique to this application)
             this.PBKDF2_ITERATIONS, // Iterations (high number for better security)
             64,                     // Output key length (64 bytes)
@@ -86,7 +109,7 @@ export class SecureKeypairGenerator {
     }
     
     /**
-     * Signs a message using the keypair derived from a 6-word phrase
+     * Signs a message using the keypair derived from a mnemonic phrase
      */
     signMessage(message: Buffer, words: string[]): Uint8Array {
         const { keypair } = this.deriveKeypairFromWords(words);

@@ -639,6 +639,65 @@
       "args": []
     },
     {
+      "name": "update_back_up_account",
+      "discriminator": [
+        238,
+        120,
+        102,
+        92,
+        157,
+        240,
+        77,
+        118
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "valid_signer_of_password",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "backup_account",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "update_max_testudos",
       "discriminator": [
         183,

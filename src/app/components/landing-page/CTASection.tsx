@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { Baskervville } from "next/font/google";
-import CustomWalletButton from "../CustomWalletButton";
 
 const baskervville = Baskervville({
 	weight: ["400"],
@@ -26,18 +25,19 @@ export function CTASection() {
 						Ready to Secure Your Solana Assets?
 					</h2>
 					<p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto">
-						Join thousands of Solana users who trust Testudo to
-						protect their digital assets with military-grade
-						security.
+						Join Testudo and let YOUR Centurion secure YOUR assets.
 					</p>
 					
 					<div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-						<div className="w-full sm:w-auto">
-							<CustomWalletButton />
-						</div>
+						<Link 
+							href="/dashboard" 
+							className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-medium rounded-md hover:from-amber-600 hover:to-amber-700 transition-all duration-300 text-center inline-block"
+						>
+							Dashboard
+						</Link>
 						<Link
 							href="/faq"
-							className="w-full sm:w-auto px-8 py-3 border border-amber-500/30 text-amber-400 rounded-md hover:bg-amber-500/10 transition-all duration-300 text-center"
+							className="w-full sm:w-auto px-8 py-3 border border-amber-500/30 text-amber-400 rounded-md hover:bg-amber-500/10 transition-all duration-300 text-center inline-block"
 						>
 							View FAQ
 						</Link>

@@ -1,3 +1,7 @@
+use crate::custom_accounts::centurion::Centurion;
+use crate::errors::ErrorCode::{
+    CenturionNotInitialized, InvalidAuthority, InvalidPasswordSignature,
+};
 use anchor_lang::prelude::*;
 
 // Update the backup account for a Centurion account
@@ -13,7 +17,7 @@ pub struct UpdateBackUpAccount<'info> {
     pub valid_signer_of_password: Signer<'info>,
     #[account(
         mut,
-        seeds = [b"centurion".as_ref(), authority.key.as_ref()],
+        seeds = [b"centurion", authority.key.as_ref()],
         bump,
         constraint = centurion.is_initialized @CenturionNotInitialized,
         has_one = authority @InvalidAuthority,
@@ -27,7 +31,7 @@ pub fn process_update_back_up_account(
 ) -> Result<()> {
     // (double check) Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
     require_eq!(
-        password_pubkey,
+        ctx.accounts.centurion.pubkey_to_password,
         ctx.accounts.valid_signer_of_password.key(),
         InvalidPasswordSignature
     );

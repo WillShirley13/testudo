@@ -75,4 +75,11 @@ pub mod testudo {
     ) -> Result<()> {
         instructions::process_add_mint_to_testudo_token_whitelist(ctx, mint)
     }
+
+    pub fn update_back_up_account(
+        ctx: Context<UpdateBackUpAccount>,
+        backup_account: Pubkey,
+    ) -> Result<()> {
+        instructions::process_update_back_up_account(ctx, backup_account)
+    }
 }

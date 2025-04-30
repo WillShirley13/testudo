@@ -68,16 +68,16 @@ export function HowItWorksSection() {
 		{
 			number: 1,
 			title: "Create Your Centurion",
-			description: "Connect your wallet and set up your main Centurion account with a memorable 6-word phrase.",
+			description: "Connect your wallet and set up your main Centurion account with a memorable 6-word phrase. Your Testudos will be attached to this Centurion and will hold your tokens.",
 			ref: step1Ref,
-			tipText: "Memorize your 6-word phrase, it's your key to security."
+			tipText: "Memorize (and store) your 6-word phrase, it's your key to security."
 		},
 		{
 			number: 2,
 			title: "Deposit Funds",
-			description: "Transfer SPL tokens to your Testudo wallets and they'll be securely stored in Program Derived Addresses.",
+			description: "Using your Centurion, create Testudos to hold your tokens.",
 			ref: step2Ref,
-			tipText: "Your tokens remain safely stored in your own PDAs."
+			tipText: "Your tokens remain secured behind your Centurion as long as you keep your 6-word phrase safe!"
 		},
 		{
 			number: 3,
@@ -89,7 +89,7 @@ export function HowItWorksSection() {
 		{
 			number: 4,
 			title: "Optional Recovery",
-			description: "Set up an Optio backup address for emergency recovery if you ever lose access to your primary wallet.",
+			description: "Set up an Optio backup address for emergency recovery if your wallet is compromised.",
 			ref: step4Ref,
 			tipText: "Never lose access to your funds with our recovery system."
 		},
@@ -105,8 +105,8 @@ export function HowItWorksSection() {
 						How Testudo Works
 					</h2>
 					<p className="text-gray-400 max-w-3xl mx-auto">
-						Our secure wallet system combines simplicity with
-						military-grade security. Scroll through each step to learn more.
+						Our secure vault system combines simplicity with
+						doubled-up cryptographic security. Scroll through each step to learn more.
 					</p>
 				</div>
 				
