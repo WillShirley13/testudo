@@ -108,12 +108,12 @@ export function CenturionCard({
 
 					<div className="p-3 bg-gray-800/40 rounded-md border border-gray-700/50">
 						<div className="text-sm text-gray-400 flex justify-between items-center">
-							<span>Backup Owner</span>
+							<span>Optio (Backup account)</span>
 							<button 
 								onClick={() => setShowUpdateBackupModal(true)}
 								className="text-xs px-2 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded text-amber-400 transition-colors"
 							>
-								Update
+								Reassign
 							</button>
 						</div>
 						<div className="text-white font-mono text-sm break-all">

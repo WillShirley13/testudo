@@ -75,24 +75,3 @@ export const shortenAddress = (address: string, chars: number = 4): string => {
 	return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 };
 
-// Some example whitelisted tokens for testing
-export const WHITELISTED_TOKENS: TokenData[] = [
-	{
-		name: "USDC",
-		symbol: "USDC",
-		mint: "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr",
-		decimals: 6,
-	},
-	{
-		name: "Solana",
-		symbol: "SOL",
-		mint: "So11111111111111111111111111111111111111112",
-		decimals: 9,
-	},
-	{
-		name: "Bonk",
-		symbol: "BONK",
-		mint: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
-		decimals: 5,
-	},
-];

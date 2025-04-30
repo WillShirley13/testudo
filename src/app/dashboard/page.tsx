@@ -7,7 +7,7 @@ import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/so
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Baskervville } from "next/font/google";
-import { WHITELISTED_TOKENS, findCenturionPDA, findTestudoPDA, findLegatePDA, generateKeypairFromSeed } from "@/app/utils/testudo-utils";
+import { findCenturionPDA, findTestudoPDA, findLegatePDA, generateKeypairFromSeed } from "@/app/utils/testudo-utils";
 import { CenturionCard, CreateCenturionForm } from "@/app/components/dashboard/centurion";
 import { CreateTestudoModal, TestudoAccountsTable } from "@/app/components/dashboard/testudo";
 import { CenturionData, TestudoData } from "@/app/types/testudo";
@@ -381,7 +381,6 @@ export default function DashboardPage() {
 				{/* Testudo Token Accounts */}
 				<TestudoAccountsTable 
 					testudos={centurionData?.testudos}
-					whitelistedTokens={WHITELISTED_TOKENS}
 					centurionData={centurionData}
 					programId={testudoProgram.programId}
 					onCreateTestudo={() => setShowCreateTestudo(true)}
