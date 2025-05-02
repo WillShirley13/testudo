@@ -51,6 +51,10 @@ pub mod testudo {
         instructions::process_withdraw_to_backup(ctx)
     }
 
+    pub fn withdraw_sol_to_backup(ctx: Context<WithdrawSolToBackup>) -> Result<()> {
+        instructions::process_withdraw_sol_to_backup(ctx)
+    }
+
     pub fn update_authority(ctx: Context<UpdateAuthority>) -> Result<()> {
         instructions::process_update_authority(ctx)
     }
@@ -74,5 +78,12 @@ pub mod testudo {
         mint: custom_accounts::legate::TestudoTokenWhitelist,
     ) -> Result<()> {
         instructions::process_add_mint_to_testudo_token_whitelist(ctx, mint)
+    }
+
+    pub fn update_back_up_account(
+        ctx: Context<UpdateBackUpAccount>,
+        backup_account: Pubkey,
+    ) -> Result<()> {
+        instructions::process_update_back_up_account(ctx, backup_account)
     }
 }

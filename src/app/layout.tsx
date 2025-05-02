@@ -1,8 +1,10 @@
 import "./globals.css";
-import { ClusterProvider } from "@/components/cluster/cluster-data-access";
-import { SolanaProvider } from "@/components/solana/solana-provider";
-import { UiLayout } from "@/components/ui/ui-layout";
+import { ClusterProvider } from "@/app/components/cluster/cluster-data-access";
+import { SolanaProvider } from "@/app/components/solana/solana-provider";
 import { ReactQueryProvider } from "./react-query-provider";
+import { Header } from "@/app/components/Header";
+import { Footer } from "@/app/components/Footer";
+import { charisSIL } from "@/app/fonts";
 
 export const metadata = {
 	title: "Testudo",
@@ -22,15 +24,19 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
-			<body>
+			<ClusterProvider>
 				<ReactQueryProvider>
-					<ClusterProvider>
-						<SolanaProvider>
-							<UiLayout links={links}>{children}</UiLayout>
-						</SolanaProvider>
-					</ClusterProvider>
+					<SolanaProvider>
+						<body className={`${charisSIL.className} bg-[#0c1221] text-gray-200 min-h-screen`}>
+							<div className="flex flex-col min-h-screen">
+								<Header />
+								<main className="flex-grow">{children}</main>
+								<Footer />
+							</div>
+						</body>
+					</SolanaProvider>
 				</ReactQueryProvider>
-			</body>
+			</ClusterProvider>
 		</html>
 	);
 }

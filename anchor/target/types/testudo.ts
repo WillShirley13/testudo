@@ -106,6 +106,7 @@ export type Testudo = {
         },
         {
           "name": "centurion",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -154,10 +155,6 @@ export type Testudo = {
         {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": []
@@ -648,6 +645,65 @@ export type Testudo = {
       "args": []
     },
     {
+      "name": "updateBackUpAccount",
+      "discriminator": [
+        238,
+        120,
+        102,
+        92,
+        157,
+        240,
+        77,
+        118
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "backupAccount",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "updateMaxTestudos",
       "discriminator": [
         183,
@@ -809,6 +865,68 @@ export type Testudo = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "withdrawSolToBackup",
+      "discriminator": [
+        254,
+        230,
+        17,
+        116,
+        161,
+        54,
+        93,
+        145
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "backupAccount",
+          "writable": true
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "withdrawSpl",
@@ -1151,7 +1269,7 @@ export type Testudo = {
     {
       "code": 6004,
       "name": "unsupportedTokenMint",
-      "msg": "Unsupported token mint"
+      "msg": "Unsupported token mint. Legate must whitelist the token mint before Testudo creation"
     },
     {
       "code": 6005,

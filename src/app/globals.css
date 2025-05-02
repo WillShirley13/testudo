@@ -1,37 +1,91 @@
-@import 'tailwindcss';
-@config '../../tailwind.config.ts';
-@plugin "daisyui";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
+/* Base styles */
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
+	/* Custom styles for the app */
+	html,
+	body {
+		min-height: 100vh;
+		background-color: #0c1221;
+		color: #e5e7eb;
+	}
+
+	/* Better background for dark mode */
+	body::before {
+		content: "";
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: radial-gradient(
+				circle at top right,
+				rgba(30, 41, 59, 0.2),
+				transparent 60%
+			),
+			radial-gradient(
+				circle at bottom left,
+				rgba(23, 30, 46, 0.3),
+				transparent 50%
+			);
+		pointer-events: none;
+		z-index: -1;
+	}
 }
 
-html,
-body {
-  height: 100%;
+/* Components layer for reusable patterns */
+@layer components {
+	/* Container for content sections */
+	.content-container {
+		width: 90%;
+		max-width: 1400px;
+		margin: 0 auto;
+	}
+
+	@media (max-width: 768px) {
+		.content-container {
+			width: 95%;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.max-w-\[90\%\] {
+			max-width: 95%;
+		}
+	}
 }
 
-.wallet-adapter-button-trigger {
-  background: rgb(100, 26, 230) !important;
-  border-radius: 8px !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
+/* Utilities layer for single-purpose classes */
+@layer utilities {
+	/* Gold accent line for section divisions */
+	.section-divider {
+		height: 1px;
+		width: 100%;
+		background: linear-gradient(
+			to right,
+			rgba(217, 119, 6, 0.05),
+			rgba(245, 158, 11, 0.3),
+			rgba(217, 119, 6, 0.05)
+		);
+	}
+
+	/* Smooth transitions between sections */
+	section {
+		position: relative;
+		width: 100%;
+	}
+
+	/* Add this class to hide scrollbars while keeping functionality */
+	.scrollbar-hide {
+		-ms-overflow-style: none;  /* IE and Edge */
+		scrollbar-width: none;  /* Firefox */
+	}
+
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;  /* Chrome, Safari and Opera */
+	}
 }
-.wallet-adapter-dropdown-list,
-.wallet-adapter-button {
-  font-family: inherit !important;
-}
+
+

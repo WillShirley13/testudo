@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Ignore all errors regarding the Anchor program 'accounts' methods. e.g. const tx = await testudoProgram.methods
+					.createTestudo()
+					.accounts({
+						authority: provider.wallet.publicKey,
+						mint: mintPubkey,
+						tokenProgram: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+					})
+                    .signers([])
+					.rpc(); //ignore any errors relating to these methods.

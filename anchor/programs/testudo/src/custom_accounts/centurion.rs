@@ -17,7 +17,7 @@ pub struct Centurion {
     pub testudos: Vec<TestudoData>, // List of testudo account data
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Debug)]
 pub struct TestudoData {
     pub token_mint: Pubkey,
     pub testudo_pubkey: Pubkey,
