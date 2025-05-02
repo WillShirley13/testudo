@@ -121,22 +121,22 @@ export function UpdateBackupOwnerModal({
 
 	return (
 		<div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-2">
-			<div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl border border-amber-500/30 w-full max-w-md max-h-[95vh] overflow-y-auto">
-				<div className="p-3 sm:p-4">
+			<div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl border border-amber-500/30 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
+				<div className="p-5 sm:p-6">
 					<h3
-						className={`${charisSIL.className} text-lg font-semibold text-amber-400 mb-2 sm:mb-3`}
+						className={`${charisSIL.className} text-xl font-semibold text-amber-400 mb-3 sm:mb-4`}
 					>
 						Update Backup Owner
 					</h3>
 
-					<form className="space-y-2 sm:space-y-3" onSubmit={handleSubmit}>
+					<form className="space-y-3 sm:space-y-4" onSubmit={handleSubmit}>
 						<div>
-							<label className="block text-sm font-medium text-gray-300 mb-1">
+							<label className="block text-sm font-medium text-gray-300 mb-2">
 								New Backup Public Key
 							</label>
 							<input
 								type="text"
-								className="w-full p-2 bg-gray-800/60 rounded border border-gray-700 text-white focus:border-amber-500 focus:ring focus:ring-amber-500/20 focus:outline-none text-sm"
+								className="w-full p-3 bg-gray-800/60 rounded border border-gray-700 text-white focus:border-amber-500 focus:ring focus:ring-amber-500/20 focus:outline-none text-sm"
 								value={backupPubkey}
 								onChange={(e) =>
 									setBackupPubkey(e.target.value)
@@ -147,31 +147,31 @@ export function UpdateBackupOwnerModal({
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium text-gray-300 mb-1">
+							<label className="block text-sm font-medium text-gray-300 mb-2">
 								Your Password Phrase
 							</label>
 							<PasswordPhraseInput 
 								words={passwordWords}
 								onChange={setPasswordWords}
 								maxWords={6}
-								className="mb-1"
+								className="mb-2"
 							/>
-							<p className="text-xs text-gray-500 mt-0.5">
+							<p className="text-xs text-gray-500 mt-1">
 								Required to authorize this change
 							</p>
 						</div>
 
 						{error && (
-							<div className="p-2 bg-red-900/30 border border-red-500/50 rounded-md text-red-300 text-xs">
+							<div className="p-3 bg-red-900/30 border border-red-500/50 rounded-md text-red-300 text-sm">
 								{error}
 							</div>
 						)}
 
-						<div className="flex space-x-2 sm:space-x-3 pt-2">
+						<div className="flex space-x-3 sm:space-x-4 pt-3">
 							<button
 								type="button"
 								onClick={onClose}
-								className="flex-1 py-2 px-2 sm:px-3 bg-gray-700 hover:bg-gray-600 rounded-md text-white transition-colors duration-200 text-sm"
+								className="flex-1 py-3 px-3 sm:px-4 bg-gray-700 hover:bg-gray-600 rounded-md text-white transition-colors duration-200 text-sm"
 								disabled={isUpdating}
 							>
 								Cancel
@@ -181,7 +181,7 @@ export function UpdateBackupOwnerModal({
 								disabled={
 									!backupPubkey || !validatePasswordWords(passwordWords) || isUpdating
 								}
-								className={`flex-1 py-2 px-2 sm:px-3 rounded-md text-black font-medium transition-colors duration-200 text-sm ${
+								className={`flex-1 py-3 px-3 sm:px-4 rounded-md text-black font-medium transition-colors duration-200 text-sm ${
 									backupPubkey && validatePasswordWords(passwordWords) && !isUpdating
 										? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
 										: "bg-gray-600 cursor-not-allowed"

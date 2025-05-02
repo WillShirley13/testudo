@@ -40,42 +40,47 @@ export function CenturionCard({
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.5 }}
-			className="bg-gray-900/60 backdrop-blur-md rounded-lg overflow-hidden shadow-lg border border-amber-500/20 mb-8"
+			className="bg-gradient-to-b from-gray-900/80 to-gray-950/90 backdrop-blur-md rounded-xl overflow-hidden shadow-xl border border-amber-500/20 mb-8 max-w-3xl mx-auto"
 		>
-			<div className="p-6">
+			<div className="p-8">
 				<h2
-					className={`${charisSIL.className} text-2xl font-semibold text-amber-400 mb-4`}
+					className={`${charisSIL.className} text-3xl font-semibold text-amber-400 mb-6 text-center`}
 				>
 					Centurion Information
 				</h2>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div className="p-3 bg-gray-800/40 rounded-md border border-gray-700/50">
-						<div className="text-sm text-gray-400">Public Key</div>
+				<div className="flex flex-col space-y-4">
+					{/* Public Key */}
+					<div className="p-4 bg-gray-800/40 rounded-lg border border-gray-700/50 hover:border-amber-500/30 transition-colors">
+						<div className="text-sm text-amber-300 font-medium mb-1">Public Key</div>
 						<div className="text-white font-mono text-sm break-all">
 							{centurionPDA.toString()}
 						</div>
 					</div>
 
-					<div className="p-3 bg-gray-800/40 rounded-md border border-gray-700/50">
-						<div className="text-sm text-gray-400">Created</div>
-						<div className="text-white">
-							{formatTimestamp(centurionData?.createdAt)}
+					{/* Timestamps Section */}
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						{/* Created */}
+						<div className="p-4 bg-gray-800/40 rounded-lg border border-gray-700/50 hover:border-amber-500/30 transition-colors">
+							<div className="text-sm text-amber-300 font-medium mb-1">Created</div>
+							<div className="text-white">
+								{formatTimestamp(centurionData?.createdAt)}
+							</div>
+						</div>
+
+						{/* Last Accessed */}
+						<div className="p-4 bg-gray-800/40 rounded-lg border border-gray-700/50 hover:border-amber-500/30 transition-colors">
+							<div className="text-sm text-amber-300 font-medium mb-1">Last Accessed</div>
+							<div className="text-white">
+								{formatTimestamp(centurionData?.lastAccessed)}
+							</div>
 						</div>
 					</div>
 
-					<div className="p-3 bg-gray-800/40 rounded-md border border-gray-700/50">
-						<div className="text-sm text-gray-400">
-							Last Accessed
-						</div>
-						<div className="text-white">
-							{formatTimestamp(centurionData?.lastAccessed)}
-						</div>
-					</div>
-
-					<div className="p-3 bg-gray-800/40 rounded-md border border-gray-700/50">
-						<div className="text-sm text-gray-400">SOL Balance</div>
-						<div className="text-white font-medium flex items-center">
+					{/* SOL Balance */}
+					<div className="p-4 bg-gray-800/40 rounded-lg border border-gray-700/50 hover:border-amber-500/30 transition-colors">
+						<div className="text-sm text-amber-300 font-medium mb-1">SOL Balance</div>
+						<div className="text-white font-medium flex items-center text-lg">
 							<span>
 								{formatBalance(centurionData?.lamportBalance)}{" "}
 								SOL
@@ -83,28 +88,28 @@ export function CenturionCard({
 						</div>
 					</div>
 
-					<div className="p-3 bg-gray-800/40 rounded-md border border-gray-700/50">
-						<div className="text-sm text-gray-400">
-							Password Public Key
-						</div>
+					{/* Password Public Key */}
+					<div className="p-4 bg-gray-800/40 rounded-lg border border-gray-700/50 hover:border-amber-500/30 transition-colors">
+						<div className="text-sm text-amber-300 font-medium mb-1">Password Public Key</div>
 						<div className="text-white font-mono text-sm break-all">
 							{centurionData?.pubkeyToPassword?.toString()}
 						</div>
 					</div>
 
-					<div className="p-3 bg-gray-800/40 rounded-md border border-gray-700/50">
-						<div className="text-sm text-gray-400 flex justify-between items-center">
-							<span>Optio (backup account)</span>
+					{/* Optio (backup account) */}
+					<div className="p-4 bg-gray-800/40 rounded-lg border border-gray-700/50 hover:border-amber-500/30 transition-colors">
+						<div className="flex justify-between items-center mb-1">
+							<div className="text-sm text-amber-300 font-medium">Optio (backup account)</div>
 							<div className="flex space-x-2">
 								<button 
 									onClick={() => setShowUpdateBackupModal(true)}
-									className="text-xs px-2 py-1 bg-amber-600/30 hover:bg-amber-600/50 rounded text-amber-400 transition-colors"
+									className="text-xs px-3 py-1.5 bg-amber-600/30 hover:bg-amber-600/50 rounded-md text-amber-400 transition-colors"
 								>
 									Reassign
 								</button>
 								<button 
 									onClick={() => centurionData?.backupOwner && setShowWithdrawToBackupModal(true)}
-									className={`text-xs px-2 py-1 rounded transition-colors ${
+									className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
 										centurionData?.backupOwner 
 											? "bg-red-600/30 hover:bg-red-600/50 text-red-400 cursor-pointer" 
 											: "bg-gray-600/30 text-gray-400 cursor-not-allowed"
@@ -113,7 +118,7 @@ export function CenturionCard({
 										? "Emergency withdrawal to backup account" 
 										: "Assign a backup account first to enable emergency withdrawals"}
 								>
-									Emergency
+									Withdraw
 								</button>
 							</div>
 						</div>

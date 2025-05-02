@@ -89,6 +89,22 @@ export function Footer() {
 									Documentation
 								</Link>
 							</li>
+                            <li>
+								<Link
+									href="https://faucet.circle.com/"
+									className="text-gray-300 hover:text-amber-300 transition-colors duration-200 text-sm"
+								>
+									Devnet USDC Faucet
+								</Link>
+							</li>
+                            <li>
+								<Link
+									href="https://faucet.solana.com/"
+									className="text-gray-300 hover:text-amber-300 transition-colors duration-200 text-sm"
+								>
+									Devnet SOL Faucet
+								</Link>
+							</li>
 						</ul>
 					</div>
 

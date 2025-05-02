@@ -293,20 +293,20 @@ export function WithdrawToBackupModal({
 
 	return (
 		<div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-3">
-			<div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl border border-red-500/20 w-full max-w-md">
+			<div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl border border-red-500/20 w-full max-w-2xl">
 				{/* Compact header */}
-				<div className="px-3 py-2 border-b border-red-500/20 bg-red-900/20 flex items-center justify-between">
+				<div className="px-5 py-3 border-b border-red-500/20 bg-red-900/20 flex items-center justify-between">
 					<div>
-						<h3 className={`${charisSIL.className} text-sm font-semibold text-red-400`}>
+						<h3 className={`${charisSIL.className} text-lg font-semibold text-red-400`}>
 							⚠️ Emergency Withdrawal
 						</h3>
-						<p className="text-xs text-red-300/80 mt-0.5">
+						<p className="text-sm text-red-300/80 mt-1">
 							Transfer funds to backup account
 						</p>
 					</div>
 					<button 
 						onClick={onClose} 
-						className="text-gray-400 hover:text-white p-1"
+						className="text-gray-400 hover:text-white p-1.5"
 						type="button"
 						disabled={isWithdrawing}
 					>
@@ -315,42 +315,42 @@ export function WithdrawToBackupModal({
 				</div>
 
 				{/* Main content - make it scrollable with fixed height */}
-				<div className="p-3 max-h-[60vh] overflow-y-auto">
+				<div className="p-5 max-h-[60vh] overflow-y-auto">
 					{!hasBackupOwner ? (
-						<div className="p-2 bg-gray-800/60 rounded text-amber-300 text-xs">
+						<div className="p-3 bg-gray-800/60 rounded text-amber-300 text-sm">
 							No backup account assigned. Please assign a backup account first.
 						</div>
 					) : !hasTokensWithBalance ? (
-						<div className="p-2 bg-gray-800/60 rounded text-amber-300 text-xs">
+						<div className="p-3 bg-gray-800/60 rounded text-amber-300 text-sm">
 							No tokens to withdraw. Your accounts are empty.
 						</div>
 					) : (
-						<div className="space-y-3">
+						<div className="space-y-4">
 							{/* Emergency info box */}
-							<div className="p-2 bg-gray-800/40 border border-red-500/20 rounded text-xs">
-								<p className="text-red-300 mb-1.5">
+							<div className="p-3 bg-gray-800/40 border border-red-500/20 rounded text-sm">
+								<p className="text-red-300 mb-2">
 									This is an emergency feature for if your wallet has been compromised.
 								</p>
-								<p className="text-red-300/80 text-xs">
+								<p className="text-red-300/80 text-sm">
 									All funds will be transferred to:
-									<span className="font-mono block mt-0.5 text-red-300 text-xs break-all">{centurionData?.backupOwner?.toString() || 'None assigned'}</span>
+									<span className="font-mono block mt-1 text-red-300 text-sm break-all">{centurionData?.backupOwner?.toString() || 'None assigned'}</span>
 								</p>
 							</div>
 
 							{/* Password section */}
 							<div>
-								<label className="block text-gray-300 text-xs font-medium">Your Password Phrase</label>
-								<p className="text-gray-400 text-xs mt-0.5 mb-1.5">
+								<label className="block text-gray-300 text-sm font-medium mb-2">Your Password Phrase</label>
+								<p className="text-gray-400 text-sm mt-1 mb-3">
 									Enter your 4-6 word phrase. Only fill what applies to you.
 								</p>
 								
 								{/* Two rows of 3 inputs for a more compact layout */}
-								<div className="grid grid-cols-3 gap-1.5 mb-1.5">
+								<div className="grid grid-cols-3 gap-2 mb-2">
 									{[0, 1, 2].map(index => (
 										<input
 											key={index}
 											type="text"
-											className="py-1.5 px-2 bg-gray-800/60 rounded border border-gray-700 text-white text-xs focus:border-amber-500 focus:outline-none"
+											className="py-2 px-3 bg-gray-800/60 rounded border border-gray-700 text-white text-sm focus:border-amber-500 focus:outline-none"
 											value={passwordWords[index] || ""}
 											onChange={(e) => {
 												const newWords = [...passwordWords];
@@ -361,12 +361,12 @@ export function WithdrawToBackupModal({
 										/>
 									))}
 								</div>
-								<div className="grid grid-cols-3 gap-1.5">
+								<div className="grid grid-cols-3 gap-2">
 									{[3, 4, 5].map(index => (
 										<input
 											key={index}
 											type="text"
-											className="py-1.5 px-2 bg-gray-800/60 rounded border border-gray-700 text-white text-xs focus:border-amber-500 focus:outline-none"
+											className="py-2 px-3 bg-gray-800/60 rounded border border-gray-700 text-white text-sm focus:border-amber-500 focus:outline-none"
 											value={passwordWords[index] || ""}
 											onChange={(e) => {
 												const newWords = [...passwordWords];
@@ -377,20 +377,20 @@ export function WithdrawToBackupModal({
 										/>
 									))}
 								</div>
-								<p className="text-xs text-gray-500 mt-1">
+								<p className="text-sm text-gray-500 mt-2">
 									Required to authorize this emergency transfer
 								</p>
 							</div>
 
 							{/* Error and progress messages */}
 							{error && (
-								<div className="p-1.5 bg-red-900/30 border border-red-500/50 rounded text-red-300 text-xs">
+								<div className="p-3 bg-red-900/30 border border-red-500/50 rounded text-red-300 text-sm">
 									{error}
 								</div>
 							)}
 
 							{withdrawalProgress && (
-								<div className="p-1.5 bg-gray-800/60 border border-gray-700/50 rounded text-amber-300 text-xs max-h-24 overflow-y-auto">
+								<div className="p-3 bg-gray-800/60 border border-gray-700/50 rounded text-amber-300 text-sm max-h-32 overflow-y-auto">
 									{withdrawalProgress}
 								</div>
 							)}
@@ -399,12 +399,12 @@ export function WithdrawToBackupModal({
 				</div>
 
 				{/* Footer with action buttons */}
-				<div className="px-3 py-2 border-t border-gray-800 bg-gray-900/90">
-					<div className="flex space-x-2">
+				<div className="px-5 py-4 border-t border-gray-800 bg-gray-900/90">
+					<div className="flex space-x-3">
 						<button
 							type="button"
 							onClick={onClose}
-							className="flex-1 py-1.5 px-3 bg-gray-700 hover:bg-gray-600 rounded text-xs text-white transition-colors"
+							className="flex-1 py-2.5 px-4 bg-gray-700 hover:bg-gray-600 rounded text-sm text-white transition-colors"
 							disabled={isWithdrawing}
 						>
 							Cancel
@@ -415,7 +415,7 @@ export function WithdrawToBackupModal({
 							disabled={
 								!validatePasswordWords(passwordWords) || isWithdrawing || !hasBackupOwner || !hasTokensWithBalance
 							}
-							className={`flex-1 py-1.5 px-3 rounded text-xs text-white font-medium transition-colors ${
+							className={`flex-1 py-2.5 px-4 rounded text-sm text-white font-medium transition-colors ${
 								validatePasswordWords(passwordWords) && !isWithdrawing && hasBackupOwner && hasTokensWithBalance
 									? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
 									: "bg-gray-600 cursor-not-allowed"
