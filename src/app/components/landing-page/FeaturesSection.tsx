@@ -1,19 +1,15 @@
 "use client";
 
 import React from "react";
-import { Baskervville } from "next/font/google";
+import { charisSIL } from "@/app/fonts";
 import { Feature } from "./Feature";
 
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
 
 export function FeaturesSection() {
 	const features = [
 		{
 			title: "Dual-Signature Security",
-			description: "All withdrawals require two signatures: your wallet and a special key derived from your memorable 6-word phrase.",
+			description: "All withdrawals require two signatures: your wallet and a special key derived from your memorable passphrase.",
 			icon: (
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -33,7 +29,7 @@ export function FeaturesSection() {
 		},
 		{
 			title: "Memorable Security",
-			description: "No need for hardware keys - just remember your 6-word phrase for a perfect balance of security and usability.",
+			description: "Your testudos are designed to be accessible when YOU need them, but impenetrable when you don't. Secured by a memorable passphrase.",
 			icon: (
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -53,7 +49,7 @@ export function FeaturesSection() {
 		},
 		{
 			title: "Optional Recovery",
-			description: "Configure a backup owner address (Optio) for account recovery, if your primary wallet is compromised.",
+			description: "Assign a backup wallet (Optio) for asset recovery, if your primary wallet is compromised.",
 			icon: (
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -78,7 +74,7 @@ export function FeaturesSection() {
 			<div className="content-container">
 				<div className="text-center mb-16">
 					<h2
-						className={`${baskervville.className} text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-500 mb-4`}
+						className={`${charisSIL.className} text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-500 mb-4`}
 					>
 						The Shield for Your Digital Assets
 					</h2>

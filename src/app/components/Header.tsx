@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Baskervville } from "next/font/google";
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { charisSIL } from "@/app/fonts";
 
 // Import wallet styles
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -20,11 +20,6 @@ const NetworkIndicatorDynamic = dynamic(
 	() => import("./solana/NetworkIndicator").then(mod => mod.NetworkIndicator),
 	{ ssr: false }
 );
-
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
 
 export function Header() {
 	const pathname = usePathname();
@@ -81,7 +76,7 @@ export function Header() {
 					</div>
 					<div className="h-10 md:h-16 ml-3 flex flex-col justify-center">
 						<span
-							className={`${baskervville.className} text-2xl md:text-3xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 group-hover:from-amber-300 group-hover:via-yellow-200 group-hover:to-amber-400 transition-all duration-300 relative`}
+							className={`${charisSIL.className} text-2xl md:text-3xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 group-hover:from-amber-300 group-hover:via-yellow-200 group-hover:to-amber-400 transition-all duration-300 relative`}
 							style={{ 
 								letterSpacing: '0.125em',
 								textShadow: '0 2px 4px rgba(0,0,0,0.3)'
@@ -90,7 +85,7 @@ export function Header() {
 							TESTUDO
 						</span>
 						<span className="text-[11px] text-amber-500/60 tracking-widest uppercase mt-0.5 hidden sm:block self-center">
-							- Secure Wallet System -
+							- Secure Vault System -
 						</span>
 					</div>
 				</Link>

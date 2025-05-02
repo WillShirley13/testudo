@@ -31,14 +31,6 @@ export const findLegatePDA = (programId: PublicKey): [PublicKey, number] => {
 	return PublicKey.findProgramAddressSync([Buffer.from("legate")], programId);
 };
 
-// Generate a keypair from a mnemonic/seed phrase
-export const generateKeypairFromSeed = (phrase: string): Keypair => {
-	// For simplicity, we're just using the phrase directly to derive a keypair
-	// In a production app, you would want to use proper BIP39 derivation
-	const seed = Buffer.from(phrase);
-	return Keypair.fromSeed(seed.slice(0, 32));
-};
-
 // Check if a Centurion account exists
 export const checkCenturionExists = async (
 	program: Program<Testudo>,

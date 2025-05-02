@@ -36,7 +36,7 @@ describe("Testudo Tests", () => {
 	
 	// Setup keyManager and related variables
 	let keyManager = new SecureKeypairGenerator();
-	let phrase = keyManager.generateRandomPhrase();
+	let phrase = keyManager.generateRandomPhrase(4);
 	let { keypair: passwordKeypair } = keyManager.deriveKeypairFromWords(phrase);
 	let { keypair: backupOwnerKeypair } = keyManager.deriveKeypairFromWords(phrase);
 
@@ -1240,6 +1240,149 @@ describe("Testudo Tests", () => {
                 expect.fail("Should have thrown an error");
             } catch (error) {
                 console.log(`Error successfully thrown when deleting with wrong password: ${error}`);
+            }
+        });
+
+        it("Successfully withdraw SOL to backup account", async () => {
+            console.log("\n==== TEST: Withdraw SOL to Backup - Transfer Remaining SOL to Backup Owner Address ====");
+            
+            let [centurionPDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("centurion"), testUser.publicKey.toBuffer()],
+                program.programId
+            );
+            
+            // First, deposit some SOL to ensure we have funds
+            const depositAmount = 1 * web3.LAMPORTS_PER_SOL; // 1 SOL
+            let depositSolTx = await program.methods
+                .depositSol(new anchor.BN(depositAmount))
+                .accounts({
+                    authority: testUser.publicKey,
+                })
+                .signers([testUser])
+                .rpc();
+                
+            await connection.confirmTransaction(depositSolTx);
+            
+            // Get centurion data and balances before withdrawal
+            const centurionBefore = await program.account.centurion.fetch(centurionPDA);
+            const centurionBalanceBefore = await connection.getBalance(centurionPDA);
+            const backupOwnerBalanceBefore = await connection.getBalance(backupOwnerKeypair.publicKey);
+
+            console.log(`Centurion rent required: ${await connection.getMinimumBalanceForRentExemption((await connection.getAccountInfo(centurionPDA)).data.length) / web3.LAMPORTS_PER_SOL} SOL`);
+            
+            console.log(`Centurion SOL balance BEFORE withdrawal: ${centurionBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Backup owner SOL balance BEFORE withdrawal: ${backupOwnerBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Centurion lamport_balance BEFORE withdrawal: ${centurionBefore.lamportBalance.toNumber() / web3.LAMPORTS_PER_SOL} SOL`);
+            
+            // Now withdraw all SOL to backup account
+            const withdrawToBackupTx = await program.methods
+                .withdrawSolToBackup()
+                .accounts({
+                    authority: testUser.publicKey,
+                    validSignerOfPassword: passwordKeypair.publicKey,
+                    centurion: centurionPDA,
+                    backupAccount: backupOwnerKeypair.publicKey,
+                    systemProgram: anchor.web3.SystemProgram.programId,
+                })
+                .signers([testUser, passwordKeypair])
+                .rpc();
+                
+            await connection.confirmTransaction(withdrawToBackupTx);
+            console.log(`Withdrew SOL to backup account: ${withdrawToBackupTx}`);
+            
+            // Get centurion data and balances after withdrawal
+            const centurionAfter = await program.account.centurion.fetch(centurionPDA);
+            const centurionBalanceAfter = await connection.getBalance(centurionPDA);
+            const backupOwnerBalanceAfter = await connection.getBalance(backupOwnerKeypair.publicKey);
+            
+            console.log(`Centurion SOL balance AFTER withdrawal: ${centurionBalanceAfter / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Backup owner SOL balance AFTER withdrawal: ${backupOwnerBalanceAfter / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Centurion lamport_balance AFTER withdrawal: ${centurionAfter.lamportBalance.toNumber() / web3.LAMPORTS_PER_SOL} SOL`);
+            
+            // Verify the SOL was transferred to backup account
+            expect(centurionAfter.lamportBalance.toNumber(), "Centurion lamport_balance should be 0").to.equal(0);
+            expect(backupOwnerBalanceAfter, "Backup owner balance should increase").to.be.greaterThan(backupOwnerBalanceBefore);
+            expect(centurionBalanceAfter, "Centurion balance should maintain enough for rent exemption").to.be.greaterThan(0);
+            
+            // Verify the last accessed timestamp was updated
+            expect(centurionAfter.lastAccessed.toNumber(), "Last accessed should be updated").to.be.greaterThanOrEqual(centurionBefore.lastAccessed.toNumber());
+        });
+
+        it("Should fail when withdrawing SOL to backup with wrong password signer", async () => {
+            console.log("\n==== TEST: Withdraw SOL to Backup with Wrong Password - Should Fail with Invalid Password ====");
+            
+            // Create wrong password keypair
+            const wrongPasswordKeypair = anchor.web3.Keypair.generate();
+            console.log(`Created wrong password keypair: ${wrongPasswordKeypair.publicKey.toBase58()}`);
+            
+            // Get centurion PDA
+            let [centurionPDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("centurion"), testUser.publicKey.toBuffer()],
+                program.programId
+            );
+            
+            // Deposit some SOL first to ensure the test is valid
+            const depositAmount = 0.5 * web3.LAMPORTS_PER_SOL; // 0.5 SOL
+            let depositSolTx = await program.methods
+                .depositSol(new anchor.BN(depositAmount))
+                .accounts({
+                    authority: testUser.publicKey,
+                })
+                .signers([testUser])
+                .rpc();
+                
+            await connection.confirmTransaction(depositSolTx);
+            
+            // Try to withdraw with wrong password
+            try {
+                await program.methods
+                    .withdrawSolToBackup()
+                    .accounts({
+                        authority: testUser.publicKey,
+                        validSignerOfPassword: wrongPasswordKeypair.publicKey, // Wrong password
+                        centurion: centurionPDA,
+                        backupAccount: backupOwnerKeypair.publicKey,
+                        systemProgram: anchor.web3.SystemProgram.programId,
+                    })
+                    .signers([testUser, wrongPasswordKeypair])
+                    .rpc();
+                    
+                expect.fail("Should have thrown an error");
+            } catch (error) {
+                console.log(`Error successfully thrown when withdrawing SOL to backup with wrong password: ${error}`);
+            }
+        });
+
+        it("Should fail when withdrawing SOL to invalid backup owner", async () => {
+            console.log("\n==== TEST: Withdraw SOL to Invalid Backup - Should Fail with Wrong Backup Address ====");
+            
+            // Create fake backup owner
+            const fakeBackupOwner = anchor.web3.Keypair.generate();
+            console.log(`Created fake backup owner: ${fakeBackupOwner.publicKey.toBase58()}`);
+            
+            // Get centurion PDA
+            let [centurionPDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("centurion"), testUser.publicKey.toBuffer()],
+                program.programId
+            );
+            
+            // Try to withdraw with wrong backup owner
+            try {
+                await program.methods
+                    .withdrawSolToBackup()
+                    .accounts({
+                        authority: testUser.publicKey,
+                        validSignerOfPassword: passwordKeypair.publicKey,
+                        centurion: centurionPDA,
+                        backupAccount: fakeBackupOwner.publicKey, // Wrong backup owner
+                        systemProgram: anchor.web3.SystemProgram.programId,
+                    })
+                    .signers([testUser, passwordKeypair])
+                    .rpc();
+                    
+                expect.fail("Should have thrown an error");
+            } catch (error) {
+                console.log(`Error successfully thrown when withdrawing SOL to invalid backup owner: ${error}`);
             }
         });
     });

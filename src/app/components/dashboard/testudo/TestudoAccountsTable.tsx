@@ -2,17 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Baskervville } from "next/font/google";
+import { charisSIL } from "@/app/fonts";
 import { formatBalance, shortenAddress, findCenturionPDA, findLegatePDA } from "@/app/utils/testudo-utils";
 import { motion } from "framer-motion";
 import { TestudoData, TokenData, CenturionData, LegateData, TokenWhitelistData } from "@/app/types/testudo";
 import { PublicKey } from "@solana/web3.js";
-import { useTestudoProgram } from "@/app/components/solana/solana-provider";
+import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
+import { Wallet } from "@coral-xyz/anchor";
 
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
 
 // Define a default SOL token to ensure it's always available
 const DEFAULT_SOL_TOKEN: TokenData = {
@@ -43,6 +40,7 @@ export function TestudoAccountsTable({
 }: TestudoAccountsTableProps) {
 	const testudoProgram = useTestudoProgram();
 	const [legateData, setLegateData] = useState<LegateData | null>(null);
+    const [testudoTokenBalances, setTestudoTokenBalances] = useState<{ [key: string]: number }>({});
 	const [whitelistedTokens, setWhitelistedTokens] = useState<TokenData[]>([DEFAULT_SOL_TOKEN]);
 	const [isLoading, setIsLoading] = useState(true);
 	
@@ -91,6 +89,33 @@ export function TestudoAccountsTable({
 		fetchLegateData();
 	}, [programId, testudoProgram]);
 	
+	// Fetch token balances for all testudo accounts
+	useEffect(() => {
+		const fetchTokenBalances = async () => {
+			if (!testudos || testudos.length === 0) return;
+			
+			try {
+				const balances: { [key: string]: number } = {};
+				
+				for (const testudo of testudos) {
+					try {
+						const response = await testudoProgram.provider.connection.getTokenAccountBalance(testudo.testudoPubkey);
+						balances[testudo.testudoPubkey.toString()] = Number(response.value.amount);
+					} catch (error) {
+						console.error(`Error fetching balance for testudo ${testudo.testudoPubkey.toString()}:`, error);
+						balances[testudo.testudoPubkey.toString()] = 0;
+					}
+				}
+				
+				setTestudoTokenBalances(balances);
+			} catch (error) {
+				console.error("Error fetching token balances:", error);
+			}
+		};
+		
+		fetchTokenBalances();
+	}, [testudos, testudoProgram]);
+	
 	const solToken = DEFAULT_SOL_TOKEN;
 
 	return (
@@ -102,7 +127,7 @@ export function TestudoAccountsTable({
 		>
 			<div className="flex justify-between items-center p-6 border-b border-gray-800">
 				<h2
-					className={`${baskervville.className} text-2xl font-semibold text-amber-400`}
+					className={`${charisSIL.className} text-2xl font-semibold text-amber-400`}
 				>
 					Testudos
 				</h2>
@@ -257,7 +282,7 @@ export function TestudoAccountsTable({
 											<td className="px-6 py-4 whitespace-nowrap">
 												<div className="text-sm text-white">
 													{formatBalance(
-														testudo.testudoTokenCount,
+														testudoTokenBalances[testudo.testudoPubkey.toString()],
 														tokenDetails.decimals
 													)}{" "}
 													{tokenDetails.symbol}

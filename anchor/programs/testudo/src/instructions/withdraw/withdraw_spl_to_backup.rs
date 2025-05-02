@@ -108,6 +108,7 @@ pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> 
     );
 
     let tokens_in_centurion_ata: u64 = centurion_ata.amount;
+    let token_program: &mut Interface<'_, TokenInterface> = &mut ctx.accounts.token_program;
 
     let cpi_accounts = TransferChecked {
         from: centurion_ata.to_account_info(),
@@ -122,11 +123,8 @@ pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> 
         &[ctx.bumps.centurion],
     ]];
 
-    let cpi_context = CpiContext::new_with_signer(
-        ctx.accounts.system_program.to_account_info(),
-        cpi_accounts,
-        signer_seeds,
-    );
+    let cpi_context =
+        CpiContext::new_with_signer(token_program.to_account_info(), cpi_accounts, signer_seeds);
 
     transfer_checked(
         cpi_context,

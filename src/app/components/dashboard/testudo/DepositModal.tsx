@@ -2,52 +2,131 @@
 
 import React, { useState, useEffect } from "react";
 import { charisSIL } from "@/app/fonts";
-import { TestudoData } from "@/app/types/testudo";
-import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
+import { TestudoData, TokenData } from "@/app/types/testudo";
 import { formatBalance, findCenturionPDA, findLegatePDA } from "@/app/utils/testudo-utils";
-import {
-	PasswordPhraseInput,
-	validatePasswordWords,
-	preparePasswordWords,
-} from "@/app/components/common/PasswordPhraseInput";
+import { PublicKey } from "@solana/web3.js";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { toast } from "react-hot-toast";
 
 
-interface WithdrawModalProps {
+// Define a default SOL token to ensure it's always available
+const DEFAULT_SOL_TOKEN: TokenData = {
+	name: "Solana",
+	symbol: "SOL",
+	mint: "So11111111111111111111111111111111111111112",
+	decimals: 9,
+};
+
+interface DepositModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onSuccess: (updatedCenturionData: any) => void;
-	isWithdrawing: boolean;
-	setIsWithdrawing: (isWithdrawing: boolean) => void;
+	isDepositing: boolean;
+	setIsDepositing: (isDepositing: boolean) => void;
 	testudo: TestudoData | "SOL";
 	tokenDecimals: number;
 	tokenSymbol: string;
+	tokenBalance?: number; // User's wallet balance for the token
 }
 
-export function WithdrawModal({
+export function DepositModal({
 	isOpen,
 	onClose,
 	onSuccess,
-	isWithdrawing,
-	setIsWithdrawing,
+	isDepositing,
+	setIsDepositing,
 	testudo,
 	tokenDecimals,
 	tokenSymbol,
-}: WithdrawModalProps) {
+	tokenBalance = 0,
+}: DepositModalProps) {
+	const { connection } = useConnection();
 	const wallet = useWallet();
 	const { publicKey } = wallet;
 	const provider = useAnchorProvider();
 	const testudoProgram = useTestudoProgram();
-	const [passwordWords, setPasswordWords] = useState<string[]>(
-		Array(6).fill("")
-	);
 	const [amount, setAmount] = useState("");
 	const [error, setError] = useState<string | null>(null);
-	const [solBalance, setSolBalance] = useState<number>(0);
+	const [walletBalance, setWalletBalance] = useState<number>(tokenBalance);
+	const [tokenInfo, setTokenInfo] = useState<TokenData>({
+		name: "Solana",
+		symbol: testudo === "SOL" ? "SOL" : tokenSymbol,
+		mint: "So11111111111111111111111111111111111111112",
+		decimals: 9,
+	});
+
+	// Update tokenInfo when props change
+	useEffect(() => {
+		if (testudo !== "SOL") {
+			setTokenInfo(prev => ({
+				...prev,
+				symbol: tokenSymbol,
+				decimals: tokenDecimals
+			}));
+		}
+	}, [testudo, tokenSymbol, tokenDecimals]);
+
+	// Fetch the user's SOL or SPL token balance and token info
+	useEffect(() => {
+		if (!isOpen || !wallet.publicKey) return;
+
+		const fetchBalanceAndInfo = async () => {
+			try {
+				if (testudo === "SOL") {
+					// Fetch SOL balance
+					const balance = await connection.getBalance(wallet.publicKey!);
+					setWalletBalance(balance);
+				} else {
+					// For SPL tokens, we need to:
+					// 1. Get the token's details (decimals) if needed
+					if (tokenDecimals === 9 && testudo.tokenMint) {
+						try {
+							// Get mint info for decimals
+							const mintInfo = await connection.getParsedAccountInfo(testudo.tokenMint);
+							if (mintInfo.value && 'parsed' in mintInfo.value.data) {
+								const parsedData = mintInfo.value.data.parsed;
+								if (parsedData.info && parsedData.info.decimals) {
+									// Update decimals based on mint info
+									setTokenInfo(prev => ({
+										...prev,
+										decimals: parsedData.info.decimals
+									}));
+								}
+							}
+						} catch (error) {
+							console.error("Error fetching token decimals:", error);
+						}
+					}
+					
+					// 2. Get user's token balance from their ATA
+					try {
+						const ata = await connection.getTokenAccountsByOwner(wallet.publicKey!, {
+							mint: testudo.tokenMint
+						});
+						
+						if (ata.value.length > 0) {
+							const tokenBalance = await connection.getTokenAccountBalance(
+								ata.value[0].pubkey
+							);
+							setWalletBalance(Number(tokenBalance.value.amount));
+						} else {
+							setWalletBalance(0);
+						}
+					} catch (error) {
+						console.error("Error fetching token balance:", error);
+						setWalletBalance(tokenBalance);
+					}
+				}
+			} catch (error) {
+				console.error("Error in fetchBalanceAndInfo:", error);
+				setError("Failed to fetch wallet balance");
+			}
+		};
+
+		fetchBalanceAndInfo();
+	}, [isOpen, connection, wallet.publicKey, testudo, tokenBalance]);
 
 	// Get token info from the Legate account
 	const getTokenInfo = async (tokenMint: PublicKey) => {
@@ -82,46 +161,43 @@ export function WithdrawModal({
 		}
 	};
 
-	// Function to handle actual withdrawal
-	const handleWithdraw = async (withdrawAmount: number, passwordKeypair: Keypair) => {
-		if (!publicKey) return;
+	const handleDeposit = async (depositAmount: number) => {
+		if (!depositAmount || !publicKey) {
+			setError("Please enter a valid amount");
+			return;
+		}
 
 		try {
-			setIsWithdrawing(true);
-            
+			setIsDepositing(true);
+			
 			if (testudo === "SOL") {
-				// Handle SOL withdrawal
-				const amountInLamports = Math.floor(withdrawAmount * Math.pow(10, 9));
+				// Handle SOL deposit - convert amount to lamports
+				const amountInLamports = Math.floor(depositAmount * Math.pow(10, 9));
 				const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
 				
-				// Call withdrawSol instruction with required accounts
+				// Call depositSol instruction with required accounts
 				// Note: Linter errors related to the .accounts() method are expected and should be ignored
 				// according to the project's custom rules.
 				const tx = await testudoProgram.methods
-					.withdrawSol(new anchor.BN(amountInLamports))
+					.depositSol(new anchor.BN(amountInLamports))
 					.accounts({
 						authority: publicKey,
-						validSignerOfPassword: passwordKeypair.publicKey,
 						centurion: centurionPDA,
 						systemProgram: anchor.web3.SystemProgram.programId,
 					})
-					.signers([passwordKeypair])
 					.rpc();
 				
 				await testudoProgram.provider.connection.confirmTransaction(tx);
 				
-				// Refresh Centurion data
+				// Refresh centurion data
 				const updatedCenturionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
-				
-				// Update the SOL balance state
-				setSolBalance(Number(updatedCenturionAccount.lamportBalance));
 				
 				// Call onSuccess with the updated data
 				onSuccess(updatedCenturionAccount);
 				
-				toast.success(`Successfully withdrew ${withdrawAmount} SOL`);
+				toast.success(`Successfully deposited ${depositAmount} SOL`);
 			} else {
-				// Handle SPL token withdrawal
+				// Handle SPL token deposit - get token info first
 				const tokenMint = new PublicKey(testudo.tokenMint);
 				const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
 				
@@ -129,7 +205,7 @@ export function WithdrawModal({
 				const tokenInfo = await getTokenInfo(tokenMint);
 				
 				// Convert amount to token units with decimals
-				const amountWithDecimals = Math.floor(withdrawAmount * Math.pow(10, tokenInfo.decimals));
+				const amountWithDecimals = Math.floor(depositAmount * Math.pow(10, tokenInfo.decimals));
 				
 				// Find authority's ATA
 				const ata = await anchor.utils.token.associatedAddress({
@@ -137,22 +213,20 @@ export function WithdrawModal({
 					owner: publicKey,
 				});
 				
-				// Call withdrawSpl instruction with required accounts
+				// Call depositSpl instruction with required accounts
 				// Note: Linter errors related to the .accounts() method are expected and should be ignored
 				// according to the project's custom rules.
 				const tx = await testudoProgram.methods
-					.withdrawSpl(new anchor.BN(amountWithDecimals))
+					.depositSpl(new anchor.BN(amountWithDecimals))
 					.accounts({
 						authority: publicKey,
 						authorityAta: ata,
-						validSignerOfPassword: passwordKeypair.publicKey,
 						centurion: centurionPDA,
 						testudo: testudo.testudoPubkey,
 						mint: tokenMint,
 						tokenProgram: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
 						systemProgram: anchor.web3.SystemProgram.programId,
 					})
-					.signers([passwordKeypair])
 					.rpc();
 				
 				await testudoProgram.provider.connection.confirmTransaction(tx);
@@ -163,27 +237,18 @@ export function WithdrawModal({
 				// Call onSuccess with the updated data
 				onSuccess(updatedCenturionAccount);
 				
-				toast.success(`Successfully withdrew ${withdrawAmount} ${tokenInfo.symbol}`);
+				toast.success(`Successfully deposited ${depositAmount} ${tokenInfo.symbol}`);
 			}
 			
 			// Clear form and close modal
-			setPasswordWords(Array(6).fill(""));
 			setAmount("");
 			onClose();
 		} catch (error) {
-			console.error("Withdrawal error:", error);
-			
-			// Check for InvalidPasswordSignature error from the on-chain program
-			const errorMessage = String(error);
-			if (errorMessage.includes("InvalidPasswordSignature")) {
-				setError("Invalid password phrase. Please check your words and try again.");
-				toast.error("Invalid password phrase. Please check your words and try again.");
-			} else {
-				toast.error(`Withdrawal failed: ${error instanceof Error ? error.message : String(error)}`);
-				setError(`Failed to process withdrawal: ${error instanceof Error ? error.message : String(error)}`);
-			}
+			console.error("Deposit error:", error);
+			toast.error(`Deposit failed: ${error instanceof Error ? error.message : String(error)}`);
+			setError(`Failed to process deposit: ${error instanceof Error ? error.message : String(error)}`);
 		} finally {
-			setIsWithdrawing(false);
+			setIsDepositing(false);
 		}
 	};
 
@@ -193,88 +258,36 @@ export function WithdrawModal({
 
 		try {
 			// Validate amount
-			const withdrawAmount = parseFloat(amount);
-			if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
+			const depositAmount = parseFloat(amount);
+			if (isNaN(depositAmount) || depositAmount <= 0) {
 				setError("Please enter a valid amount");
 				return;
 			}
 
-			// Check against available balance
-			let maxAmount = 0;
-			if (testudo === "SOL") {
-				// For SOL testudo is actually the Centurion account
-				const [centurionPDA] = findCenturionPDA(publicKey!, testudoProgram.programId);
-				const centurionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
-				maxAmount = Number(centurionAccount.lamportBalance) / Math.pow(10, tokenDecimals);
-			} else {
-				// For SPL token testudo is the Testudo account
-				maxAmount = Number(testudo.testudoTokenCount) / Math.pow(10, tokenDecimals);
-			}
+			// Convert the amount to lamports/raw token amount for comparison
+			const rawAmount = depositAmount * Math.pow(10, tokenDecimals);
 			
-			if (withdrawAmount > maxAmount) {
-				setError(`Amount exceeds balance of ${maxAmount.toFixed(tokenDecimals)} ${tokenSymbol}`);
+			// Check if user has enough balance
+			if (rawAmount > walletBalance) {
+				setError(`Insufficient balance. You have ${formatBalance(walletBalance, tokenDecimals)} ${tokenSymbol}`);
 				return;
 			}
 
-			// Get prepared words (filtered non-empty)
-			const words = preparePasswordWords(passwordWords);
-
-			// Validate words
-			if (!validatePasswordWords(passwordWords)) {
-				setError("Please enter at least 4 words for your password phrase");
-				return;
-			}
-
-			// Validate and derive keypair from mnemonic
-			const secureKeypairGenerator = new SecureKeypairGenerator();
-
-			try {
-				const { keypair } = secureKeypairGenerator.deriveKeypairFromWords(words);
-				await handleWithdraw(withdrawAmount, keypair);
-			} catch (error) {
-				// Check for InvalidPasswordSignature error from the on-chain program
-				const errorMessage = String(error);
-				if (errorMessage.includes("InvalidPasswordSignature")) {
-					setError("Invalid password phrase. Please check your words and try again.");
-				} else if (error instanceof Error) {
-					setError(error.message);
-				} else {
-					setError("Failed to process withdrawal. Please try again.");
-				}
-			}
+			// Call the deposit function
+			await handleDeposit(depositAmount);
 		} catch (error) {
-			console.error("Withdrawal error:", error);
-			setError("Failed to process withdrawal. Please try again.");
+			console.error("Deposit error:", error);
+			setError(`Failed to process deposit: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	};
 
 	// Reset form when closed
 	useEffect(() => {
 		if (!isOpen) {
-			setPasswordWords(Array(6).fill(""));
 			setAmount("");
 			setError(null);
-			setSolBalance(0);
 		}
 	}, [isOpen]);
-
-	// Fetch SOL balance when modal opens and token is SOL
-	useEffect(() => {
-		const fetchSolBalance = async () => {
-			if (testudo === "SOL" && publicKey && isOpen) {
-				try {
-					const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
-					const centurionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
-					setSolBalance(Number(centurionAccount.lamportBalance));
-				} catch (error) {
-					console.error("Error fetching SOL balance:", error);
-					setSolBalance(0);
-				}
-			}
-		};
-
-		fetchSolBalance();
-	}, [testudo, publicKey, isOpen, testudoProgram]);
 
 	if (!isOpen) return null;
 
@@ -285,7 +298,7 @@ export function WithdrawModal({
 					<h3
 						className={`${charisSIL.className} text-lg font-semibold text-amber-400 mb-2 sm:mb-3`}
 					>
-						Withdraw {tokenSymbol}
+						Deposit {testudo === "SOL" ? "SOL" : tokenInfo.symbol}
 					</h3>
 
 					<form
@@ -311,28 +324,12 @@ export function WithdrawModal({
 								</div>
 							</div>
 							<p className="text-xs text-gray-500 mt-0.5">
-								Available:{" "}
+								Available in wallet:{" "}
 								{formatBalance(
-									testudo === "SOL" ? solBalance : Number(testudo.testudoTokenCount),
-									tokenDecimals
+									walletBalance,
+									testudo === "SOL" ? 9 : tokenInfo.decimals
 								)}{" "}
-								{tokenSymbol}
-							</p>
-						</div>
-
-						<div>
-							<label className="block text-sm font-medium text-gray-300 mb-1">
-								Your Password Phrase
-							</label>
-							<PasswordPhraseInput
-								words={passwordWords}
-								onChange={setPasswordWords}
-								maxWords={6}
-								className="mb-1"
-							/>
-							<p className="text-xs text-gray-500 mt-0.5">
-								Enter the password phrase for your Centurion
-								account
+								{testudo === "SOL" ? "SOL" : tokenInfo.symbol}
 							</p>
 						</div>
 
@@ -347,26 +344,20 @@ export function WithdrawModal({
 								type="button"
 								onClick={onClose}
 								className="flex-1 py-2 px-2 sm:px-3 bg-gray-700 hover:bg-gray-600 rounded-md text-white transition-colors duration-200 text-sm"
-								disabled={isWithdrawing}
+								disabled={isDepositing}
 							>
 								Cancel
 							</button>
 							<button
 								type="submit"
-								disabled={
-									!amount ||
-									!validatePasswordWords(passwordWords) ||
-									isWithdrawing
-								}
+								disabled={!amount || isDepositing}
 								className={`flex-1 py-2 px-2 sm:px-3 rounded-md text-black font-medium transition-colors duration-200 text-sm ${
-									amount &&
-									validatePasswordWords(passwordWords) &&
-									!isWithdrawing
+									amount && !isDepositing
 										? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
 										: "bg-gray-600 cursor-not-allowed"
 								}`}
 							>
-								{isWithdrawing ? "Withdrawing..." : "Withdraw"}
+								{isDepositing ? "Depositing..." : "Deposit"}
 							</button>
 						</div>
 					</form>
@@ -374,4 +365,4 @@ export function WithdrawModal({
 			</div>
 		</div>
 	);
-}
+} 

@@ -51,6 +51,10 @@ pub mod testudo {
         instructions::process_withdraw_to_backup(ctx)
     }
 
+    pub fn withdraw_sol_to_backup(ctx: Context<WithdrawSolToBackup>) -> Result<()> {
+        instructions::process_withdraw_sol_to_backup(ctx)
+    }
+
     pub fn update_authority(ctx: Context<UpdateAuthority>) -> Result<()> {
         instructions::process_update_authority(ctx)
     }

@@ -1,6 +1,6 @@
 use crate::custom_accounts::centurion::{Centurion, TestudoData};
 use crate::errors::ErrorCode::{
-    ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidATA, InvalidAuthority,
+    CenturionNotInitialized, InsufficientFunds, InvalidATA, InvalidAuthority,
     InvalidPasswordSignature, InvalidTokenMint,
 };
 use anchor_lang::prelude::*;

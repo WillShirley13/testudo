@@ -867,6 +867,68 @@ export type Testudo = {
       ]
     },
     {
+      "name": "withdrawSolToBackup",
+      "discriminator": [
+        254,
+        230,
+        17,
+        116,
+        161,
+        54,
+        93,
+        145
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "backupAccount",
+          "writable": true
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "withdrawSpl",
       "discriminator": [
         181,

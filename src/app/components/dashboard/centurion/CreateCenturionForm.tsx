@@ -2,35 +2,97 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Baskervville } from "next/font/google";
+import { charisSIL } from "@/app/fonts";
 import { motion } from "framer-motion";
 import { MnemonicPhraseGenerator } from "../common/MnemonicPhraseGenerator";
+import { PublicKey } from "@solana/web3.js";
+import { useTestudoProgram } from "@/app/components/solana/solana-provider";
+import { findCenturionPDA } from "@/app/utils/testudo-utils";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { CenturionData } from "@/app/types/testudo";
 
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
 
 interface CreateCenturionFormProps {
-	onCreateCenturion: (
-		passwordPublicKey: string,
-		backupOwner: string
-	) => Promise<void>;
+	onSuccess: (centurionData: CenturionData) => void;
 	isCreating: boolean;
+	setIsCreating: (isCreating: boolean) => void;
 }
 
 export function CreateCenturionForm({
-	onCreateCenturion,
+	onSuccess,
 	isCreating,
+	setIsCreating,
 }: CreateCenturionFormProps) {
 	const [showForm, setShowForm] = useState(false);
 	const [derivedPublicKey, setDerivedPublicKey] = useState("");
 	const [backupOwner, setBackupOwner] = useState("");
+	const [error, setError] = useState("");
+
+	// Get necessary Solana components
+	const { publicKey } = useWallet();
+	const testudoProgram = useTestudoProgram();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		await onCreateCenturion(derivedPublicKey, backupOwner);
-		// Form will be automatically hidden when creation is successful
+		if (!publicKey) return;
+
+		try {
+			setError("");
+			setIsCreating(true);
+
+			// Validate input public keys
+			let parsedPasswordPubkey;
+			let parsedBackupOwner = null;
+
+			try {
+				parsedPasswordPubkey = new PublicKey(derivedPublicKey);
+				if (backupOwner) {
+					parsedBackupOwner = new PublicKey(backupOwner);
+				}
+			} catch (error) {
+				console.error("Invalid public key format");
+				setError("Please enter valid public key(s)");
+				setIsCreating(false);
+				return;
+			}
+
+			// Find the Centurion PDA
+			const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
+
+			// Initialize Centurion account
+			try {
+				const tx = await testudoProgram.methods
+					.initCenturion(parsedPasswordPubkey, parsedBackupOwner)
+					.accounts({
+						authority: publicKey,
+					})
+                    .signers([])
+					.rpc();
+
+				// Get latest blockhash once
+				const { blockhash, lastValidBlockHeight } = await testudoProgram.provider.connection.getLatestBlockhash();
+				
+				await testudoProgram.provider.connection.confirmTransaction({
+					signature: tx,
+					blockhash,
+					lastValidBlockHeight,
+				});
+
+				// Refresh account data
+				const centurionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
+				// Call the success callback with the new centurion data
+				onSuccess(centurionAccount as unknown as CenturionData);
+			} catch (e) {
+				console.error("RPC Error:", e);
+				setError(`Failed to create Centurion: ${e instanceof Error ? e.message : String(e)}`);
+				throw e;
+			}
+		} catch (error) {
+			console.error("Error creating Centurion:", error);
+			setError("Failed to create Centurion account. Please try again.");
+		} finally {
+			setIsCreating(false);
+		}
 	};
 
 	return (
@@ -52,7 +114,7 @@ export function CreateCenturionForm({
 					</div>
 
 					<h1
-						className={`${baskervville.className} text-3xl text-center font-bold mb-6 text-amber-400`}
+						className={`${charisSIL.className} text-3xl text-center font-bold mb-6 text-amber-400`}
 					>
 						Create Your Centurion
 					</h1>
@@ -90,6 +152,12 @@ export function CreateCenturionForm({
 									purposes.
 								</p>
 							</div>
+
+							{error && (
+								<div className="p-2 bg-red-900/30 border border-red-500/50 rounded-md text-red-300 text-sm">
+									{error}
+								</div>
+							)}
 
 							<div className="flex space-x-4 pt-3">
 								<button

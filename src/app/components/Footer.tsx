@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Baskervville } from "next/font/google";
-
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
+import { charisSIL } from "@/app/fonts";
 
 export function Footer() {
 	return (
@@ -33,7 +28,7 @@ export function Footer() {
 								/>
 							</div>
 							<span
-								className={`${baskervville.className} text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 group-hover:from-amber-300 group-hover:via-yellow-200 group-hover:to-amber-400 transition-all duration-300 relative`}
+								className={`${charisSIL.className} md:ml-5 text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 group-hover:from-amber-300 group-hover:via-yellow-200 group-hover:to-amber-400 transition-all duration-300 relative`}
 								style={{
 									letterSpacing: "0.125em",
 									textShadow: "0 2px 4px rgba(0,0,0,0.3)",
@@ -42,7 +37,7 @@ export function Footer() {
 								TESTUDO
 							</span>
 							<span className="text-[10px] text-amber-500/60 tracking-widest uppercase mt-0.5 text-center md:text-left">
-								- Secure Wallet System -
+								- Secure Vault System -
 							</span>
 						</Link>
 					</div>

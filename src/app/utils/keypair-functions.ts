@@ -76,13 +76,8 @@ export class SecureKeypairGenerator {
             throw new Error("Phrase must be 4, 5, or 6 words");
         }
         
-        // Check that all words are in the wordlist
+        // Normalize words (lowercase and trim)
         const normalizedWords = words.map(w => w.toLowerCase().trim());
-        for (const word of normalizedWords) {
-            if (!this.wordlist.includes(word)) {
-                throw new Error(`Word "${word}" is not in the BIP39 wordlist`);
-            }
-        }
         
         // Create canonical representation (lowercase, space-separated)
         const phrase = normalizedWords.join(' ');

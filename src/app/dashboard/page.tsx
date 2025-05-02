@@ -6,16 +6,15 @@ import { PublicKey, Keypair } from "@solana/web3.js";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Baskervville } from "next/font/google";
-import { findCenturionPDA, findTestudoPDA, findLegatePDA, generateKeypairFromSeed } from "@/app/utils/testudo-utils";
+import { charisSIL } from "@/app/fonts";
+import { findCenturionPDA, findTestudoPDA, findLegatePDA } from "@/app/utils/testudo-utils";
+import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
 import { CenturionCard, CreateCenturionForm } from "@/app/components/dashboard/centurion";
-import { CreateTestudoModal, TestudoAccountsTable } from "@/app/components/dashboard/testudo";
-import { CenturionData, TestudoData } from "@/app/types/testudo";
+import { CreateTestudoModal, TestudoAccountsTable, DepositModal, WithdrawModal } from "@/app/components/dashboard/testudo";
+import { CenturionData, TestudoData, TokenData, TokenWhitelistData } from "@/app/types/testudo";
+import { toast } from "react-hot-toast";
+import * as anchor from "@coral-xyz/anchor";
 
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
 
 export default function DashboardPage() {
 	const wallet = useWallet();
@@ -25,6 +24,10 @@ export default function DashboardPage() {
 	const testudoProgramRaw = useTestudoProgram();
 	// Memoize the program to avoid unnecessary re-renders
 	const testudoProgram = useMemo(() => testudoProgramRaw, [testudoProgramRaw.programId.toString()]);
+    const secureKeypairGenerator = new SecureKeypairGenerator();
+
+	// Note: Linter errors related to the .accounts() methods are expected and should be ignored
+	// according to the project's custom rules.
 
 	const [loading, setLoading] = useState(true);
 	const [hasCenturion, setHasCenturion] = useState(false);
@@ -32,7 +35,14 @@ export default function DashboardPage() {
 	const [showCreateTestudo, setShowCreateTestudo] = useState(false);
 	const [creatingCenturion, setCreatingCenturion] = useState(false);
 	const [creatingTestudo, setCreatingTestudo] = useState(false);
-	const [updatingBackupOwner, setUpdatingBackupOwner] = useState(false);
+	const [depositingTestudo, setDepositingTestudo] = useState<TestudoData | "SOL" | null>(null);
+	const [showDepositModal, setShowDepositModal] = useState(false);
+	const [isDepositing, setIsDepositing] = useState(false);
+	const [tokenSymbol, setTokenSymbol] = useState("");
+	const [tokenDecimals, setTokenDecimals] = useState(9);
+	const [withdrawingTestudo, setWithdrawingTestudo] = useState<TestudoData | "SOL" | null>(null);
+	const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+	const [isWithdrawing, setIsWithdrawing] = useState(false);
 
 	useEffect(() => {
 		// Reset states when wallet disconnects
@@ -75,196 +85,119 @@ export default function DashboardPage() {
 		checkCenturionAccount();
 	}, [connected, publicKey, testudoProgram]);
 
-	const handleCreateCenturion = async (passwordPublicKey: string, backupOwner: string) => {
+	// Add a function to fetch testudos
+	const fetchTestudos = async () => {
 		if (!publicKey) return;
-
+		
 		try {
-			setCreatingCenturion(true);
-
-			// Validate input public keys
-			let parsedPasswordPubkey;
-			let parsedBackupOwner = null;
-
-			try {
-				parsedPasswordPubkey = new PublicKey(passwordPublicKey);
-				if (backupOwner) {
-					parsedBackupOwner = new PublicKey(backupOwner);
-				}
-			} catch (error) {
-				console.error("Invalid public key format");
-				alert("Please enter valid public key(s)");
-				setCreatingCenturion(false);
-				return;
-			}
-
-			// Find the Centurion PDA
 			const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
-
-			// Initialize Centurion account
-			try {
-				const tx = await testudoProgram.methods
-					.initCenturion(parsedPasswordPubkey, parsedBackupOwner)
-					.accounts({
-						authority: publicKey,
-					})
-                    .signers([])
-					.rpc();
-
-				// Get latest blockhash once
-				const { blockhash, lastValidBlockHeight } = await testudoProgram.provider.connection.getLatestBlockhash();
-				
-				await testudoProgram.provider.connection.confirmTransaction({
-					signature: tx,
-					blockhash,
-					lastValidBlockHeight,
-				});
-
-				// Refresh account data
-				const centurionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
-				setHasCenturion(true);
-				setCenturionData(centurionAccount as unknown as CenturionData);
-			} catch (e) {
-				console.error("RPC Error:", e);
-				throw e;
-			}
-		} catch (error) {
-			console.error("Error creating Centurion:", error);
-			alert("Failed to create Centurion account. Please try again.");
-		} finally {
-			setCreatingCenturion(false);
-		}
-	};
-
-	const handleCreateTestudo = async (mintAddress: string) => {
-		if (!publicKey) return;
-
-		try {
-			setCreatingTestudo(true);
-
-			const mintPubkey = new PublicKey(mintAddress);
-			const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
-			const [testudoPDA] = findTestudoPDA(centurionPDA, mintPubkey, testudoProgram.programId);
-			const [legatePDA] = findLegatePDA(testudoProgram.programId);
-
-			// Check which token program the mint belongs to
-			const mintInfo = await testudoProgram.provider.connection.getAccountInfo(mintPubkey);
-			if (!mintInfo) {
-				throw new Error("Mint account not found");
-			}
-
-			const tokenProgramId = mintInfo.owner;
-			const isToken2022 = tokenProgramId.equals(new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"));
-			const isRegularToken = tokenProgramId.equals(new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"));
-
-			if (!isToken2022 && !isRegularToken) {
-				throw new Error("Mint is not owned by a recognized token program");
-			}
-
-			console.log(`Creating Testudo with ${isToken2022 ? "Token 2022" : "Token"} Program`);
-
-			// Create Testudo account with the correct token program
-			const tx = await testudoProgram.methods
-				.createTestudo()
-				.accounts({
-					authority: publicKey,
-					mint: mintPubkey,
-					tokenProgram: tokenProgramId,
-				})
-				.signers([])
-				.rpc();
-
-			// Get latest blockhash once
-			const { blockhash, lastValidBlockHeight } = await testudoProgram.provider.connection.getLatestBlockhash();
-			
-			await testudoProgram.provider.connection.confirmTransaction({
-				signature: tx,
-				blockhash,
-				lastValidBlockHeight,
-			});
-
-			// Refresh Centurion data
 			const updatedCenturionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
 			setCenturionData(updatedCenturionAccount as unknown as CenturionData);
-			setShowCreateTestudo(false);
 		} catch (error) {
-			console.error("Error creating Testudo:", error);
-			alert("Failed to create Testudo account. Please try again.");
-		} finally {
-			setCreatingTestudo(false);
+			console.error("Error fetching testudos:", error);
 		}
 	};
 
-	const handleUpdateBackupOwner = async (backupPubkey: string, passwordPhrase: string) => {
-		if (!publicKey || !centurionData) return;
-
+	// Add a function to get token info when needed
+	const getTokenInfo = async (tokenMint: PublicKey) => {
 		try {
-			setUpdatingBackupOwner(true);
-
-			// Derive keypair from password phrase
-			const passwordKeypair = generateKeypairFromSeed(passwordPhrase);
+			// First try to get from Legate account (whitelist)
+			const [legatePDA] = findLegatePDA(testudoProgram.programId);
+			const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
 			
-			// Check if derived public key matches the one stored in centurion account
-			if (passwordKeypair.publicKey.toString() !== centurionData.pubkeyToPassword.toString()) {
-				throw new Error("Invalid password phrase");
+			// Find the token in the whitelist
+			const tokenInfo = legateAccount.testudoTokenWhitelist.find(
+				(token: any) => token.tokenMint.toString() === tokenMint.toString()
+			);
+			
+			if (tokenInfo) {
+				return {
+					symbol: tokenInfo.tokenSymbol,
+					decimals: tokenInfo.tokenDecimals
+				};
 			}
-
-			const newBackupPubkey = new PublicKey(backupPubkey);
-			const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
-
-			// Update backup owner
-			try {
-				const tx = await testudoProgram.methods
-					.updateBackUpAccount(newBackupPubkey)
-					.accounts({
-						authority: publicKey,
-						validSignerOfPassword: passwordKeypair.publicKey,
-						centurion: centurionPDA,
-					})
-					.signers([passwordKeypair])
-					.rpc();
-
-				// Get latest blockhash once
-				const { blockhash, lastValidBlockHeight } = await testudoProgram.provider.connection.getLatestBlockhash();
-				
-				await testudoProgram.provider.connection.confirmTransaction({
-					signature: tx,
-					blockhash,
-					lastValidBlockHeight,
-				});
-
-				// Refresh Centurion data
-				const updatedCenturionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
-				setCenturionData(updatedCenturionAccount as unknown as CenturionData);
-				alert("Backup owner updated successfully!");
-			} catch (e) {
-				console.error("RPC Error:", e);
-				throw e;
-			}
+			
+			// If not found, return defaults
+			return {
+				symbol: "Token",
+				decimals: 9
+			};
 		} catch (error) {
-			console.error("Error updating backup owner:", error);
-			alert(`Failed to update backup owner: ${error instanceof Error ? error.message : String(error)}`);
-		} finally {
-			setUpdatingBackupOwner(false);
+			console.error("Error getting token info:", error);
+			return {
+				symbol: "Token",
+				decimals: 9
+			};
 		}
 	};
 
-	const handleDeposit = async (testudo: TestudoData | "SOL") => {
-		if (testudo === "SOL") {
-			alert("Deposit SOL functionality to be implemented");
-			// Implementation for native SOL deposit functionality would go here
-		} else {
-			alert("Deposit SPL token functionality to be implemented");
-			// Implementation for SPL token deposit functionality would go here
+	// Show the deposit modal when a user chooses to deposit
+	const handleShowDepositModal = async (testudo: TestudoData | "SOL") => {
+		if (testudo) {
+			// Only show modal if testudo is provided
+			setDepositingTestudo(testudo);
+			
+			// Fetch token symbol from Legate for non-SOL tokens
+			if (testudo !== "SOL") {
+				try {
+					const [legatePDA] = findLegatePDA(testudoProgram.programId);
+					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+					
+					// Find the token in the whitelist
+					const tokenInfo = legateAccount.testudoTokenWhitelist.find(
+						(token: any) => token.tokenMint.toString() === testudo.tokenMint.toString()
+					);
+					
+					if (tokenInfo) {
+						// Pass the correct token symbol to the DepositModal
+						setTokenSymbol(tokenInfo.tokenSymbol);
+						setTokenDecimals(tokenInfo.tokenDecimals);
+					}
+				} catch (error) {
+					console.error("Error fetching token info from Legate:", error);
+				}
+			} else {
+				// For SOL, set default values
+				setTokenSymbol("SOL");
+				setTokenDecimals(9);
+			}
+			
+			setShowDepositModal(true);
 		}
 	};
 
-	const handleWithdraw = async (testudo: TestudoData | "SOL") => {
-		if (testudo === "SOL") {
-			alert("Withdraw SOL functionality to be implemented");
-			// Implementation for native SOL withdraw functionality would go here
-		} else {
-			alert("Withdraw SPL token functionality to be implemented");
-			// Implementation for SPL token withdraw functionality would go here
+	// Show the withdraw modal when a user chooses to withdraw
+	const handleShowWithdrawModal = async (testudo: TestudoData | "SOL") => {
+		if (testudo) {
+			// Only show modal if testudo is provided
+			setWithdrawingTestudo(testudo);
+			
+			// Fetch token symbol from Legate for non-SOL tokens
+			if (testudo !== "SOL") {
+				try {
+					const [legatePDA] = findLegatePDA(testudoProgram.programId);
+					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+					
+					// Find the token in the whitelist
+					const tokenInfo = legateAccount.testudoTokenWhitelist.find(
+						(token: any) => token.tokenMint.toString() === testudo.tokenMint.toString()
+					);
+					
+					if (tokenInfo) {
+						// Pass the correct token symbol to the WithdrawModal
+						setTokenSymbol(tokenInfo.tokenSymbol);
+						setTokenDecimals(tokenInfo.tokenDecimals);
+					}
+				} catch (error) {
+					console.error("Error fetching token info from Legate:", error);
+				}
+			} else {
+				// For SOL, set default values
+				setTokenSymbol("SOL");
+				setTokenDecimals(9);
+			}
+			
+			setShowWithdrawModal(true);
 		}
 	};
 
@@ -291,7 +224,7 @@ export default function DashboardPage() {
 					</div>
 
 					<h1
-						className={`${baskervville.className} text-3xl md:text-4xl font-bold mb-4 text-amber-400`}
+						className={`${charisSIL.className} text-3xl md:text-4xl font-bold mb-4 text-amber-400`}
 					>
 						Connect Your Wallet
 					</h1>
@@ -326,8 +259,12 @@ export default function DashboardPage() {
 	if (!hasCenturion) {
 		return (
 			<CreateCenturionForm 
-				onCreateCenturion={handleCreateCenturion}
+				onSuccess={(centurionData) => {
+					setHasCenturion(true);
+					setCenturionData(centurionData);
+				}}
 				isCreating={creatingCenturion}
+				setIsCreating={setCreatingCenturion}
 			/>
 		);
 	}
@@ -335,7 +272,7 @@ export default function DashboardPage() {
 	// Main Dashboard View (when user has a Centurion)
 	return (
 		<div className="min-h-screen pb-20">
-			<div className="content-container pt-8">
+			<div className="content-container pt-36">
 				{/* Dashboard Header with animation */}
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}
@@ -344,7 +281,7 @@ export default function DashboardPage() {
 					className="mb-10"
 				>
 					<div className="flex flex-col md:flex-row justify-end items-center mb-6">
-						<div className="mt-4 md:mt-0 flex items-center">
+						<div className="flex items-center">
 							<div className="relative mr-3">
 								<Image
 									src="/on-the-attack2-Photoroom.png"
@@ -374,7 +311,7 @@ export default function DashboardPage() {
 						centurionData={centurionData}
 						userWallet={publicKey}
 						programId={testudoProgram.programId}
-						onUpdateBackupOwner={handleUpdateBackupOwner}
+						onCenturionUpdated={fetchTestudos}
 					/>
 				)}
 
@@ -384,8 +321,8 @@ export default function DashboardPage() {
 					centurionData={centurionData}
 					programId={testudoProgram.programId}
 					onCreateTestudo={() => setShowCreateTestudo(true)}
-					onDeposit={handleDeposit}
-					onWithdraw={handleWithdraw}
+					onDeposit={handleShowDepositModal}
+					onWithdraw={handleShowWithdrawModal}
 					onDelete={handleDelete}
 				/>
 			</div>
@@ -394,9 +331,51 @@ export default function DashboardPage() {
 			<CreateTestudoModal 
 				isOpen={showCreateTestudo}
 				onClose={() => setShowCreateTestudo(false)}
-				onCreateTestudo={handleCreateTestudo}
+				onSuccess={(updatedCenturionData) => {
+					setCenturionData(updatedCenturionData as unknown as CenturionData);
+					setShowCreateTestudo(false);
+				}}
 				isCreating={creatingTestudo}
+				setIsCreating={setCreatingTestudo}
 			/>
+
+			{/* Deposit Modal */}
+			{depositingTestudo && (
+				<DepositModal
+					isOpen={showDepositModal}
+					onClose={() => {
+						setShowDepositModal(false);
+						setDepositingTestudo(null);
+					}}
+					onSuccess={(updatedCenturionData) => {
+						setCenturionData(updatedCenturionData as unknown as CenturionData);
+					}}
+					isDepositing={isDepositing}
+					setIsDepositing={setIsDepositing}
+					testudo={depositingTestudo}
+					tokenDecimals={tokenDecimals}
+					tokenSymbol={tokenSymbol}
+				/>
+			)}
+
+			{/* Withdraw Modal */}
+			{withdrawingTestudo && (
+				<WithdrawModal
+					isOpen={showWithdrawModal}
+					onClose={() => {
+						setShowWithdrawModal(false);
+						setWithdrawingTestudo(null);
+					}}
+					onSuccess={(updatedCenturionData) => {
+						setCenturionData(updatedCenturionData as unknown as CenturionData);
+					}}
+					isWithdrawing={isWithdrawing}
+					setIsWithdrawing={setIsWithdrawing}
+					testudo={withdrawingTestudo}
+					tokenDecimals={tokenDecimals}
+					tokenSymbol={tokenSymbol}
+				/>
+			)}
 		</div>
 	);
 }

@@ -1,16 +1,10 @@
 import "./globals.css";
 import { ClusterProvider } from "@/app/components/cluster/cluster-data-access";
 import { SolanaProvider } from "@/app/components/solana/solana-provider";
-
 import { ReactQueryProvider } from "./react-query-provider";
 import { Header } from "@/app/components/Header";
 import { Footer } from "@/app/components/Footer";
-import { Baskervville } from "next/font/google";
-
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
+import { charisSIL } from "@/app/fonts";
 
 export const metadata = {
 	title: "Testudo",
@@ -30,21 +24,19 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
-			<body className={`${baskervville.className} bg-[#0c1221] text-gray-200 min-h-screen`}>
+			<ClusterProvider>
 				<ReactQueryProvider>
-					<ClusterProvider>
-						<SolanaProvider>
+					<SolanaProvider>
+						<body className={`${charisSIL.className} bg-[#0c1221] text-gray-200 min-h-screen`}>
 							<div className="flex flex-col min-h-screen">
 								<Header />
-								<main className="flex-grow pt-28">
-									{children}
-								</main>
+								<main className="flex-grow">{children}</main>
 								<Footer />
 							</div>
-						</SolanaProvider>
-					</ClusterProvider>
+						</body>
+					</SolanaProvider>
 				</ReactQueryProvider>
-			</body>
+			</ClusterProvider>
 		</html>
 	);
 }

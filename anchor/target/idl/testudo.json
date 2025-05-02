@@ -861,6 +861,68 @@
       ]
     },
     {
+      "name": "withdraw_sol_to_backup",
+      "discriminator": [
+        254,
+        230,
+        17,
+        116,
+        161,
+        54,
+        93,
+        145
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "valid_signer_of_password",
+          "signer": true
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "backup_account",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "withdraw_spl",
       "discriminator": [
         181,

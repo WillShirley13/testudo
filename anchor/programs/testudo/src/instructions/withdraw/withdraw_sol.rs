@@ -17,7 +17,7 @@ pub struct WithdrawSol<'info> {
     pub valid_signer_of_password: Signer<'info>,
     #[account(
         mut,
-        seeds = [b"centurion", authority.key.as_ref()],
+        seeds = [b"centurion".as_ref(), authority.key.as_ref()],
         bump,
         constraint = centurion.is_initialized @CenturionNotInitialized,
         has_one = authority @InvalidAuthority,
@@ -27,43 +27,53 @@ pub struct WithdrawSol<'info> {
 }
 
 pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) -> Result<()> {
-    let password_pubkey: Pubkey = ctx.accounts.centurion.pubkey_to_password;
+    // Get references to accounts
+    let centurion_info = ctx.accounts.centurion.to_account_info();
 
-    // (double check)Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
+    // Validate the pubkey matches the password's pubkey
     require_eq!(
-        password_pubkey,
+        ctx.accounts.centurion.pubkey_to_password,
         ctx.accounts.valid_signer_of_password.key(),
         InvalidPasswordSignature
     );
     msg!("Password signature is valid");
 
-    // Ensure the centurion has enough funds to withdraw
+    // Calculate rent exemption
+    let rent = Rent::get()?;
+    let min_rent = rent.minimum_balance(8 + Centurion::INIT_SPACE);
+
+    // Get current account lamports
+    let account_lamports = centurion_info.lamports();
+
+    // Ensure the withdrawal won't go below rent exemption
+    let max_withdrawable = account_lamports.saturating_sub(min_rent);
+    require_gte!(max_withdrawable, amount_in_lamports, InsufficientFunds);
+
+    // Ensure the centurion has enough funds tracked in its state
     require_gte!(
-        ctx.accounts.centurion.get_lamports(),
+        ctx.accounts.centurion.lamport_balance,
         amount_in_lamports,
         InsufficientFunds
     );
     msg!("Centurion has enough funds to withdraw");
 
-    // Replace CpiContext transfer with direct lamport manipulation
-    let withdraw_amount = amount_in_lamports;
-
     // Debit from centurion account
-    ctx.accounts.centurion.sub_lamports(withdraw_amount)?;
+    ctx.accounts.centurion.sub_lamports(amount_in_lamports)?;
 
     // Credit to authority account
-    ctx.accounts.authority.add_lamports(withdraw_amount)?;
+    ctx.accounts.authority.add_lamports(amount_in_lamports)?;
 
-    ctx.accounts.centurion.lamport_balance = ctx
-        .accounts
-        .centurion
-        .lamport_balance
-        .checked_sub(withdraw_amount)
-        .ok_or(ArithmeticOverflow)?;
-
-    // Update last accessed timestamp (keep this part)
+    // Update the centurion's state in a separate mutable borrow
     let current_datetime = Clock::get()?.unix_timestamp;
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
+
+    // Update lamport balance
+    centurion_data.lamport_balance = centurion_data
+        .lamport_balance
+        .checked_sub(amount_in_lamports)
+        .ok_or(ArithmeticOverflow)?;
+
+    // Update last accessed timestamp
     centurion_data.last_accessed = current_datetime as u64;
 
     msg!("Withdrawal successful");

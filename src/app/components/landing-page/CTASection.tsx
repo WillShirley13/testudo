@@ -2,12 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { Baskervville } from "next/font/google";
+import { charisSIL } from "@/app/fonts";
 
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
 
 export function CTASection() {
 	return (
@@ -20,7 +16,7 @@ export function CTASection() {
 			<div className="content-container relative z-10">
 				<div className="max-w-4xl mx-auto text-center">
 					<h2
-						className={`${baskervville.className} text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-500 mb-6`}
+						className={`${charisSIL.className} text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-500 mb-6`}
 					>
 						Ready to Secure Your Solana Assets?
 					</h2>

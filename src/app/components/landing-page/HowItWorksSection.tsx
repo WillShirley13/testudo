@@ -1,14 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Baskervville } from "next/font/google";
+import { charisSIL } from "@/app/fonts";
 import { useInView } from "react-intersection-observer";
 import { Step } from "./Step";
 
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
 
 export function HowItWorksSection() {
 	// State to track active step in How It Works section
@@ -68,28 +64,28 @@ export function HowItWorksSection() {
 		{
 			number: 1,
 			title: "Create Your Centurion",
-			description: "Connect your wallet and set up your main Centurion account with a memorable 6-word phrase. Your Testudos will be attached to this Centurion and will hold your tokens.",
+			description: "Connect your wallet and set up your main Centurion account to get your memorable passphrase.",
 			ref: step1Ref,
-			tipText: "Memorize (and store) your 6-word phrase, it's your key to security."
+			tipText: "Memorize (and store) your passphrase, it's your key to security!"
 		},
 		{
 			number: 2,
 			title: "Deposit Funds",
 			description: "Using your Centurion, create Testudos to hold your tokens.",
 			ref: step2Ref,
-			tipText: "Your tokens remain secured behind your Centurion as long as you keep your 6-word phrase safe!"
+			tipText: "Your tokens remain secured behind your Centurion. The shield wall only opens when the passphrase is given!"
 		},
 		{
 			number: 3,
 			title: "Dual-Sign Withdrawals",
-			description: "When withdrawing, sign with both your wallet and enter your 6-word phrase to authorize the transaction.",
+			description: "When withdrawing, sign with both your wallet and enter your passphrase to authorize the transaction.",
 			ref: step3Ref,
 			tipText: "Two-factor authentication built directly into the blockchain."
 		},
 		{
 			number: 4,
 			title: "Optional Recovery",
-			description: "Set up an Optio backup address for emergency recovery if your wallet is compromised.",
+			description: "Set up an Optio (backup) address for emergency recovery if your wallet is compromised.",
 			ref: step4Ref,
 			tipText: "Never lose access to your funds with our recovery system."
 		},
@@ -100,7 +96,7 @@ export function HowItWorksSection() {
 			<div className="content-container">
 				<div className="text-center mb-16">
 					<h2
-						className={`${baskervville.className} text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-500 mb-4`}
+						className={`${charisSIL.className} text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-500 mb-4`}
 					>
 						How Testudo Works
 					</h2>

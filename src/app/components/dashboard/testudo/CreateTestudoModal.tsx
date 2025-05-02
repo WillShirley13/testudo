@@ -1,16 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Baskervville } from "next/font/google";
-import { findLegatePDA } from "@/app/utils/testudo-utils";
-import { useTestudoProgram } from "@/app/components/solana/solana-provider";
+import { charisSIL } from "@/app/fonts";
+import { findLegatePDA, findCenturionPDA, findTestudoPDA } from "@/app/utils/testudo-utils";
+import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
 import { TokenWhitelistData, TokenData } from "@/app/types/testudo";
 import { PublicKey } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { toast } from "react-hot-toast";
 
-const baskervville = Baskervville({
-	weight: ["400"],
-	subsets: ["latin"],
-});
 
 // Define a default SOL token to ensure it's always available
 const DEFAULT_SOL_TOKEN: TokenData = {
@@ -23,16 +21,21 @@ const DEFAULT_SOL_TOKEN: TokenData = {
 interface CreateTestudoModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onCreateTestudo: (mintAddress: string) => Promise<void>;
+	onSuccess: (updatedCenturionData: any) => void;
 	isCreating: boolean;
+	setIsCreating: (isCreating: boolean) => void;
 }
 
 export function CreateTestudoModal({
 	isOpen,
 	onClose,
-	onCreateTestudo,
+	onSuccess,
 	isCreating,
+	setIsCreating,
 }: CreateTestudoModalProps) {
+	const wallet = useWallet();
+	const { publicKey } = wallet;
+	const provider = useAnchorProvider();
 	const testudoProgram = useTestudoProgram();
 	const [selectedMint, setSelectedMint] = useState("");
 	const [whitelistedTokens, setWhitelistedTokens] = useState<TokenData[]>([]);
@@ -47,6 +50,10 @@ export function CreateTestudoModal({
 				setIsLoading(true);
 				const [legatePDA] = findLegatePDA(testudoProgram.programId);
 				const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+
+				for (const token of legateAccount.testudoTokenWhitelist) {
+					console.log("Token:", token.tokenMint.toString());
+				}
 
 				// Convert to our frontend data type
 				const tokens: TokenData[] = legateAccount.testudoTokenWhitelist.map((token: TokenWhitelistData) => ({
@@ -73,11 +80,80 @@ export function CreateTestudoModal({
 		fetchWhitelistedTokens();
 	}, [isOpen, testudoProgram]);
 
+	const handleCreateTestudo = async (mintAddress: string) => {
+		if (!publicKey) return;
+
+		try {
+			setIsCreating(true);
+
+            console.log("Creating Testudo with mint address:", mintAddress);
+
+			const mintPubkey = new PublicKey(mintAddress);
+			const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
+			const [testudoPDA] = findTestudoPDA(centurionPDA, mintPubkey, testudoProgram.programId);
+			const [legatePDA] = findLegatePDA(testudoProgram.programId);
+
+			// Check which token program the mint belongs to
+			const mintInfo = await testudoProgram.provider.connection.getAccountInfo(mintPubkey);
+			if (!mintInfo) {
+				throw new Error("Mint account not found");
+			}
+
+			const tokenProgramId = mintInfo.owner;
+			const isToken2022 = tokenProgramId.equals(new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"));
+			const isRegularToken = tokenProgramId.equals(new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"));
+
+			if (!isToken2022 && !isRegularToken) {
+				throw new Error("Mint is not owned by a recognized token program");
+			}
+
+			console.log(`Creating Testudo with ${isToken2022 ? "Token 2022" : "Token"} Program`);
+
+			// Create Testudo account with the correct token program
+			// Note: Linter errors related to the .accounts() method are expected and should be ignored
+			// according to the project's custom rules.
+			const tx = await testudoProgram.methods
+				.createTestudo()
+				.accounts({
+					authority: publicKey,
+					mint: mintPubkey,
+					tokenProgram: tokenProgramId,
+				})
+				.signers([])
+				.rpc();
+
+			// Get latest blockhash once
+			const { blockhash, lastValidBlockHeight } = await testudoProgram.provider.connection.getLatestBlockhash();
+			
+			await testudoProgram.provider.connection.confirmTransaction({
+				signature: tx,
+				blockhash,
+				lastValidBlockHeight,
+			});
+
+			// Refresh Centurion data
+			const updatedCenturionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
+			
+			// Call onSuccess with the updated data
+			onSuccess(updatedCenturionAccount);
+			
+			// Close the modal
+			onClose();
+			
+			// Show success message
+			toast.success(`Successfully created Testudo for ${whitelistedTokens.find(t => t.mint === mintAddress)?.symbol || 'token'}`);
+		} catch (error) {
+			console.error("Error creating Testudo:", error);
+			toast.error(`Failed to create Testudo account: ${error instanceof Error ? error.message : String(error)}`);
+		} finally {
+			setIsCreating(false);
+		}
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (selectedMint) {
-			await onCreateTestudo(selectedMint);
-			// Modal will be automatically closed when creation is successful
+			await handleCreateTestudo(selectedMint);
 		}
 	};
 
@@ -88,7 +164,7 @@ export function CreateTestudoModal({
 			<div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl border border-amber-500/30 w-full max-w-md">
 				<div className="p-6">
 					<h3
-						className={`${baskervville.className} text-xl font-semibold text-amber-400 mb-4`}
+						className={`${charisSIL.className} text-xl font-semibold text-amber-400 mb-4`}
 					>
 						Create New Testudo
 					</h3>
