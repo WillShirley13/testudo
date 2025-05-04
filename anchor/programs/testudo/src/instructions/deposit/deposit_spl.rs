@@ -1,8 +1,11 @@
 use crate::custom_accounts::centurion::{Centurion, TestudoData};
+use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
-    CenturionNotInitialized, InsufficientFunds, InvalidATA, InvalidAuthority, InvalidTokenMint,
+    ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidATA, InvalidAuthority,
+    InvalidTokenMint, InvalidTreasuryAccount, LegateNotInitialized,
 };
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked};
 
@@ -40,6 +43,26 @@ pub struct DepositSplToken<'info> {
         constraint = testudo.owner == centurion.key() @InvalidATA,
     )]
     pub testudo: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        seeds = [b"legate"],
+        bump = legate.bump,
+        constraint = legate.is_initialized @LegateNotInitialized,
+    )]
+    pub legate: Account<'info, Legate>,
+    #[account(
+        mut,
+        constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
+    )]
+    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
+    pub treasury: UncheckedAccount<'info>,
+    #[account(
+        init_if_needed,
+        payer = treasury,
+        associated_token::mint = mint,
+        associated_token::authority = treasury,
+        associated_token::token_program = associated_token_program,
+    )]
+    pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
     pub mint: InterfaceAccount<'info, Mint>,
     // Ensure valid token program is passed
@@ -52,6 +75,10 @@ pub struct DepositSplToken<'info> {
         constraint = system_program.key() == anchor_lang::system_program::ID,
     )]
     pub system_program: Program<'info, System>,
+    #[account(
+        constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
+    )]
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn process_deposit_spl_token(
@@ -71,12 +98,6 @@ pub fn process_deposit_spl_token(
 
     // Get the amount of tokens the depositor has in their ATA
     let depositer_token_holdings: u64 = ctx.accounts.authority_ata.amount;
-    // Get the number of decimals for the token
-    // let decimals: u8 = ctx.accounts.mint.decimals;
-    // // Convert the desired deposit amount to a u64 with the correct number of decimals
-    // let amount_to_deposit_with_decimals: u64 = amount
-    //     .checked_mul(10u64.pow(decimals as u32))
-    //     .ok_or(ArithmeticOverflow)?;
 
     // Ensure the depositor has enough tokens in their ATA to cover the deposit
     require_gte!(
@@ -86,26 +107,57 @@ pub fn process_deposit_spl_token(
     );
     msg!("Depositor has enough tokens to cover the deposit");
 
+    let deposit_fee = amount_with_decimals
+        .checked_mul(ctx.accounts.legate.percent_for_fees as u64)
+        .unwrap_or(0)
+        .checked_div(10000)
+        .unwrap_or(0);
+    let amount_after_fee = amount_with_decimals
+        .checked_sub(deposit_fee)
+        .ok_or(ArithmeticOverflow)?;
+
     // Get the testudo account for the token
     let testudo_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.testudo;
     // Get the depositor's ATA for the token
     let authority_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.authority_ata;
+    //Get treasury ATA for the token
+    let treasury_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.treasury_ata;
 
-    // Set up the CPI accounts for the transfer
-    let cpi_accounts = TransferChecked {
+    let decimals: u8 = ctx.accounts.mint.decimals;
+
+    // Set up the CPI accounts for the transfer of fee
+    let cpi_accounts_for_fee = TransferChecked {
+        from: authority_ata.to_account_info(),
+        to: treasury_ata.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        authority: ctx.accounts.authority.to_account_info(),
+    };
+
+    // Set up the CPI context for the transfer of fee
+    let cpi_context_for_fee: CpiContext<'_, '_, '_, '_, TransferChecked<'_>> = CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        cpi_accounts_for_fee,
+    );
+    // Perform the transfer
+    token_interface::transfer_checked(cpi_context_for_fee, deposit_fee, decimals)?;
+    msg!("Transfer of deposit fee successful");
+
+    // Set up the CPI accounts for the transfer of deposit
+    let cpi_accounts_for_deposit = TransferChecked {
         from: authority_ata.to_account_info(),
         to: testudo_ata.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
         authority: ctx.accounts.authority.to_account_info(),
     };
 
-    let decimals: u8 = ctx.accounts.mint.decimals;
-
-    // Set up the CPI context for the transfer
-    let cpi_context: CpiContext<'_, '_, '_, '_, TransferChecked<'_>> =
-        CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts);
+    // Set up the CPI context for the transfer of deposit
+    let cpi_context_for_deposit: CpiContext<'_, '_, '_, '_, TransferChecked<'_>> = CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        cpi_accounts_for_deposit,
+    );
     // Perform the transfer
-    token_interface::transfer_checked(cpi_context, amount_with_decimals, decimals)?;
+    token_interface::transfer_checked(cpi_context_for_deposit, amount_after_fee, decimals)?;
+    msg!("Transfer of deposit successful");
 
     // Update the last accessed timestamp
     let current_datetime: i64 = Clock::get()?.unix_timestamp;

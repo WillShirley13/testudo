@@ -16,7 +16,7 @@ testudo = "8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

@@ -129,7 +129,7 @@ export function UpdateBackupOwnerModal({
 						Update Backup Owner
 					</h3>
 
-					<form className="space-y-3 sm:space-y-4" onSubmit={handleSubmit}>
+					<form className="space-y-3 sm:space-y-4" onSubmit={handleSubmit} autoComplete="off">
 						<div>
 							<label className="block text-sm font-medium text-gray-300 mb-2">
 								New Backup Public Key

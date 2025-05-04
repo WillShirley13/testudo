@@ -10,6 +10,10 @@ import { PublicKey } from "@solana/web3.js";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
 import { Wallet } from "@coral-xyz/anchor";
 import Link from "next/link";
+import { CreateTestudoModal } from "./CreateTestudoModal";
+import { DepositModal } from "./DepositModal";
+import { WithdrawModal } from "./WithdrawModal";
+import { DeleteTestudoModal } from "./DeleteTestudoModal";
 
 // Define a default SOL token to ensure it's always available
 const DEFAULT_SOL_TOKEN: TokenData = {
@@ -27,20 +31,14 @@ interface TestudoAccountsTableProps {
 	testudos: TestudoData[] | undefined;
 	centurionData: CenturionData | null;
 	programId: PublicKey;
-	onCreateTestudo: () => void;
-	onDeposit: (testudo: TestudoData | "SOL") => void;
-	onWithdraw: (testudo: TestudoData | "SOL") => void;
-	onDelete: (testudo: TestudoData) => void;
+	onCenturionUpdated: (updatedCenturionData: CenturionData) => void;
 }
 
 export function TestudoAccountsTable({
 	testudos,
 	centurionData,
 	programId,
-	onCreateTestudo,
-	onDeposit,
-	onWithdraw,
-	onDelete,
+	onCenturionUpdated,
 }: TestudoAccountsTableProps) {
 	const testudoProgram = useTestudoProgram();
 	const [legateData, setLegateData] = useState<LegateData | null>(null);
@@ -48,7 +46,29 @@ export function TestudoAccountsTable({
 	const [whitelistedTokens, setWhitelistedTokens] = useState<TokenData[]>([DEFAULT_SOL_TOKEN]);
 	const [isLoading, setIsLoading] = useState(true);
 	
-	const isEmpty = !testudos || testudos.length === 0;
+	// States for modals
+	const [showCreateTestudo, setShowCreateTestudo] = useState(false);
+	const [creatingTestudo, setCreatingTestudo] = useState(false);
+	
+	// Deposit modal states
+	const [depositingTestudo, setDepositingTestudo] = useState<TestudoData | "SOL" | null>(null);
+	const [showDepositModal, setShowDepositModal] = useState(false);
+	const [isDepositing, setIsDepositing] = useState(false);
+	const [depositTokenSymbol, setDepositTokenSymbol] = useState("");
+	const [depositTokenDecimals, setDepositTokenDecimals] = useState(9);
+	
+	// Withdraw modal states
+	const [withdrawingTestudo, setWithdrawingTestudo] = useState<TestudoData | "SOL" | null>(null);
+	const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+	const [isWithdrawing, setIsWithdrawing] = useState(false);
+	const [withdrawTokenSymbol, setWithdrawTokenSymbol] = useState("");
+	const [withdrawTokenDecimals, setWithdrawTokenDecimals] = useState(9);
+	
+	// Delete modal states
+	const [deletingTestudo, setDeletingTestudo] = useState<TestudoData | null>(null);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [deleteTokenSymbol, setDeleteTokenSymbol] = useState("");
 	
 	// Calculate the Centurion PDA if centurionData exists
 	const centurionPDA = React.useMemo(() => {
@@ -125,56 +145,124 @@ export function TestudoAccountsTable({
 		fetchTokenBalances();
 	}, [testudos, testudoProgram]);
 	
+	// Handler for opening the create testudo modal
+	const handleCreateTestudo = () => {
+		setShowCreateTestudo(true);
+	};
+	
+	// Show the deposit modal when a user chooses to deposit
+	const handleShowDepositModal = async (testudo: TestudoData | "SOL") => {
+		if (testudo) {
+			// Only show modal if testudo is provided
+			setDepositingTestudo(testudo);
+			
+			// Fetch token symbol from Legate for non-SOL tokens
+			if (testudo !== "SOL") {
+				try {
+					const [legatePDA] = findLegatePDA(testudoProgram.programId);
+					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+					
+					// Find the token in the whitelist
+					const tokenInfo = legateAccount.testudoTokenWhitelist.find(
+						(token: any) => token.tokenMint.toString() === testudo.tokenMint.toString()
+					);
+					
+					if (tokenInfo) {
+						// Pass the correct token symbol to the DepositModal
+						setDepositTokenSymbol(tokenInfo.tokenSymbol);
+						setDepositTokenDecimals(tokenInfo.tokenDecimals);
+					}
+				} catch (error) {
+					console.error("Error fetching token info from Legate:", error);
+				}
+			} else {
+				// For SOL, set default values
+				setDepositTokenSymbol("SOL");
+				setDepositTokenDecimals(9);
+			}
+			
+			setShowDepositModal(true);
+		}
+	};
+	
+	// Show the withdraw modal when a user chooses to withdraw
+	const handleShowWithdrawModal = async (testudo: TestudoData | "SOL") => {
+		if (testudo) {
+			// Only show modal if testudo is provided
+			setWithdrawingTestudo(testudo);
+			
+			// Fetch token symbol from Legate for non-SOL tokens
+			if (testudo !== "SOL") {
+				try {
+					const [legatePDA] = findLegatePDA(testudoProgram.programId);
+					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+					
+					// Find the token in the whitelist
+					const tokenInfo = legateAccount.testudoTokenWhitelist.find(
+						(token: any) => token.tokenMint.toString() === testudo.tokenMint.toString()
+					);
+					
+					if (tokenInfo) {
+						// Pass the correct token symbol to the WithdrawModal
+						setWithdrawTokenSymbol(tokenInfo.tokenSymbol);
+						setWithdrawTokenDecimals(tokenInfo.tokenDecimals);
+					}
+				} catch (error) {
+					console.error("Error fetching token info from Legate:", error);
+				}
+			} else {
+				// For SOL, set default values
+				setWithdrawTokenSymbol("SOL");
+				setWithdrawTokenDecimals(9);
+			}
+			
+			setShowWithdrawModal(true);
+		}
+	};
+	
+	// Handle showing the delete modal
+	const handleShowDeleteModal = (testudo: TestudoData) => {
+		if (testudo) {
+			// Find token info for the display name
+			const tokenInfo = whitelistedTokens.find(
+				(token) => token.mint === testudo.tokenMint.toString()
+			);
+			
+			setDeletingTestudo(testudo);
+			setDeleteTokenSymbol(tokenInfo?.symbol || "Token");
+			setShowDeleteModal(true);
+		}
+	};
+	
+	const handleDelete = async (testudo: TestudoData) => {
+		handleShowDeleteModal(testudo);
+	};
+	
 	const solToken = DEFAULT_SOL_TOKEN;
 
 	return (
-		<motion.div
-			initial={{ opacity: 0, y: 20 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{ duration: 0.5 }}
-			className="bg-gradient-to-b from-gray-900/80 to-gray-950/90 backdrop-blur-md rounded-xl overflow-hidden shadow-xl border border-amber-500/20 mb-8 max-w-3xl mx-auto"
-		>
-			<div className="flex justify-between items-center p-8 border-b border-gray-800/50">
-				<h2
-					className={`${charisSIL.className} text-3xl font-semibold text-amber-400`}
-				>
-					Testudos
-				</h2>
-
-				<button
-					onClick={onCreateTestudo}
-					className="py-2.5 px-5 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-medium rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 text-sm flex items-center shadow-lg"
-				>
-					<span className="mr-1 text-lg">+</span> New Testudo
-				</button>
-			</div>
-
-			{isEmpty && !centurionData ? (
-				<div className="p-12 text-center">
-					<div className="mb-6 opacity-80">
-						<Image
-							src="/logo2.png"
-							alt="Testudo Logo"
-							width={100}
-							height={100}
-							className="mx-auto"
-						/>
-					</div>
-					<h3 className="text-2xl font-medium text-amber-400 mb-3">
-						No Testudo Accounts Yet
-					</h3>
-					<p className="text-gray-400 mb-8 max-w-md mx-auto">
-						Create your first Testudo token account to start
-						managing assets securely with our dual-signature system.
-					</p>
-					<button
-						onClick={onCreateTestudo}
-						className="py-3 px-8 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-medium rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-lg"
+		<>
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5 }}
+				className="bg-gradient-to-b from-gray-900/80 to-gray-950/90 backdrop-blur-md rounded-xl overflow-hidden shadow-xl border border-amber-500/20 mb-8 max-w-3xl mx-auto"
+			>
+				<div className="flex justify-between items-center p-8 border-b border-gray-800/50">
+					<h2
+						className={`${charisSIL.className} text-3xl text-amber-400`}
 					>
-						Create First Testudo
+						Testudos
+					</h2>
+
+					<button
+						onClick={handleCreateTestudo}
+						className="py-2.5 px-5 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-medium rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 text-sm flex items-center shadow-lg"
+					>
+						<span className="mr-1 text-lg">+</span> New Testudo
 					</button>
 				</div>
-			) : (
+
 				<div className="overflow-x-auto p-4">
 					{isLoading ? (
 						<div className="p-8 text-center">
@@ -215,17 +303,17 @@ export function TestudoAccountsTable({
 										
 										<div className="flex flex-col items-end">
 											<div className="text-lg font-medium text-white text-right">
-												{formatBalance(centurionData.lamportBalance, solToken.decimals)} {solToken.symbol}
+												{formatBalance(centurionData.lamportBalance, 9)} SOL
 											</div>
 											<div className="flex justify-end space-x-2 mt-2">
 												<button
-													onClick={() => onDeposit("SOL")}
+													onClick={() => handleShowDepositModal("SOL")}
 													className="px-4 py-1.5 text-xs rounded-md bg-green-600/30 text-green-400 hover:bg-green-600/40 transition-colors duration-200"
 												>
 													Deposit
 												</button>
 												<button
-													onClick={() => onWithdraw("SOL")}
+													onClick={() => handleShowWithdrawModal("SOL")}
 													className="px-4 py-1.5 text-xs rounded-md bg-blue-600/30 text-blue-400 hover:bg-blue-600/40 transition-colors duration-200"
 												>
 													Withdraw
@@ -288,19 +376,19 @@ export function TestudoAccountsTable({
 												</div>
 												<div className="flex justify-end space-x-2 mt-2">
 													<button
-														onClick={() => onDeposit(testudo)}
+														onClick={() => handleShowDepositModal(testudo)}
 														className="px-4 py-1.5 text-xs rounded-md bg-green-600/30 text-green-400 hover:bg-green-600/40 transition-colors duration-200"
 													>
 														Deposit
 													</button>
 													<button
-														onClick={() => onWithdraw(testudo)}
+														onClick={() => handleShowWithdrawModal(testudo)}
 														className="px-4 py-1.5 text-xs rounded-md bg-blue-600/30 text-blue-400 hover:bg-blue-600/40 transition-colors duration-200"
 													>
 														Withdraw
 													</button>
 													<button
-														onClick={() => onDelete(testudo)}
+														onClick={() => handleDelete(testudo)}
 														className="px-4 py-1.5 text-xs rounded-md bg-red-600/30 text-red-400 hover:bg-red-600/40 transition-colors duration-200"
 													>
 														Delete
@@ -314,7 +402,75 @@ export function TestudoAccountsTable({
 						</div>
 					)}
 				</div>
+			</motion.div>
+		
+			{/* Create Testudo Modal */}
+			<CreateTestudoModal
+				isOpen={showCreateTestudo}
+				onClose={() => setShowCreateTestudo(false)}
+				onSuccess={(updatedCenturionData) => {
+					onCenturionUpdated(updatedCenturionData as unknown as CenturionData);
+					setShowCreateTestudo(false);
+				}}
+				isCreating={creatingTestudo}
+				setIsCreating={setCreatingTestudo}
+			/>
+			
+			{/* Deposit Modal */}
+			{depositingTestudo && (
+				<DepositModal
+					isOpen={showDepositModal}
+					onClose={() => {
+						setShowDepositModal(false);
+						setDepositingTestudo(null);
+					}}
+					onSuccess={(updatedCenturionData) => {
+						onCenturionUpdated(updatedCenturionData as unknown as CenturionData);
+					}}
+					isDepositing={isDepositing}
+					setIsDepositing={setIsDepositing}
+					testudo={depositingTestudo}
+					tokenDecimals={depositTokenDecimals}
+					tokenSymbol={depositTokenSymbol}
+				/>
 			)}
-		</motion.div>
+			
+			{/* Withdraw Modal */}
+			{withdrawingTestudo && (
+				<WithdrawModal
+					isOpen={showWithdrawModal}
+					onClose={() => {
+						setShowWithdrawModal(false);
+						setWithdrawingTestudo(null);
+					}}
+					onSuccess={(updatedCenturionData) => {
+						onCenturionUpdated(updatedCenturionData as unknown as CenturionData);
+					}}
+					isWithdrawing={isWithdrawing}
+					setIsWithdrawing={setIsWithdrawing}
+					testudo={withdrawingTestudo}
+					tokenDecimals={withdrawTokenDecimals}
+					tokenSymbol={withdrawTokenSymbol}
+				/>
+			)}
+			
+			{/* Delete Modal */}
+			{deletingTestudo && (
+				<DeleteTestudoModal
+					isOpen={showDeleteModal}
+					onClose={() => {
+						setShowDeleteModal(false);
+						setDeletingTestudo(null);
+					}}
+					onSuccess={(updatedCenturionData) => {
+						onCenturionUpdated(updatedCenturionData as unknown as CenturionData);
+					}}
+					isDeleting={isDeleting}
+					setIsDeleting={setIsDeleting}
+					testudo={deletingTestudo}
+					tokenSymbol={deleteTokenSymbol}
+				/>
+			)}
+		</>
 	);
 }

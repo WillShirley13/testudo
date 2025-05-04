@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, Keypair } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { charisSIL } from "@/app/fonts";
-import { findCenturionPDA, findTestudoPDA, findLegatePDA } from "@/app/utils/testudo-utils";
+import { findCenturionPDA } from "@/app/utils/testudo-utils";
 import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
 import { CenturionCard, CreateCenturionForm } from "@/app/components/dashboard/centurion";
-import { CreateTestudoModal, TestudoAccountsTable, DepositModal, WithdrawModal } from "@/app/components/dashboard/testudo";
-import { CenturionData, TestudoData, TokenData, TokenWhitelistData } from "@/app/types/testudo";
+import { TestudoAccountsTable } from "@/app/components/dashboard/testudo";
+import { CenturionData } from "@/app/types/testudo";
 import { toast } from "react-hot-toast";
 import * as anchor from "@coral-xyz/anchor";
 
@@ -32,17 +32,7 @@ export default function DashboardPage() {
 	const [loading, setLoading] = useState(true);
 	const [hasCenturion, setHasCenturion] = useState(false);
 	const [centurionData, setCenturionData] = useState<CenturionData | null>(null);
-	const [showCreateTestudo, setShowCreateTestudo] = useState(false);
 	const [creatingCenturion, setCreatingCenturion] = useState(false);
-	const [creatingTestudo, setCreatingTestudo] = useState(false);
-	const [depositingTestudo, setDepositingTestudo] = useState<TestudoData | "SOL" | null>(null);
-	const [showDepositModal, setShowDepositModal] = useState(false);
-	const [isDepositing, setIsDepositing] = useState(false);
-	const [tokenSymbol, setTokenSymbol] = useState("");
-	const [tokenDecimals, setTokenDecimals] = useState(9);
-	const [withdrawingTestudo, setWithdrawingTestudo] = useState<TestudoData | "SOL" | null>(null);
-	const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-	const [isWithdrawing, setIsWithdrawing] = useState(false);
 
 	useEffect(() => {
 		// Reset states when wallet disconnects
@@ -96,114 +86,6 @@ export default function DashboardPage() {
 		} catch (error) {
 			console.error("Error fetching testudos:", error);
 		}
-	};
-
-	// Add a function to get token info when needed
-	const getTokenInfo = async (tokenMint: PublicKey) => {
-		try {
-			// First try to get from Legate account (whitelist)
-			const [legatePDA] = findLegatePDA(testudoProgram.programId);
-			const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
-			
-			// Find the token in the whitelist
-			const tokenInfo = legateAccount.testudoTokenWhitelist.find(
-				(token: any) => token.tokenMint.toString() === tokenMint.toString()
-			);
-			
-			if (tokenInfo) {
-				return {
-					symbol: tokenInfo.tokenSymbol,
-					decimals: tokenInfo.tokenDecimals
-				};
-			}
-			
-			// If not found, return defaults
-			return {
-				symbol: "Token",
-				decimals: 9
-			};
-		} catch (error) {
-			console.error("Error getting token info:", error);
-			return {
-				symbol: "Token",
-				decimals: 9
-			};
-		}
-	};
-
-	// Show the deposit modal when a user chooses to deposit
-	const handleShowDepositModal = async (testudo: TestudoData | "SOL") => {
-		if (testudo) {
-			// Only show modal if testudo is provided
-			setDepositingTestudo(testudo);
-			
-			// Fetch token symbol from Legate for non-SOL tokens
-			if (testudo !== "SOL") {
-				try {
-					const [legatePDA] = findLegatePDA(testudoProgram.programId);
-					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
-					
-					// Find the token in the whitelist
-					const tokenInfo = legateAccount.testudoTokenWhitelist.find(
-						(token: any) => token.tokenMint.toString() === testudo.tokenMint.toString()
-					);
-					
-					if (tokenInfo) {
-						// Pass the correct token symbol to the DepositModal
-						setTokenSymbol(tokenInfo.tokenSymbol);
-						setTokenDecimals(tokenInfo.tokenDecimals);
-					}
-				} catch (error) {
-					console.error("Error fetching token info from Legate:", error);
-				}
-			} else {
-				// For SOL, set default values
-				setTokenSymbol("SOL");
-				setTokenDecimals(9);
-			}
-			
-			setShowDepositModal(true);
-		}
-	};
-
-	// Show the withdraw modal when a user chooses to withdraw
-	const handleShowWithdrawModal = async (testudo: TestudoData | "SOL") => {
-		if (testudo) {
-			// Only show modal if testudo is provided
-			setWithdrawingTestudo(testudo);
-			
-			// Fetch token symbol from Legate for non-SOL tokens
-			if (testudo !== "SOL") {
-				try {
-					const [legatePDA] = findLegatePDA(testudoProgram.programId);
-					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
-					
-					// Find the token in the whitelist
-					const tokenInfo = legateAccount.testudoTokenWhitelist.find(
-						(token: any) => token.tokenMint.toString() === testudo.tokenMint.toString()
-					);
-					
-					if (tokenInfo) {
-						// Pass the correct token symbol to the WithdrawModal
-						setTokenSymbol(tokenInfo.tokenSymbol);
-						setTokenDecimals(tokenInfo.tokenDecimals);
-					}
-				} catch (error) {
-					console.error("Error fetching token info from Legate:", error);
-				}
-			} else {
-				// For SOL, set default values
-				setTokenSymbol("SOL");
-				setTokenDecimals(9);
-			}
-			
-			setShowWithdrawModal(true);
-		}
-	};
-
-	const handleDelete = async (testudo: TestudoData) => {
-		alert("Delete functionality to be implemented");
-		// Implementation for delete functionality would go here
 	};
 
 	// Render different states based on wallet connection and Centurion existence
@@ -320,62 +202,11 @@ export default function DashboardPage() {
 					testudos={centurionData?.testudos}
 					centurionData={centurionData}
 					programId={testudoProgram.programId}
-					onCreateTestudo={() => setShowCreateTestudo(true)}
-					onDeposit={handleShowDepositModal}
-					onWithdraw={handleShowWithdrawModal}
-					onDelete={handleDelete}
+					onCenturionUpdated={(updatedCenturionData) => {
+						setCenturionData(updatedCenturionData);
+					}}
 				/>
 			</div>
-
-			{/* Create Testudo Modal */}
-			<CreateTestudoModal 
-				isOpen={showCreateTestudo}
-				onClose={() => setShowCreateTestudo(false)}
-				onSuccess={(updatedCenturionData) => {
-					setCenturionData(updatedCenturionData as unknown as CenturionData);
-					setShowCreateTestudo(false);
-				}}
-				isCreating={creatingTestudo}
-				setIsCreating={setCreatingTestudo}
-			/>
-
-			{/* Deposit Modal */}
-			{depositingTestudo && (
-				<DepositModal
-					isOpen={showDepositModal}
-					onClose={() => {
-						setShowDepositModal(false);
-						setDepositingTestudo(null);
-					}}
-					onSuccess={(updatedCenturionData) => {
-						setCenturionData(updatedCenturionData as unknown as CenturionData);
-					}}
-					isDepositing={isDepositing}
-					setIsDepositing={setIsDepositing}
-					testudo={depositingTestudo}
-					tokenDecimals={tokenDecimals}
-					tokenSymbol={tokenSymbol}
-				/>
-			)}
-
-			{/* Withdraw Modal */}
-			{withdrawingTestudo && (
-				<WithdrawModal
-					isOpen={showWithdrawModal}
-					onClose={() => {
-						setShowWithdrawModal(false);
-						setWithdrawingTestudo(null);
-					}}
-					onSuccess={(updatedCenturionData) => {
-						setCenturionData(updatedCenturionData as unknown as CenturionData);
-					}}
-					isWithdrawing={isWithdrawing}
-					setIsWithdrawing={setIsWithdrawing}
-					testudo={withdrawingTestudo}
-					tokenDecimals={tokenDecimals}
-					tokenSymbol={tokenSymbol}
-				/>
-			)}
 		</div>
 	);
 }

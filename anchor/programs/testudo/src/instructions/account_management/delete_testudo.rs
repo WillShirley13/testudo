@@ -85,8 +85,6 @@ pub fn process_delete_testudo(ctx: Context<DeleteTestudo>) -> Result<()> {
     );
     msg!("Password signature is valid");
 
-    let actual_token_amount = testudo_ata.amount;
-
     // Transfer all SPL tokens to the authority
     // Set up the CPI accounts for the transfer
     let cpi_accounts = TransferChecked {
@@ -108,16 +106,9 @@ pub fn process_delete_testudo(ctx: Context<DeleteTestudo>) -> Result<()> {
     // Perform the transfer
     transfer_checked(cpi_context, testudo_ata.amount, ctx.accounts.mint.decimals)?;
 
-    let tracked_token_amount = centurion
-        .testudos
-        .iter()
-        .find(|testudo| testudo.token_mint == ctx.accounts.mint.key())
-        .unwrap()
-        .testudo_token_count;
-
     //Ensure all tokens have been transferred
     require_eq!(
-        actual_token_amount - tracked_token_amount,
+        testudo_ata.amount,
         0,
         ErrorTransferringAllTokensOutOfTestudo
     );

@@ -20,7 +20,7 @@ pub struct InitLegate<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn process_init_legate(ctx: Context<InitLegate>) -> Result<()> {
+pub fn process_init_legate(ctx: Context<InitLegate>, treasury_acc: Pubkey) -> Result<()> {
     let legate_data: &mut Account<'_, Legate> = &mut ctx.accounts.legate;
 
     // double check that the legate account is not already initialized
@@ -46,6 +46,8 @@ pub fn process_init_legate(ctx: Context<InitLegate>) -> Result<()> {
         token_symbol: "USDC".to_string(),
         token_decimals: 6,
     }];
+    legate_data.treasury_acc = treasury_acc;
+    legate_data.percent_for_fees = 15; // where 15 = 0.15%
 
     msg!("Legate account initialized");
     Ok(())

@@ -5,8 +5,8 @@ use crate::errors::ErrorCode::{
     TestudoCreationCannotPreceedCenturionInitialization, UnsupportedTokenMint,
 };
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
-
 // Initialize a testudo account (An ATA from the Centurion PDA) for a user.
 
 #[derive(Accounts)]
@@ -51,7 +51,7 @@ pub struct CreateTestudo<'info> {
         seeds = [centurion.key().as_ref(), mint.key().as_ref()],
         bump
     )]
-    pub centurion_ata: InterfaceAccount<'info, TokenAccount>,
+    pub testudo: InterfaceAccount<'info, TokenAccount>,
     // Ensure valid system program is passed
     #[account(
         constraint = system_program.key() == anchor_lang::system_program::ID,

@@ -14,8 +14,8 @@ pub struct Legate {
     pub max_whitelisted_mints: u16,  // Maximum number of whitelisted mints
     #[max_len(50)]
     pub testudo_token_whitelist: Vec<TestudoTokenWhitelist>, // List of token mints that can be used with testudos
-                                                             // treasury acc for later use?
-                                                             // basis points for fees?
+    pub treasury_acc: Pubkey,  // treasury acc for later use
+    pub percent_for_fees: u16, // where 10000 = 100%
 }
 
 // Data structure for the testudo token whitelist info

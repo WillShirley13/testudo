@@ -11,8 +11,8 @@ declare_id!("8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U");
 pub mod testudo {
     use super::*;
 
-    pub fn init_legate(ctx: Context<InitLegate>) -> Result<()> {
-        instructions::process_init_legate(ctx)
+    pub fn init_legate(ctx: Context<InitLegate>, treasury_acc: Pubkey) -> Result<()> {
+        instructions::process_init_legate(ctx, treasury_acc)
     }
 
     pub fn init_centurion(

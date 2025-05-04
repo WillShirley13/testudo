@@ -52,7 +52,7 @@ export function Header() {
 			className={`fixed w-full z-30 transition-all duration-300 shadow-lg ${
 				scrolled
 					? "py-2 bg-gray-900/95 backdrop-blur-md"
-					: "py-4 bg-gradient-to-b from-gray-900 via-[#1a2133] to-[#171e2e]"
+					: "py-2 md:py-4 bg-gradient-to-b from-gray-900 via-[#1a2133] to-[#171e2e]"
 			}`}
 		>
 			{/* Top gold accent line - full width */}
@@ -61,10 +61,10 @@ export function Header() {
 			{/* Bottom gold accent line - full width */}
 			<div className="absolute bottom-0 left-0 right-0 w-full h-0.5 bg-gradient-to-r from-amber-700/5 via-amber-500/20 to-amber-700/5" />
 
-			<div className="max-w-[90%] mx-auto px-4 flex items-center justify-between min-h-[74px] relative">
+			<div className="max-w-[90%] mx-auto px-4 flex items-center justify-between min-h-[60px] md:min-h-[74px] relative">
 				{/* Logo and brand */}
 				<Link href="/" className="flex items-center group select-none">
-					<div className="relative h-10 w-10 md:h-16 md:w-16 flex-shrink-0 overflow-hidden">
+					<div className="relative h-8 w-8 md:h-10 lg:h-16 md:w-10 lg:w-16 flex-shrink-0 overflow-hidden">
 						<Image
 							src="/logo2.png"
 							alt="Testudo Logo"
@@ -74,9 +74,9 @@ export function Header() {
 							priority
 						/>
 					</div>
-					<div className="h-10 md:h-16 ml-3 flex flex-col justify-center">
+					<div className="h-8 md:h-10 lg:h-16 ml-2 md:ml-3 flex flex-col justify-center">
 						<span
-							className={`${charisSIL.className} text-2xl md:text-3xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 group-hover:from-amber-300 group-hover:via-yellow-200 group-hover:to-amber-400 transition-all duration-300 relative`}
+							className={`${charisSIL.className} text-xl md:text-2xl lg:text-3xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 group-hover:from-amber-300 group-hover:via-yellow-200 group-hover:to-amber-400 transition-all duration-300 relative`}
 							style={{ 
 								letterSpacing: '0.125em',
 								textShadow: '0 2px 4px rgba(0,0,0,0.3)'

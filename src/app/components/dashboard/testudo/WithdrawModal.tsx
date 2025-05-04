@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { charisSIL } from "@/app/fonts";
-import { TestudoData } from "@/app/types/testudo";
+import { TestudoData, CenturionData } from "@/app/types/testudo";
 import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
 import { formatBalance, findCenturionPDA, findLegatePDA } from "@/app/utils/testudo-utils";
 import {
@@ -16,6 +16,66 @@ import { PublicKey, Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { toast } from "react-hot-toast";
 
+// Hook for using the withdraw modal
+export function useWithdrawModal() {
+	const [withdrawingTestudo, setWithdrawingTestudo] = useState<TestudoData | "SOL" | null>(null);
+	const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+	const [isWithdrawing, setIsWithdrawing] = useState(false);
+	const [tokenSymbol, setTokenSymbol] = useState("");
+	const [tokenDecimals, setTokenDecimals] = useState(9);
+	const testudoProgram = useTestudoProgram();
+
+	// Show the withdraw modal when a user chooses to withdraw
+	const handleShowWithdrawModal = async (testudo: TestudoData | "SOL") => {
+		if (testudo) {
+			// Only show modal if testudo is provided
+			setWithdrawingTestudo(testudo);
+			
+			// Fetch token symbol from Legate for non-SOL tokens
+			if (testudo !== "SOL") {
+				try {
+					const [legatePDA] = findLegatePDA(testudoProgram.programId);
+					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+					
+					// Find the token in the whitelist
+					const tokenInfo = legateAccount.testudoTokenWhitelist.find(
+						(token: any) => token.tokenMint.toString() === testudo.tokenMint.toString()
+					);
+					
+					if (tokenInfo) {
+						// Pass the correct token symbol to the WithdrawModal
+						setTokenSymbol(tokenInfo.tokenSymbol);
+						setTokenDecimals(tokenInfo.tokenDecimals);
+					}
+				} catch (error) {
+					console.error("Error fetching token info from Legate:", error);
+				}
+			} else {
+				// For SOL, set default values
+				setTokenSymbol("SOL");
+				setTokenDecimals(9);
+			}
+			
+			setShowWithdrawModal(true);
+		}
+	};
+
+	const closeWithdrawModal = () => {
+		setShowWithdrawModal(false);
+		setWithdrawingTestudo(null);
+	};
+
+	return {
+		withdrawingTestudo,
+		showWithdrawModal,
+		isWithdrawing,
+		setIsWithdrawing,
+		tokenSymbol,
+		tokenDecimals,
+		handleShowWithdrawModal,
+		closeWithdrawModal
+	};
+}
 
 interface WithdrawModalProps {
 	isOpen: boolean;
@@ -291,6 +351,7 @@ export function WithdrawModal({
 					<form
 						className="space-y-2 sm:space-y-3"
 						onSubmit={handleSubmit}
+						autoComplete="off"
 					>
 						<div>
 							<label className="block text-sm font-medium text-gray-300 mb-1">

@@ -8,7 +8,7 @@ import { charisSIL } from "@/app/fonts";
 
 export function HeroSection() {
 	return (
-		<section className="relative overflow-hidden pt-16 mt-6 pb-24 w-full">
+		<section className="relative overflow-hidden pt-24 md:pt-16 mt-16 md:mt-6 pb-24 w-full">
 			<div className="content-container relative z-10">
 				<div className="grid md:grid-cols-2 gap-12 items-center">
 					<div className="text-center md:text-left">

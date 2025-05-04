@@ -339,44 +339,15 @@ export function WithdrawToBackupModal({
 
 							{/* Password section */}
 							<div>
-								<label className="block text-gray-300 text-sm font-medium mb-2">Your Password Phrase</label>
-								<p className="text-gray-400 text-sm mt-1 mb-3">
-									Enter your 4-6 word phrase. Only fill what applies to you.
-								</p>
-								
-								{/* Two rows of 3 inputs for a more compact layout */}
-								<div className="grid grid-cols-3 gap-2 mb-2">
-									{[0, 1, 2].map(index => (
-										<input
-											key={index}
-											type="text"
-											className="py-2 px-3 bg-gray-800/60 rounded border border-gray-700 text-white text-sm focus:border-amber-500 focus:outline-none"
-											value={passwordWords[index] || ""}
-											onChange={(e) => {
-												const newWords = [...passwordWords];
-												newWords[index] = e.target.value;
-												setPasswordWords(newWords);
-											}}
-											placeholder={`Word ${index + 1}`}
-										/>
-									))}
-								</div>
-								<div className="grid grid-cols-3 gap-2">
-									{[3, 4, 5].map(index => (
-										<input
-											key={index}
-											type="text"
-											className="py-2 px-3 bg-gray-800/60 rounded border border-gray-700 text-white text-sm focus:border-amber-500 focus:outline-none"
-											value={passwordWords[index] || ""}
-											onChange={(e) => {
-												const newWords = [...passwordWords];
-												newWords[index] = e.target.value;
-												setPasswordWords(newWords);
-											}}
-											placeholder={`Word ${index + 1}`}
-										/>
-									))}
-								</div>
+								<label className="block text-gray-300 text-sm font-medium mb-2">
+									Your Password Phrase
+								</label>
+								<PasswordPhraseInput
+									words={passwordWords}
+									onChange={setPasswordWords}
+									maxWords={6}
+									className="mb-1"
+								/>
 								<p className="text-sm text-gray-500 mt-2">
 									Required to authorize this emergency transfer
 								</p>

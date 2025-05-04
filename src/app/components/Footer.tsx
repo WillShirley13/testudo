@@ -132,7 +132,7 @@ export function Footer() {
 								</svg>
 							</a>
 							<a
-								href="#"
+								href="https://x.com/TestudoOnSolana"
 								className="text-gray-300 hover:text-amber-300 transition-colors duration-200"
 							>
 								<svg

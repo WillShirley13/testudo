@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { charisSIL } from "@/app/fonts";
-import { TestudoData, TokenData } from "@/app/types/testudo";
+import { TestudoData, TokenData, CenturionData } from "@/app/types/testudo";
 import { formatBalance, findCenturionPDA, findLegatePDA } from "@/app/utils/testudo-utils";
 import { PublicKey } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
 import * as anchor from "@coral-xyz/anchor";
 import { toast } from "react-hot-toast";
-
 
 // Define a default SOL token to ensure it's always available
 const DEFAULT_SOL_TOKEN: TokenData = {
@@ -18,6 +17,67 @@ const DEFAULT_SOL_TOKEN: TokenData = {
 	mint: "So11111111111111111111111111111111111111112",
 	decimals: 9,
 };
+
+// Hook for using the deposit modal
+export function useDepositModal() {
+	const [depositingTestudo, setDepositingTestudo] = useState<TestudoData | "SOL" | null>(null);
+	const [showDepositModal, setShowDepositModal] = useState(false);
+	const [isDepositing, setIsDepositing] = useState(false);
+	const [tokenSymbol, setTokenSymbol] = useState("");
+	const [tokenDecimals, setTokenDecimals] = useState(9);
+	const testudoProgram = useTestudoProgram();
+
+	// Show the deposit modal when a user chooses to deposit
+	const handleShowDepositModal = async (testudo: TestudoData | "SOL") => {
+		if (testudo) {
+			// Only show modal if testudo is provided
+			setDepositingTestudo(testudo);
+			
+			// Fetch token symbol from Legate for non-SOL tokens
+			if (testudo !== "SOL") {
+				try {
+					const [legatePDA] = findLegatePDA(testudoProgram.programId);
+					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+					
+					// Find the token in the whitelist
+					const tokenInfo = legateAccount.testudoTokenWhitelist.find(
+						(token: any) => token.tokenMint.toString() === testudo.tokenMint.toString()
+					);
+					
+					if (tokenInfo) {
+						// Pass the correct token symbol to the DepositModal
+						setTokenSymbol(tokenInfo.tokenSymbol);
+						setTokenDecimals(tokenInfo.tokenDecimals);
+					}
+				} catch (error) {
+					console.error("Error fetching token info from Legate:", error);
+				}
+			} else {
+				// For SOL, set default values
+				setTokenSymbol("SOL");
+				setTokenDecimals(9);
+			}
+			
+			setShowDepositModal(true);
+		}
+	};
+
+	const closeDepositModal = () => {
+		setShowDepositModal(false);
+		setDepositingTestudo(null);
+	};
+
+	return {
+		depositingTestudo,
+		showDepositModal,
+		isDepositing,
+		setIsDepositing,
+		tokenSymbol,
+		tokenDecimals,
+		handleShowDepositModal,
+		closeDepositModal
+	};
+}
 
 interface DepositModalProps {
 	isOpen: boolean;

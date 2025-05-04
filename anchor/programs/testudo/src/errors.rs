@@ -40,4 +40,6 @@ pub enum ErrorCode {
     CannotUpdateMaxWhitelistedMintsToLessThanCurrentNumberOfWhitelistedMints,
     #[msg("Error while transferring all tokens out of Testudo")]
     ErrorTransferringAllTokensOutOfTestudo,
+    #[msg("Invalid treasury account")]
+    InvalidTreasuryAccount,
 }

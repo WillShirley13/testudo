@@ -155,6 +155,10 @@ export type Testudo = {
         {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": []
@@ -340,6 +344,28 @@ export type Testudo = {
           }
         },
         {
+          "name": "legate",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
@@ -472,6 +498,85 @@ export type Testudo = {
           }
         },
         {
+          "name": "legate",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "treasuryAta",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "treasury"
+              },
+              {
+                "kind": "account",
+                "path": "associatedTokenProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
           "name": "mint",
           "writable": true
         },
@@ -481,6 +586,10 @@ export type Testudo = {
         {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": [
@@ -594,7 +703,12 @@ export type Testudo = {
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "treasuryAcc",
+          "type": "pubkey"
+        }
+      ]
     },
     {
       "name": "updateAuthority",
@@ -1340,6 +1454,11 @@ export type Testudo = {
       "code": 6018,
       "name": "errorTransferringAllTokensOutOfTestudo",
       "msg": "Error while transferring all tokens out of Testudo"
+    },
+    {
+      "code": 6019,
+      "name": "invalidTreasuryAccount",
+      "msg": "Invalid treasury account"
     }
   ],
   "types": [
@@ -1437,6 +1556,14 @@ export type Testudo = {
                 }
               }
             }
+          },
+          {
+            "name": "treasuryAcc",
+            "type": "pubkey"
+          },
+          {
+            "name": "percentForFees",
+            "type": "u16"
           }
         ]
       }

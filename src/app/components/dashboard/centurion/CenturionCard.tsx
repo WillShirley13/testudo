@@ -44,9 +44,9 @@ export function CenturionCard({
 		>
 			<div className="p-8">
 				<h2
-					className={`${charisSIL.className} text-3xl font-semibold text-amber-400 mb-6 text-center`}
+					className={`${charisSIL.className} text-3xl text-amber-400 mb-6 text-center`}
 				>
-					Centurion Information
+					Centurion
 				</h2>
 
 				<div className="flex flex-col space-y-4">
