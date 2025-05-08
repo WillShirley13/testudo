@@ -141,17 +141,18 @@ export function DepositModal({
 				} else {
 					// For SPL tokens, we need to:
 					// 1. Get the token's details (decimals) if needed
-					if (tokenDecimals === 9 && testudo.tokenMint) {
+					if (testudo.tokenMint) {
 						try {
-							// Get mint info for decimals
+							// Always get mint info for decimals to ensure accuracy
 							const mintInfo = await connection.getParsedAccountInfo(testudo.tokenMint);
 							if (mintInfo.value && 'parsed' in mintInfo.value.data) {
 								const parsedData = mintInfo.value.data.parsed;
 								if (parsedData.info && parsedData.info.decimals) {
 									// Update decimals based on mint info
+									const actualDecimals = parsedData.info.decimals;
 									setTokenInfo(prev => ({
 										...prev,
-										decimals: parsedData.info.decimals
+										decimals: actualDecimals
 									}));
 								}
 							}
@@ -239,15 +240,18 @@ export function DepositModal({
 				// Note: Linter errors related to the .accounts() method are expected and should be ignored
 				// according to the project's custom rules.
 				const tx = await testudoProgram.methods
-					.depositSol(new anchor.BN(amountInLamports))
+					.depositSol(new anchor.BN(amountInLamports.toString()))
 					.accounts({
 						authority: publicKey,
-						centurion: centurionPDA,
-						systemProgram: anchor.web3.SystemProgram.programId,
 					})
 					.rpc();
 				
-				await testudoProgram.provider.connection.confirmTransaction(tx);
+                const { blockhash, lastValidBlockHeight } = await testudoProgram.provider.connection.getLatestBlockhash();
+				await testudoProgram.provider.connection.confirmTransaction({
+					blockhash,
+					lastValidBlockHeight,
+					signature: tx,
+				});
 				
 				// Refresh centurion data
 				const updatedCenturionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
@@ -264,28 +268,33 @@ export function DepositModal({
 				// Get token info for decimals and symbol
 				const tokenInfo = await getTokenInfo(tokenMint);
 				
+				// Double-check against on-chain decimals to ensure accuracy
+                const mintInfo = await connection.getParsedAccountInfo(tokenMint);
+				try {
+					if (mintInfo.value && 'parsed' in mintInfo.value.data) {
+						const parsedData = mintInfo.value.data.parsed;
+						if (parsedData.info && parsedData.info.decimals) {
+							tokenInfo.decimals = parsedData.info.decimals;
+						}
+					}
+				} catch (error) {
+					console.error("Error verifying token decimals:", error);
+				}
+				
 				// Convert amount to token units with decimals
-				const amountWithDecimals = Math.floor(depositAmount * Math.pow(10, tokenInfo.decimals));
+				const amountWithDecimals = depositAmount * Math.pow(10, tokenInfo.decimals);
+				const amountWithDecimalsStr = Math.floor(amountWithDecimals).toString();
+
+                const tokenProgram = (await connection.getAccountInfo(tokenMint))?.owner;
 				
-				// Find authority's ATA
-				const ata = await anchor.utils.token.associatedAddress({
-					mint: tokenMint,
-					owner: publicKey,
-				});
-				
-				// Call depositSpl instruction with required accounts
-				// Note: Linter errors related to the .accounts() method are expected and should be ignored
-				// according to the project's custom rules.
+				// Call depositSpl instruction with string representation
 				const tx = await testudoProgram.methods
-					.depositSpl(new anchor.BN(amountWithDecimals))
+					.depositSpl(new anchor.BN(amountWithDecimalsStr))
 					.accounts({
 						authority: publicKey,
-						authorityAta: ata,
-						centurion: centurionPDA,
-						testudo: testudo.testudoPubkey,
 						mint: tokenMint,
-						tokenProgram: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
-						systemProgram: anchor.web3.SystemProgram.programId,
+						tokenProgram: tokenProgram as PublicKey,
+
 					})
 					.rpc();
 				
@@ -324,12 +333,15 @@ export function DepositModal({
 				return;
 			}
 
+			// Get the actual token decimals to use
+			const actualDecimals = testudo === "SOL" ? 9 : tokenInfo.decimals;
+
 			// Convert the amount to lamports/raw token amount for comparison
-			const rawAmount = depositAmount * Math.pow(10, tokenDecimals);
+			const rawAmount = depositAmount * Math.pow(10, actualDecimals);
 			
 			// Check if user has enough balance
 			if (rawAmount > walletBalance) {
-				setError(`Insufficient balance. You have ${formatBalance(walletBalance, tokenDecimals)} ${tokenSymbol}`);
+				setError(`Insufficient balance. You have ${formatBalance(walletBalance, actualDecimals)} ${tokenSymbol}`);
 				return;
 			}
 

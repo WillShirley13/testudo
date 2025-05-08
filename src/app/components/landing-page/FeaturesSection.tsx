@@ -9,7 +9,7 @@ export function FeaturesSection() {
 	const features = [
 		{
 			title: "Dual-Signature Security",
-			description: "All withdrawals require two signatures: your wallet and a special key derived from your memorable passphrase.",
+			description: "All withdrawals require two signatures: your wallet and a special key derived from your memorable passphrase. Dual-signature, reimagined.",
 			icon: (
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

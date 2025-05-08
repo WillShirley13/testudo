@@ -12,7 +12,8 @@ import {
 	getOrCreateAssociatedTokenAccount,
 	mintTo,
     TOKEN_2022_PROGRAM_ID,
-    getMint
+    getMint,
+    ASSOCIATED_TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import { SecureKeypairGenerator } from "./keypair_functions";
 
@@ -27,6 +28,7 @@ describe("Testudo Tests", () => {
 	const provider = anchor.getProvider() as anchor.AnchorProvider;
 	const connection = new Connection("http://localhost:8899", "confirmed");
 	const legateAuthority = anchor.web3.Keypair.generate();
+    const legateTreasury = anchor.web3.Keypair.generate();
 	const testUser = anchor.web3.Keypair.generate();
 	
 	// Declare variables that will be initialized in before()
@@ -45,7 +47,8 @@ describe("Testudo Tests", () => {
 		// Log initial information
 		console.log("==== TEST ENVIRONMENT SETUP ====");
 		console.log(`Program ID: ${program.programId.toBase58()}`);
-		console.log(`legateAuthority: ${legateAuthority.publicKey.toBase58()}`);
+        console.log(`legateAuthority: ${legateAuthority.publicKey.toBase58()}`);
+		console.log(`legateTreasury: ${legateTreasury.publicKey.toBase58()}`);
 		console.log(`Password phrase: ${phrase}`);
 		console.log(`Password public Key: ${passwordKeypair.publicKey.toBase58()}`);
 		console.log(`Backup Owner Public Key: ${backupOwnerKeypair.publicKey.toBase58()}`);
@@ -125,8 +128,8 @@ describe("Testudo Tests", () => {
 			console.log("\n==== TEST: Initialize Legate - Creating global configuration account ====");
 			// Initialize the global Legate account which manages the Testudo system parameters
 			const tx = await program.methods
-				.initLegate()
-				.accounts({
+				.initLegate(legateTreasury.publicKey)
+				.accountsPartial({
 					authority: legateAuthority.publicKey,
 				})
 				.signers([legateAuthority])
@@ -160,7 +163,7 @@ describe("Testudo Tests", () => {
 			try {
 				await program.methods
 					.initLegate()
-					.accounts({
+					.accountsPartial({
 						authority: legateAuthority.publicKey,
 					})
 					.signers([legateAuthority])
@@ -185,7 +188,7 @@ describe("Testudo Tests", () => {
 			
 			const tx = await program.methods
 				.updateMaxTestudos(newMaxTestudosPerUser)
-				.accounts({
+				.accountsPartial({
 					authority: legateAuthority.publicKey,
 				})
 				.signers([legateAuthority])
@@ -226,7 +229,7 @@ describe("Testudo Tests", () => {
 
 			const tx = await program.methods
 				.updateMaxWhitelistedMints(newMaxWhitelistedMints)
-				.accounts({
+				.accountsPartial({
 					authority: legateAuthority.publicKey,
 				})
 				.signers([legateAuthority])
@@ -251,7 +254,7 @@ describe("Testudo Tests", () => {
 				"Max whitelisted mints should match new value"
 			).to.equal(newMaxWhitelistedMints);
 			expect(newSize, "New size of legate should be 8159 bytes").to.equal(
-				8159
+				8193
 			);
 		});
 
@@ -262,7 +265,7 @@ describe("Testudo Tests", () => {
 			
 			const tx = await program.methods
 				.updateAuthority()
-				.accounts({
+				.accountsPartial({
 					authority: legateAuthority.publicKey,
 					newAuthority: newAuthority.publicKey,
 				})
@@ -284,7 +287,7 @@ describe("Testudo Tests", () => {
 			// Update Legate authority back to original for subsequent tests
 			const reverseAuthorityUpdatetx = await program.methods
 				.updateAuthority()
-				.accounts({
+				.accountsPartial({
 					authority: newAuthority.publicKey,
 					newAuthority: legateAuthority.publicKey,
 				})
@@ -300,7 +303,7 @@ describe("Testudo Tests", () => {
 			try {
 				await program.methods
 					.updateAuthority()
-					.accounts({
+					.accountsPartial({
 						authority: wrongAuthority.publicKey,
 						newAuthority: newAuthority.publicKey,
 					})
@@ -319,14 +322,19 @@ describe("Testudo Tests", () => {
 				program.programId
 			);
 
+            let mintTokenProgram = (await connection.getAccountInfo(mintPubkey))?.owner;
+
 			let addMintTx = await program.methods.addMintTestudo({
 				tokenMint: mintPubkey,
 				tokenName: "TesterToken",
 				tokenSymbol: "TT",
 				tokenDecimals: token_info.value.decimals
 				})
-				.accounts({
-					authority: legateAuthority.publicKey
+				.accountsPartial({
+					authority: legateAuthority.publicKey,
+					treasury: legateTreasury.publicKey,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    mint: mintPubkey,
 				})
 				.signers([legateAuthority])
 				.rpc();
@@ -355,7 +363,7 @@ describe("Testudo Tests", () => {
 			expect(legate.testudoTokenWhitelist.length).to.be.greaterThan(0);
 			// Verify the added mint is in the whitelist
 			expect(
-				legate.testudoTokenWhitelist[1].tokenMint.toBase58()
+				legate.testudoTokenWhitelist[0].tokenMint.toBase58()
 			).to.equal(mintPubkey.toBase58());
 		});
 
@@ -375,7 +383,7 @@ describe("Testudo Tests", () => {
                         tokenSymbol: "TT",
                         tokenDecimals: token_info.value.decimals
                     })
-                    .accounts({
+                    .accountsPartial({
                         authority: legateAuthority.publicKey
                     })
                     .signers([legateAuthority])
@@ -442,49 +450,69 @@ describe("Testudo Tests", () => {
 				} SOL`
 			);
 
+            let treasuryLamportsBefore = await connection.getBalance(legateTreasury.publicKey);
+            console.log(`Treasury balance BEFORE deposit: ${treasuryLamportsBefore / web3.LAMPORTS_PER_SOL} SOL`);
+
             let centurionBeforeDeposit = await program.account.centurion.fetch(centurionPDA);
             console.log(`Last accessed BEFORE deposit: ${centurionBeforeDeposit.lastAccessed}`);
 
-			let depositSolTx = await program.methods
-				.depositSol(new anchor.BN(1.5 * web3.LAMPORTS_PER_SOL))
-				.accounts({
-					authority: testUser.publicKey,
-				})
-				.signers([testUser])
-				.rpc();
+            const depositAmount = 1.5 * web3.LAMPORTS_PER_SOL;
+            // Calculate the fee (0.15%)
+            const feeAmount = Math.floor(depositAmount * 15 / 10000);
+            const amountAfterFee = depositAmount - feeAmount;
+            console.log(`Deposit amount: ${depositAmount / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Fee amount (0.15%): ${feeAmount / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Amount after fee: ${amountAfterFee / web3.LAMPORTS_PER_SOL} SOL`);
 
-			await connection.confirmTransaction(
-				{
-					signature: depositSolTx,
-					blockhash: (await connection.getLatestBlockhash()).blockhash,
-					lastValidBlockHeight: (
-						await connection.getLatestBlockhash()
-					).lastValidBlockHeight,
-				},
-				"confirmed"
-			);
+            let depositSolTx = await program.methods
+                .depositSol(new anchor.BN(depositAmount))
+                .accounts({
+                    authority: testUser.publicKey,
+                })
+                .signers([testUser])
+                .rpc();
 
-			let centurion = await program.account.centurion.fetch(centurionPDA);
-			console.log(
-				`Centurion balance AFTER deposit: ${
-					(await connection.getBalance(centurionPDA)) /
-					web3.LAMPORTS_PER_SOL
-				} SOL`
-			);
+            await connection.confirmTransaction(
+                {
+                    signature: depositSolTx,
+                    blockhash: (await connection.getLatestBlockhash()).blockhash,
+                    lastValidBlockHeight: (
+                        await connection.getLatestBlockhash()
+                    ).lastValidBlockHeight,
+                },
+                "confirmed"
+            );
+
+            let centurion = await program.account.centurion.fetch(centurionPDA);
+            let treasuryLamportsAfter = await connection.getBalance(legateTreasury.publicKey);
+            console.log(
+                `Centurion balance AFTER deposit: ${
+                    (await connection.getBalance(centurionPDA)) /
+                    web3.LAMPORTS_PER_SOL
+                } SOL`
+            );
+            console.log(`Treasury balance AFTER deposit: ${treasuryLamportsAfter / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Treasury fee received: ${(treasuryLamportsAfter - treasuryLamportsBefore) / web3.LAMPORTS_PER_SOL} SOL`);
 
             let centurionAfterDeposit = await program.account.centurion.fetch(centurionPDA);
             console.log(`Last accessed AFTER deposit: ${centurionAfterDeposit.lastAccessed}`);
 
-			// Verify the deposit was successful
-			expect(
-				await connection.getBalance(centurionPDA),
-				"Centurion balance should be at least 1.5 SOL"
-			).to.greaterThan(1.5 * web3.LAMPORTS_PER_SOL);
-			expect(
-				centurion.lamportBalance.toNumber(),
-				"Centurion account data should show 1.5 SOL"
-			).to.equal(1.5 * web3.LAMPORTS_PER_SOL);
-		});
+            // Verify the deposit was successful
+            expect(
+                await connection.getBalance(centurionPDA),
+                "Centurion balance should include the full deposit amount"
+            ).to.be.greaterThan(depositAmount - 10000); // Allow small tolerance for transaction fees
+            expect(
+                centurion.lamportBalance.toNumber(),
+                "Centurion account data should show the full deposit amount"
+            ).to.equal(depositAmount);
+            
+            // Verify that the treasury did NOT receive a fee (fees are now on withdrawal only)
+            expect(
+                treasuryLamportsAfter - treasuryLamportsBefore,
+                "Treasury should not have received a fee on deposit"
+            ).to.equal(0);
+        });
 
 		it("Should fail when depositing more SOL than available", async () => {
 			console.log("\n==== TEST: Excessive SOL Deposit - Should Fail When Insufficient Funds ====");
@@ -511,65 +539,99 @@ describe("Testudo Tests", () => {
 
 		it("Withdraw SOL from Centurion account with password authentication", async () => {
 			console.log("\n==== TEST: Withdraw SOL - Remove Native SOL Using Password Authentication ====");
-			console.log(
-				`Test User Balance BEFORE withdraw: ${
-					(await connection.getBalance(testUser.publicKey)) /
-					web3.LAMPORTS_PER_SOL
-				} SOL`
-			);
+			let testUserBalanceBefore = await connection.getBalance(testUser.publicKey);
+			console.log(`Test User Balance BEFORE withdraw: ${testUserBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
 			
-
+			// Get the Legate PDA to check treasury balances
+			let [legatePDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("legate")],
+				program.programId
+			);
+			let legate = await program.account.legate.fetch(legatePDA);
+			
+			// Check treasury balance before withdrawal
+			const treasuryBalanceBefore = await connection.getBalance(legate.treasuryAcc);
+			console.log(`Treasury balance BEFORE withdrawal: ${treasuryBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
+			
+			const withdrawAmount = 0.7 * web3.LAMPORTS_PER_SOL; // 0.7 SOL
+			console.log(`Withdraw amount: ${withdrawAmount / web3.LAMPORTS_PER_SOL} SOL`);
+			
+			// Calculate expected fee
+			const feeAmount = Math.floor(withdrawAmount * 15 / 10000); // 0.15% fee
+			const amountAfterFee = withdrawAmount - feeAmount;
+			
+			console.log(`Fee amount (0.15%): ${feeAmount / web3.LAMPORTS_PER_SOL} SOL`);
+			console.log(`Amount after fee: ${amountAfterFee / web3.LAMPORTS_PER_SOL} SOL`);
+			
 			// Withdraw SOL requiring both account owner and password signatures
 			let withdrawSolTx = await program.methods
-				.withdrawSol(new anchor.BN(0.7 * web3.LAMPORTS_PER_SOL))
-				.accountsPartial({
+				.withdrawSol(new anchor.BN(withdrawAmount))
+				.accounts({
 					authority: testUser.publicKey,
 					validSignerOfPassword: passwordKeypair.publicKey,
+					treasury: legateTreasury.publicKey
 				})
 				.signers([testUser, passwordKeypair])
 				.rpc();
-			await connection.confirmTransaction(withdrawSolTx);
-
-			console.log(
-				`Test User Balance AFTER withdraw: ${
-					(await connection.getBalance(testUser.publicKey)) /
-					web3.LAMPORTS_PER_SOL
-				} SOL`
+			
+			await connection.confirmTransaction(
+				{
+					signature: withdrawSolTx,
+					blockhash: (await connection.getLatestBlockhash()).blockhash,
+					lastValidBlockHeight: (
+						await connection.getLatestBlockhash()
+					).lastValidBlockHeight,
+				},
+				"confirmed"
 			);
-			console.log(
-				`Centurion balance AFTER withdraw: ${
-					(await connection.getBalance(centurionPDA)) /
-					web3.LAMPORTS_PER_SOL
-				} SOL`
+			
+			// Check treasury balance after withdrawal
+			const treasuryBalanceAfter = await connection.getBalance(legate.treasuryAcc);
+			console.log(`Treasury balance AFTER withdrawal: ${treasuryBalanceAfter / web3.LAMPORTS_PER_SOL} SOL`);
+			console.log(`Treasury fee received: ${(treasuryBalanceAfter - treasuryBalanceBefore) / web3.LAMPORTS_PER_SOL} SOL`);
+			
+			let testUserBalanceAfter = await connection.getBalance(testUser.publicKey);
+			console.log(`Test User Balance AFTER withdraw: ${testUserBalanceAfter / web3.LAMPORTS_PER_SOL} SOL`);
+			
+			let [centurionPDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("centurion"), testUser.publicKey.toBuffer()],
+				program.programId
 			);
-
-			let centurion = await program.account.centurion.fetch(centurionPDA);
-
+			console.log(`Centurion balance AFTER withdraw: ${(await connection.getBalance(centurionPDA)) / web3.LAMPORTS_PER_SOL} SOL`);
+			
+			let testUserIncrease = testUserBalanceAfter - testUserBalanceBefore;
+			
 			// Verify the withdrawal was successful
 			expect(
-				await connection.getBalance(centurionPDA),
-				"Centurion balance should be above 0.79 SOL"
-			).to.greaterThan(0.79 * web3.LAMPORTS_PER_SOL);
+				testUserIncrease,
+				"User should receive the withdrawal amount minus the fee and transaction costs"
+			).to.be.greaterThan(amountAfterFee - 20000); // Allow small tolerance for transaction fees
+			
+			// Verify that the treasury received the fee
 			expect(
-				await connection.getBalance(centurionPDA),
-				"Centurion balance should be below 0.82 SOL"
-			).to.lessThan(0.82 * web3.LAMPORTS_PER_SOL);
-			expect(
-				centurion.lamportBalance.toNumber(),
-				"Centurion account data should show 0.8 SOL"
-			).to.equal(0.8 * web3.LAMPORTS_PER_SOL);
+				treasuryBalanceAfter - treasuryBalanceBefore,
+				"Treasury should have received the fee"
+			).to.equal(feeAmount);
 		});
 
         it("Should fail when withdrawing with incorrect password signer", async () => {
             console.log("\n==== TEST: Unauthorized SOL Withdrawal - Should Fail with Incorrect Password ====");
             const incorrectPasswordSigner = anchor.web3.Keypair.generate();
             
+            // Get legate PDA
+            let [legatePDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("legate")],
+                program.programId
+            );
+            const legate = await program.account.legate.fetch(legatePDA);
+            
             try {
                 await program.methods
                     .withdrawSol(new anchor.BN(0.1 * web3.LAMPORTS_PER_SOL))
-                    .accountsPartial({
+                    .accounts({
                         authority: testUser.publicKey,
                         validSignerOfPassword: incorrectPasswordSigner.publicKey,
+                        treasury: legateTreasury.publicKey
                     })
                     .signers([testUser, incorrectPasswordSigner])
                     .rpc();
@@ -723,18 +785,24 @@ describe("Testudo Tests", () => {
 
         it("Deposit to SPL Token Testudo", async () => {
             console.log("\n==== TEST: Deposit SPL Tokens - Add Tokens to Testudo Account ====");
-            let testudoPDA = PublicKey.findProgramAddressSync(
+
+            // Get token program
+            const tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
+            
+            // Get testudo PDA
+            const [testudo] = PublicKey.findProgramAddressSync(
                 [centurionPDA.toBuffer(), mintPubkey.toBuffer()],
                 program.programId
-            )[0];
+            );
 
-            let mintInfo = await getMint(connection, mintPubkey);
-            let decimals = mintInfo.decimals;
-            let tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
-            let depositAmount = 50 * Math.pow(10, decimals);
+            const depositAmount = 50;
+            const depositAmountWithDecimals = depositAmount * (10 ** 8); // 8 decimals
 
-            let depositSPLTokenTx = await program.methods.depositSpl(new anchor.BN(depositAmount))
-                .accounts({
+            // No fees on deposit now
+            console.log(`Deposit amount: ${depositAmount}`);
+
+            let depositSPLTokenTx = await program.methods.depositSpl(new anchor.BN(depositAmountWithDecimals))
+                .accountsPartial({
                     authority: testUser.publicKey,
                     mint: mintPubkey,
                     tokenProgram: tokenProgram,
@@ -742,86 +810,130 @@ describe("Testudo Tests", () => {
                 .signers([testUser])
                 .rpc();
 
-            await connection.confirmTransaction(
-                {
-                    signature: depositSPLTokenTx,
-                    blockhash: (await connection.getLatestBlockhash()).blockhash,
-                    lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
-                },
-                "confirmed"
-            );
-
-            let centurionData = await program.account.centurion.fetch(centurionPDA);
-            let centurionRecordedTestudoTokenCount = centurionData.testudos[0].testudoTokenCount;
-            let centurionRecordedTestudoTokenCountWithoutDecimals = centurionRecordedTestudoTokenCount.toNumber() / Math.pow(10, decimals);
-            console.log(`Centurion token count (without decimals): ${centurionRecordedTestudoTokenCountWithoutDecimals}`);
-
-            let testudoData = await connection.getTokenAccountBalance(testudoPDA);
-            let testudoTokenAccountBalance = testudoData.value.uiAmount;
-            console.log(`Testudo token account balance (without decimals): ${testudoTokenAccountBalance}`);
+            await connection.confirmTransaction(depositSPLTokenTx);
 
             // Verify the deposit was successful
-            expect(centurionRecordedTestudoTokenCount.toNumber()).to.equal(depositAmount);
-            // Verify that token count recorded in the centurion account matches actual token count in the testudo account
-            expect(centurionRecordedTestudoTokenCountWithoutDecimals).to.equal(depositAmount / Math.pow(10, decimals));
+            const testudoTokenAccount = await connection.getTokenAccountBalance(testudo);
+            console.log(`Centurion token count (without decimals): ${testudoTokenAccount.value.uiAmount}`);
+            console.log(`Testudo token account balance (without decimals): ${testudoTokenAccount.value.uiAmount}`);
+
+            // Should be exactly the deposit amount since no fee is taken on deposit
+            expect(testudoTokenAccount.value.uiAmount, "Token count should equal deposit amount").to.equal(depositAmount);
+            
+            // Update centurion data
+            const centurion = await program.account.centurion.fetch(centurionPDA);
+            
+            // Find this testudo in centurion's testudos
+            const testudoData = centurion.testudos.find(t => t.tokenMint.toBase58() === mintPubkey.toBase58());
+            expect(testudoData, "Testudo should be in centurion's testudos").to.not.be.undefined;
+            expect(testudoData.testudoTokenCount.toNumber(), "Testudo token count should match deposit").to.equal(depositAmountWithDecimals);
         });
 
         it("Withdraw from SPL Token Testudo", async () => {
             console.log("\n==== TEST: Withdraw SPL Tokens - Remove Tokens with Password Authentication ====");
-            let testudoPDA = PublicKey.findProgramAddressSync(
+            
+            // Get token program
+            const tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
+            
+            // Get testudo PDA
+            const [testudo] = PublicKey.findProgramAddressSync(
                 [centurionPDA.toBuffer(), mintPubkey.toBuffer()],
                 program.programId
-            )[0];
+            );
             
-            let mintInfo = await getMint(connection, mintPubkey);
-            let decimals = mintInfo.decimals;
-            let tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
-            let withdrawAmount = 40 * Math.pow(10, decimals);
+            // Get legatePDA for treasury
+            const [legatePDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("legate")],
+                program.programId
+            );
+            const legate = await program.account.legate.fetch(legatePDA);
 
-            let centurionData = await program.account.centurion.fetch(centurionPDA);
-            let centurionRecordedTestudoTokenCount = centurionData.testudos[0].testudoTokenCount;
-            let centurionRecordedTestudoTokenCountWithoutDecimals = centurionRecordedTestudoTokenCount.toNumber() / Math.pow(10, decimals);
-            console.log(`Centurion token count BEFORE withdraw (without decimals): ${centurionRecordedTestudoTokenCountWithoutDecimals}`);
-
-            let testudoData = await connection.getTokenAccountBalance(testudoPDA);
-            let testudoTokenAccountBalance = testudoData.value.uiAmount;
-            console.log(`Testudo token account balance BEFORE withdraw (without decimals): ${testudoTokenAccountBalance}`);
-
-            let withdrawSPLTokenTx = await program.methods.withdrawSpl(new anchor.BN(withdrawAmount))
+            // Get current testudo balance
+            const testudoBalanceBefore = await connection.getTokenAccountBalance(testudo);
+            console.log(`Testudo token account balance BEFORE withdraw (without decimals): ${testudoBalanceBefore.value.uiAmount}`);
+            
+            // Check treasury token balance before withdrawal
+            let treasuryTokenAccounts = await connection.getParsedTokenAccountsByOwner(
+                legate.treasuryAcc,
+                { mint: mintPubkey }
+            );
+            
+            let treasuryTokenBalanceBefore = 0;
+            if (treasuryTokenAccounts.value.length > 0) {
+                treasuryTokenBalanceBefore = Number(treasuryTokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount);
+            }
+            console.log(`Treasury token balance BEFORE withdrawal: ${treasuryTokenBalanceBefore}`);
+            
+            // Withdraw 40 tokens
+            const withdrawAmount = 40;
+            const withdrawAmountWithDecimals = withdrawAmount * (10 ** 8); // 8 decimals for this test token
+            console.log(`Withdraw amount: ${withdrawAmount}`);
+            
+            // Calculate fee (0.15%)
+            const feeAmount = Math.floor(withdrawAmountWithDecimals * 15 / 10000) / (10 ** 8);
+            const amountAfterFee = withdrawAmount - feeAmount;
+            console.log(`Fee amount (0.15%): ${feeAmount}`);
+            console.log(`Amount after fee: ${amountAfterFee}`);
+            
+            // Get centurion data before withdrawal
+            const centurionBefore = await program.account.centurion.fetch(centurionPDA);
+            const testudoDataBefore = centurionBefore.testudos.find(t => t.tokenMint.toBase58() === mintPubkey.toBase58());
+            console.log(`Centurion token count BEFORE withdraw (without decimals): ${testudoDataBefore.testudoTokenCount.toNumber() / (10 ** 8)}`);
+            console.log(`Testudo token account balance BEFORE withdraw (without decimals): ${testudoBalanceBefore.value.uiAmount}`);
+            console.log(`Testudo token account balance in raw units BEFORE withdraw: ${testudoBalanceBefore.value.amount}`);
+            
+            // Withdraw from SPL Token Testudo
+            let withdrawSPLTokenTx = await program.methods.withdrawSpl(new anchor.BN(withdrawAmountWithDecimals))
                 .accounts({
                     authority: testUser.publicKey,
                     validSignerOfPassword: passwordKeypair.publicKey,
                     mint: mintPubkey,
                     tokenProgram: tokenProgram,
+                    treasury: legateTreasury.publicKey
                 })
                 .signers([testUser, passwordKeypair])
                 .rpc();
-
-            await connection.confirmTransaction(
-                {
-                    signature: withdrawSPLTokenTx,
-                    blockhash: (await connection.getLatestBlockhash()).blockhash,
-                    lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
-                },
-                "confirmed"
+                
+            await connection.confirmTransaction(withdrawSPLTokenTx);
+            
+            // Check treasury token balance after withdrawal
+            treasuryTokenAccounts = await connection.getParsedTokenAccountsByOwner(
+                legate.treasuryAcc,
+                { mint: mintPubkey }
             );
-
-            centurionData = await program.account.centurion.fetch(centurionPDA);
-            centurionRecordedTestudoTokenCount = centurionData.testudos[0].testudoTokenCount;
-            centurionRecordedTestudoTokenCountWithoutDecimals = centurionRecordedTestudoTokenCount.toNumber() / Math.pow(10, decimals);
-            console.log(`Centurion token count AFTER withdraw (without decimals): ${centurionRecordedTestudoTokenCountWithoutDecimals}`);
-
-            testudoData = await connection.getTokenAccountBalance(testudoPDA);
-            testudoTokenAccountBalance = testudoData.value.uiAmount;
-            console.log(`Testudo token account balance AFTER withdraw (without decimals): ${testudoTokenAccountBalance}`);
-
-            // Verify the deposit was successful
-            expect(centurionRecordedTestudoTokenCount.toNumber(), `Centurion token count should be ${Math.pow(10, decimals) * 50 - withdrawAmount}`).to.equal(10 * Math.pow(10, decimals));
-            // Verify that token count recorded in the centurion account matches actual token count in the testudo account
-            expect(testudoTokenAccountBalance, `Testudo token count should be ${50 - withdrawAmount / Math.pow(10, decimals)}`).to.equal(10);
+            
+            let treasuryTokenBalanceAfter = 0;
+            if (treasuryTokenAccounts.value.length > 0) {
+                treasuryTokenBalanceAfter = Number(treasuryTokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount);
+            }
+            console.log(`Treasury token balance AFTER withdrawal: ${treasuryTokenBalanceAfter}`);
+            console.log(`Treasury fee received: ${treasuryTokenBalanceAfter - treasuryTokenBalanceBefore}`);
+            
+            // Get centurion data after withdrawal
+            const centurionAfter = await program.account.centurion.fetch(centurionPDA);
+            const testudoDataAfter = centurionAfter.testudos.find(t => t.tokenMint.toBase58() === mintPubkey.toBase58());
+            
+            // Get current testudo balance after withdrawal
+            const testudoBalanceAfter = await connection.getTokenAccountBalance(testudo);
+            console.log(`Centurion token count AFTER withdraw (without decimals): ${testudoDataAfter.testudoTokenCount.toNumber() / (10 ** 8)}`);
+            console.log(`Testudo token account balance AFTER withdraw (without decimals): ${testudoBalanceAfter.value.uiAmount}`);
+            console.log(`Testudo token account balance in raw units AFTER withdraw: ${testudoBalanceAfter.value.amount}`);
+            
+            // Verify the withdrawal was successful
+            // Testudo balance should be reduced by the withdrawal amount
+            expect(testudoBalanceAfter.value.uiAmount, "Testudo balance should be reduced by withdrawal amount")
+                .to.be.closeTo(testudoBalanceBefore.value.uiAmount - withdrawAmount, 0.01);
+            
+            // Verify the centurion account data reflects the withdrawal
+            expect(testudoDataAfter.testudoTokenCount.toNumber(), "Centurion account should reflect the withdrawal")
+                .to.equal(testudoDataBefore.testudoTokenCount.toNumber() - withdrawAmountWithDecimals);
+            
+            // Verify that the treasury received the fee
+            expect(treasuryTokenBalanceAfter - treasuryTokenBalanceBefore, "Treasury should have received the fee")
+                .to.be.closeTo(feeAmount, 0.001);
         });
 
-        it("Deposit to SPL Token Testudo with incorrect token program", async () => {
+        it("Withdraw from SPL Token Testudo with incorrect token program", async () => {
             console.log("\n==== TEST: Withdraw with Incorrect Token Program - Should Fail with Mismatched Program ====");
             let testudoPDA = PublicKey.findProgramAddressSync(
                 [centurionPDA.toBuffer(), mintPubkey.toBuffer()],
@@ -831,7 +943,14 @@ describe("Testudo Tests", () => {
             let mintInfo = await getMint(connection, mintPubkey);
             let decimals = mintInfo.decimals;
             let token2022Program = new PublicKey(TOKEN_2022_PROGRAM_ID);
-            let withdrawAmount = 40 * Math.pow(10, decimals);
+            let withdrawAmount = 1 * Math.pow(10, decimals);
+            
+            // Get legate pda
+            let [legatePDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("legate")],
+                program.programId
+            );
+            const legate = await program.account.legate.fetch(legatePDA);
 
             try {
                 let withdrawSPLTokenTx = await program.methods.withdrawSpl(new anchor.BN(withdrawAmount))
@@ -840,6 +959,7 @@ describe("Testudo Tests", () => {
                     validSignerOfPassword: passwordKeypair.publicKey,
                     mint: mintPubkey,
                     tokenProgram: token2022Program, // Incorrect token program
+                    treasury: legateTreasury.publicKey
                 })
                     .signers([testUser, passwordKeypair])
                     .rpc();
@@ -858,9 +978,16 @@ describe("Testudo Tests", () => {
             let mintInfo = await getMint(connection, mintPubkey);
             let decimals = mintInfo.decimals;
             let tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
-            let withdrawAmount = 40 * Math.pow(10, decimals);
+            let withdrawAmount = 1 * Math.pow(10, decimals);
 
             let invalidPasswordKeypair = anchor.web3.Keypair.generate();
+            
+            // Get legate pda
+            let [legatePDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("legate")],
+                program.programId
+            );
+            const legate = await program.account.legate.fetch(legatePDA);
 
             try {
                 let withdrawSPLTokenTx = await program.methods.withdrawSpl(new anchor.BN(withdrawAmount))
@@ -869,6 +996,7 @@ describe("Testudo Tests", () => {
                     validSignerOfPassword: invalidPasswordKeypair.publicKey,
                     mint: mintPubkey,
                     tokenProgram: tokenProgram,
+                    treasury: legateTreasury.publicKey
                 })
                 .signers([testUser, invalidPasswordKeypair])
                 .rpc();
@@ -900,6 +1028,9 @@ describe("Testudo Tests", () => {
             })
             .accounts({
                 authority: legateAuthority.publicKey,
+                treasury: legateTreasury.publicKey,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                mint: deletionMintPubkey,
             })
             .signers([legateAuthority])
             .rpc();
@@ -962,6 +1093,8 @@ describe("Testudo Tests", () => {
             // Deposit some tokens to the Testudo
             const depositAmount = 50 * 10 ** 8;
             
+            console.log(`Deposit amount: ${depositAmount / 10 ** 8} tokens`);
+            
             // Get authority's ATA for this mint
             let authorityAtaAddress = await anchor.utils.token.associatedAddress({
                 mint: deletionMintPubkey,
@@ -989,10 +1122,34 @@ describe("Testudo Tests", () => {
                 console.log(`  #${i}: Mint=${t.tokenMint.toBase58()}, Balance=${t.testudoTokenCount.toString()}`);
             });
             console.log(`Testudo token balance BEFORE deletion: ${testudoBalanceBefore.value.uiAmount}`);
+            console.log(`Testudo token balance in raw units: ${testudoBalanceBefore.value.amount}`);
             
             // Get user's token balance before deletion
             let userAtaBalanceBefore = await connection.getTokenAccountBalance(userAta.address);
             console.log(`User ATA balance BEFORE deletion: ${userAtaBalanceBefore.value.uiAmount}`);
+            
+            // Get legate information for treasury
+            const legate = await program.account.legate.fetch(legatePDA);
+            
+            // Check treasury token balance before deletion
+            let treasuryTokenAccounts = await connection.getParsedTokenAccountsByOwner(
+                legate.treasuryAcc,
+                { mint: deletionMintPubkey }
+            );
+            
+            let treasuryTokenBalanceBefore = 0;
+            if (treasuryTokenAccounts.value.length > 0) {
+                treasuryTokenBalanceBefore = Number(treasuryTokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount);
+            }
+            console.log(`Treasury token balance BEFORE deletion: ${treasuryTokenBalanceBefore}`);
+            
+            // Calculate expected fee (0.15% of testudo balance)
+            const testudoBalanceInTokens = testudoBalanceBefore.value.uiAmount;
+            const feeAmount = testudoBalanceInTokens * 0.0015; // 0.15% fee
+            const expectedUserBalanceAfter = userAtaBalanceBefore.value.uiAmount + (testudoBalanceInTokens - feeAmount);
+            
+            console.log(`Expected fee amount (0.15%): ${feeAmount}`);
+            console.log(`Expected user balance after deletion: ${expectedUserBalanceAfter}`);
             
             // Now delete the Testudo
             const deleteTestudoTx = await program.methods.deleteTestudo()
@@ -1001,12 +1158,26 @@ describe("Testudo Tests", () => {
                     validSignerOfPassword: passwordKeypair.publicKey,
                     mint: deletionMintPubkey,
                     tokenProgram: tokenProgram,
+                    treasury: legateTreasury.publicKey
                 })
                 .signers([testUser, passwordKeypair])
                 .rpc();
                 
             await connection.confirmTransaction(deleteTestudoTx);
             console.log(`Deleted Testudo: ${deleteTestudoTx}`);
+            
+            // Check treasury token balance after deletion
+            treasuryTokenAccounts = await connection.getParsedTokenAccountsByOwner(
+                legate.treasuryAcc,
+                { mint: deletionMintPubkey }
+            );
+            
+            let treasuryTokenBalanceAfter = 0;
+            if (treasuryTokenAccounts.value.length > 0) {
+                treasuryTokenBalanceAfter = Number(treasuryTokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount);
+            }
+            console.log(`Treasury token balance AFTER deletion: ${treasuryTokenBalanceAfter}`);
+            console.log(`Treasury fee received: ${treasuryTokenBalanceAfter - treasuryTokenBalanceBefore}`);
             
             // Verify account is closed
             const testudoAccountInfo = await connection.getAccountInfo(testudoPDA);
@@ -1028,7 +1199,18 @@ describe("Testudo Tests", () => {
             
             // Assertions
             expect(testudoAccountInfo, "Testudo account should be closed").to.be.null;
-            expect(userAtaBalanceAfter.value.uiAmount - userAtaBalanceBefore.value.uiAmount, "All tokens should be returned to user").to.equal(50);
+            
+            // When deleting Testudo, all tokens (minus fee) are returned to the user 
+            expect(
+                userAtaBalanceAfter.value.uiAmount, 
+                `User ATA balance after deletion should be close to ${expectedUserBalanceAfter}`
+            ).to.be.closeTo(expectedUserBalanceAfter, 0.01); // Allow a small tolerance for rounding
+            
+            // Verify the treasury received the fee
+            expect(
+                treasuryTokenBalanceAfter - treasuryTokenBalanceBefore,
+                "Treasury should have received the fee"
+            ).to.be.closeTo(feeAmount, 0.01);
             
             // The testudo should be removed from the Centurion's testudos array
             const hasMintInTestudos = centurionAfter.testudos.some(t => 
@@ -1117,8 +1299,11 @@ describe("Testudo Tests", () => {
                 tokenSymbol: "AT",
                 tokenDecimals: 8
             })
-            .accounts({
+            .accountsPartial({
                 authority: legateAuthority.publicKey,
+                treasury: legateTreasury.publicKey,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                mint: testMint,
             })
             .signers([legateAuthority])
             .rpc();
@@ -1146,7 +1331,7 @@ describe("Testudo Tests", () => {
             );
             
             let createTestudoTx = await program.methods.createTestudo()
-                .accounts({
+                .accountsPartial({
                     authority: testUser.publicKey,
                     mint: testMint,
                     tokenProgram: tokenProgram,
@@ -1251,8 +1436,22 @@ describe("Testudo Tests", () => {
                 program.programId
             );
             
+            // Get the Legate PDA to check treasury balances
+            let [legatePDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("legate")],
+                program.programId
+            );
+            let legate = await program.account.legate.fetch(legatePDA);
+            
             // First, deposit some SOL to ensure we have funds
             const depositAmount = 1 * web3.LAMPORTS_PER_SOL; // 1 SOL
+            
+            console.log(`Deposit amount: ${depositAmount / web3.LAMPORTS_PER_SOL} SOL`);
+            
+            // Check treasury balance before deposit
+            const treasuryBalanceBefore = await connection.getBalance(legate.treasuryAcc);
+            console.log(`Treasury balance BEFORE deposit: ${treasuryBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
+            
             let depositSolTx = await program.methods
                 .depositSol(new anchor.BN(depositAmount))
                 .accounts({
@@ -1274,6 +1473,19 @@ describe("Testudo Tests", () => {
             console.log(`Backup owner SOL balance BEFORE withdrawal: ${backupOwnerBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
             console.log(`Centurion lamport_balance BEFORE withdrawal: ${centurionBefore.lamportBalance.toNumber() / web3.LAMPORTS_PER_SOL} SOL`);
             
+            // Calculate expected fee for the withdrawal
+            const withdrawAmount = centurionBefore.lamportBalance.toNumber();
+            const feeAmount = Math.floor(withdrawAmount * 15 / 10000);
+            const amountAfterFee = withdrawAmount - feeAmount;
+            
+            console.log(`Expected withdraw amount: ${withdrawAmount / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Expected fee amount (0.15%): ${feeAmount / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Expected amount after fee: ${amountAfterFee / web3.LAMPORTS_PER_SOL} SOL`);
+            
+            // Check treasury balance before withdrawal
+            const treasuryBalanceBeforeWithdraw = await connection.getBalance(legate.treasuryAcc);
+            console.log(`Treasury balance BEFORE withdrawal: ${treasuryBalanceBeforeWithdraw / web3.LAMPORTS_PER_SOL} SOL`);
+            
             // Now withdraw all SOL to backup account
             const withdrawToBackupTx = await program.methods
                 .withdrawSolToBackup()
@@ -1282,6 +1494,8 @@ describe("Testudo Tests", () => {
                     validSignerOfPassword: passwordKeypair.publicKey,
                     centurion: centurionPDA,
                     backupAccount: backupOwnerKeypair.publicKey,
+                    legate: legatePDA,
+                    treasury: legate.treasuryAcc,
                     systemProgram: anchor.web3.SystemProgram.programId,
                 })
                 .signers([testUser, passwordKeypair])
@@ -1294,18 +1508,28 @@ describe("Testudo Tests", () => {
             const centurionAfter = await program.account.centurion.fetch(centurionPDA);
             const centurionBalanceAfter = await connection.getBalance(centurionPDA);
             const backupOwnerBalanceAfter = await connection.getBalance(backupOwnerKeypair.publicKey);
+            const treasuryBalanceAfterWithdraw = await connection.getBalance(legate.treasuryAcc);
             
             console.log(`Centurion SOL balance AFTER withdrawal: ${centurionBalanceAfter / web3.LAMPORTS_PER_SOL} SOL`);
             console.log(`Backup owner SOL balance AFTER withdrawal: ${backupOwnerBalanceAfter / web3.LAMPORTS_PER_SOL} SOL`);
             console.log(`Centurion lamport_balance AFTER withdrawal: ${centurionAfter.lamportBalance.toNumber() / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Treasury balance AFTER withdrawal: ${treasuryBalanceAfterWithdraw / web3.LAMPORTS_PER_SOL} SOL`);
+            console.log(`Treasury fee received: ${(treasuryBalanceAfterWithdraw - treasuryBalanceBeforeWithdraw) / web3.LAMPORTS_PER_SOL} SOL`);
             
             // Verify the SOL was transferred to backup account
             expect(centurionAfter.lamportBalance.toNumber(), "Centurion lamport_balance should be 0").to.equal(0);
-            expect(backupOwnerBalanceAfter, "Backup owner balance should increase").to.be.greaterThan(backupOwnerBalanceBefore);
+            expect(backupOwnerBalanceAfter - backupOwnerBalanceBefore, "Backup owner should receive approximately the amount after fee")
+                .to.be.closeTo(amountAfterFee, 15000); // Allow small tolerance for tx fees
             expect(centurionBalanceAfter, "Centurion balance should maintain enough for rent exemption").to.be.greaterThan(0);
             
             // Verify the last accessed timestamp was updated
             expect(centurionAfter.lastAccessed.toNumber(), "Last accessed should be updated").to.be.greaterThanOrEqual(centurionBefore.lastAccessed.toNumber());
+            
+            // Verify that the treasury received the fee
+            expect(
+                treasuryBalanceAfterWithdraw - treasuryBalanceBeforeWithdraw,
+                "Treasury should have received the fee"
+            ).to.equal(feeAmount);
         });
 
         it("Should fail when withdrawing SOL to backup with wrong password signer", async () => {
@@ -1323,6 +1547,16 @@ describe("Testudo Tests", () => {
             
             // Deposit some SOL first to ensure the test is valid
             const depositAmount = 0.5 * web3.LAMPORTS_PER_SOL; // 0.5 SOL
+            
+            console.log(`Deposit amount: ${depositAmount / web3.LAMPORTS_PER_SOL} SOL`);
+
+            // Get legate to find treasury
+            let [legatePDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("legate")],
+                program.programId
+            );
+            const legate = await program.account.legate.fetch(legatePDA);
+            
             let depositSolTx = await program.methods
                 .depositSol(new anchor.BN(depositAmount))
                 .accounts({
@@ -1339,9 +1573,11 @@ describe("Testudo Tests", () => {
                     .withdrawSolToBackup()
                     .accounts({
                         authority: testUser.publicKey,
-                        validSignerOfPassword: wrongPasswordKeypair.publicKey, // Wrong password
+                        validSignerOfPassword: wrongPasswordKeypair.publicKey,
                         centurion: centurionPDA,
                         backupAccount: backupOwnerKeypair.publicKey,
+                        legate: legatePDA,
+                        treasury: legate.treasuryAcc,
                         systemProgram: anchor.web3.SystemProgram.programId,
                     })
                     .signers([testUser, wrongPasswordKeypair])
@@ -1366,6 +1602,28 @@ describe("Testudo Tests", () => {
                 program.programId
             );
             
+            // Deposit some SOL first to ensure the test is valid
+            const depositAmount = 0.5 * web3.LAMPORTS_PER_SOL; // 0.5 SOL
+            
+            console.log(`Deposit amount: ${depositAmount / web3.LAMPORTS_PER_SOL} SOL`);
+
+            // Get legate to find treasury
+            let [legatePDA] = PublicKey.findProgramAddressSync(
+                [Buffer.from("legate")],
+                program.programId
+            );
+            const legate = await program.account.legate.fetch(legatePDA);
+            
+            let depositSolTx = await program.methods
+                .depositSol(new anchor.BN(depositAmount))
+                .accounts({
+                    authority: testUser.publicKey,
+                })
+                .signers([testUser])
+                .rpc();
+                
+            await connection.confirmTransaction(depositSolTx);
+            
             // Try to withdraw with wrong backup owner
             try {
                 await program.methods
@@ -1375,6 +1633,8 @@ describe("Testudo Tests", () => {
                         validSignerOfPassword: passwordKeypair.publicKey,
                         centurion: centurionPDA,
                         backupAccount: fakeBackupOwner.publicKey, // Wrong backup owner
+                        legate: legatePDA,
+                        treasury: legate.treasuryAcc,
                         systemProgram: anchor.web3.SystemProgram.programId,
                     })
                     .signers([testUser, passwordKeypair])

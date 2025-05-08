@@ -86,4 +86,19 @@ pub mod testudo {
     ) -> Result<()> {
         instructions::process_update_back_up_account(ctx, backup_account)
     }
+
+    pub fn update_treasury(ctx: Context<UpdateTreasury>, new_treasury: Pubkey) -> Result<()> {
+        instructions::process_update_treasury(ctx, new_treasury)
+    }
+
+    pub fn update_fee_percent(ctx: Context<UpdateFeePercent>, new_fee_percent: u16) -> Result<()> {
+        instructions::process_update_fee_percent(ctx, new_fee_percent)
+    }
+
+    pub fn add_mint_to_testudo_token_whitelist(
+        ctx: Context<AddMintToTestudoTokenWhitelist>,
+        mint: custom_accounts::legate::TestudoTokenWhitelist,
+    ) -> Result<()> {
+        instructions::process_add_mint_to_testudo_token_whitelist(ctx, mint)
+    }
 }

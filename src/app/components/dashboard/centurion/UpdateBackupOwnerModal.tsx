@@ -73,7 +73,6 @@ export function UpdateBackupOwnerModal({
 					.accounts({
 						authority: userWallet,
 						validSignerOfPassword: passwordKeypair.publicKey,
-						centurion: centurionPDA,
 					})
 					.signers([passwordKeypair])
 					.rpc();

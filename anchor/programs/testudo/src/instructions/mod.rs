@@ -1,7 +1,7 @@
 pub mod legate_admin;
 pub use legate_admin::{
-    add_mint_testudo::*, update_authority::*, update_max_testudos::*,
-    update_max_whitelisted_mints::*,
+    add_mint_testudo::*, update_authority::*, update_fee_percent::*, update_max_testudos::*,
+    update_max_whitelisted_mints::*, update_treasury::*,
 };
 
 pub mod account_management;

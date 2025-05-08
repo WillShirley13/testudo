@@ -1,9 +1,11 @@
 use crate::custom_accounts::centurion::{Centurion, TestudoData};
+use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
-    CenturionNotInitialized, InsufficientFunds, InvalidATA, InvalidAuthority,
-    InvalidPasswordSignature, InvalidTokenMint,
+    ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidATA, InvalidAuthority,
+    InvalidPasswordSignature, InvalidTokenMint, InvalidTreasuryAccount, LegateNotInitialized,
 };
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked};
 
@@ -48,6 +50,24 @@ pub struct WithdrawSplToken<'info> {
     // Centurion ATA
     pub testudo: InterfaceAccount<'info, TokenAccount>,
     pub mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        seeds = [b"legate"],
+        bump = legate.bump,
+        constraint = legate.is_initialized @LegateNotInitialized,
+    )]
+    pub legate: Account<'info, Legate>,
+    #[account(
+        constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
+    )]
+    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
+    pub treasury: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = treasury,
+        associated_token::token_program = token_program,
+    )]
+    pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
     // Ensure valid token program is passed
     #[account(
         constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
@@ -58,6 +78,10 @@ pub struct WithdrawSplToken<'info> {
         constraint = system_program.key() == anchor_lang::system_program::ID,
     )]
     pub system_program: Program<'info, System>,
+    #[account(
+        constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
+    )]
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn process_withdraw_spl_token(
@@ -96,34 +120,66 @@ pub fn process_withdraw_spl_token(
     );
     msg!("Depositor has enough tokens to cover the deposit");
 
+    let withdraw_fee = amount_in_decimals
+        .checked_mul(ctx.accounts.legate.percent_for_fees as u64)
+        .unwrap_or(0)
+        .checked_div(10000)
+        .unwrap_or(0);
+    let amount_after_fee = amount_in_decimals
+        .checked_sub(withdraw_fee)
+        .ok_or(ArithmeticOverflow)?;
+
     // Get the testudo account for the token
     let testudo_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.testudo;
     // Get the depositor's ATA for the token
     let authority_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.authority_ata;
+    // Get the treasury ATA for the token
+    let treasury_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.treasury_ata;
 
-    // Set up the CPI accounts for the transfer
-    let cpi_accounts = TransferChecked {
+    // Get the number of decimals for the token
+    let decimals: u8 = ctx.accounts.mint.decimals;
+
+    let signer_seeds: &[&[&[u8]]] = &[&[
+        b"centurion",
+        ctx.accounts.authority.key.as_ref(),
+        &[ctx.bumps.centurion],
+    ]];
+
+    // Set up the CPI accounts for the transfer of fee
+    let cpi_accounts_for_fee = TransferChecked {
+        from: testudo_ata.to_account_info(),
+        to: treasury_ata.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        authority: centurion_data.to_account_info(),
+    };
+
+    // Set up the CPI context for the transfer of fee
+    let cpi_context_for_fee = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        cpi_accounts_for_fee,
+        signer_seeds,
+    );
+
+    // Perform the transfer
+    token_interface::transfer_checked(cpi_context_for_fee, withdraw_fee, decimals)?;
+
+    // Set up the CPI accounts for the transfer of amount after fee
+    let cpi_accounts_for_withdraw = TransferChecked {
         from: testudo_ata.to_account_info(),
         to: authority_ata.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
         authority: centurion_data.to_account_info(),
     };
 
-    // Get the number of decimals for the token
-    let decimals: u8 = ctx.accounts.mint.decimals;
-    // Define seeds first
-    let authority_key_ref = ctx.accounts.authority.key.as_ref();
-    let bump = &[ctx.bumps.centurion];
-    let signer_seeds: &[&[&[u8]]] = &[&[b"centurion", authority_key_ref, bump]];
-
-    let cpi_context = CpiContext::new_with_signer(
+    // Set up the CPI context for the transfer of amount after fee
+    let cpi_context_for_withdraw = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
-        cpi_accounts,
+        cpi_accounts_for_withdraw,
         signer_seeds,
     );
 
     // Perform the transfer
-    token_interface::transfer_checked(cpi_context, amount_in_decimals, decimals)?;
+    token_interface::transfer_checked(cpi_context_for_withdraw, amount_after_fee, decimals)?;
 
     // Update the last accessed timestamp
     let current_datetime: i64 = Clock::get()?.unix_timestamp;

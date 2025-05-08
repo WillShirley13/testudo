@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { shouldEnableEnhancedSecurity, sanitizeInput } from "@/app/utils/security-utils";
 
 interface PasswordPhraseInputProps {
 	words: string[];
@@ -25,40 +24,17 @@ export function PasswordPhraseInput({
 	);
 	// State to toggle password visibility
 	const [showPassword, setShowPassword] = useState(false);
-	// State to track enhanced security mode
-	const [securityMode, setSecurityMode] = useState(false);
-
-	// Setup security check on component mount and at intervals
-	useEffect(() => {
-		// Check security on mount
-		const checkSecurity = () => {
-			const enhancedSecurity = shouldEnableEnhancedSecurity();
-			setSecurityMode(enhancedSecurity);
-		};
-
-		// Initial check
-		checkSecurity();
-
-		// Set interval for periodic checks
-		const securityInterval = setInterval(checkSecurity, 2000);
-		
-		// Clear interval on unmount
-		return () => clearInterval(securityInterval);
-	}, []);
 
 	// Handle input change for a specific word box
 	const handleWordChange = (index: number, value: string) => {
-		// Sanitize input to protect against potential XSS
-		const sanitizedValue = sanitizeInput(value).toLowerCase();
-		
 		const newWords = [...words];
-		newWords[index] = sanitizedValue; // Don't trim during typing
+		newWords[index] = value.toLowerCase(); // Don't trim during typing
 		onChange(newWords);
 
 		// Auto-focus next input field if the current one is completed (contains a space)
-		if (sanitizedValue.includes(" ") && index < maxWords - 1) {
+		if (value.includes(" ") && index < maxWords - 1) {
 			// If user enters a space, assume they're done with this word
-			newWords[index] = sanitizedValue.trim().toLowerCase();
+			newWords[index] = value.trim().toLowerCase();
 			onChange(newWords);
 			wordInputRefs.current[index + 1]?.focus();
 		}
@@ -91,9 +67,8 @@ export function PasswordPhraseInput({
 
 	// Handle blur event to clean up words when user leaves an input
 	const handleBlur = (index: number, value: string) => {
-		const sanitizedValue = sanitizeInput(value);
 		const newWords = [...words];
-		newWords[index] = sanitizedValue.trim().toLowerCase();
+		newWords[index] = value.trim().toLowerCase();
 		onChange(newWords);
 	};
 
@@ -125,9 +100,7 @@ export function PasswordPhraseInput({
 							wordInputRefs.current[index] = el;
 						}}
 						type={showPassword ? "text" : "password"}
-						className={`p-1.5 bg-gray-800/60 rounded border border-gray-700 text-white focus:border-amber-500 focus:ring focus:ring-amber-500/20 focus:outline-none text-sm ${
-							securityMode ? "border-amber-500" : ""
-						}`}
+						className="p-1.5 bg-gray-800/60 rounded border border-gray-700 text-white focus:border-amber-500 focus:ring focus:ring-amber-500/20 focus:outline-none text-sm"
 						value={words[index] || ""}
 						onChange={(e) =>
 							handleWordChange(index, e.target.value)
@@ -136,16 +109,9 @@ export function PasswordPhraseInput({
 						onBlur={(e) => handleBlur(index, e.target.value)}
 						placeholder={`Word ${index + 1}`}
 						autoComplete="off"
-						data-lpignore="true" // Prevent LastPass from detecting as password field
-						data-form-type="other" // Help prevent password managers from auto-filling
 					/>
 				))}
 			</div>
-			{securityMode && (
-				<p className="text-xs text-amber-500 mt-1">
-					Enhanced security mode active
-				</p>
-			)}
 		</div>
 	);
 }
@@ -159,6 +125,6 @@ export function validatePasswordWords(words: string[]): boolean {
 // Helper function to prepare words for the deriveKeypairFromWords function
 export function preparePasswordWords(words: string[]): string[] {
 	return words
-		.map((word) => sanitizeInput(word).trim().toLowerCase())
+		.map((word) => word.trim().toLowerCase())
 		.filter((word) => word !== "");
 }

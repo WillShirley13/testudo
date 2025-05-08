@@ -1,7 +1,9 @@
 use crate::custom_accounts::centurion::Centurion;
+use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
-    CenturionNotInitialized, InsufficientFunds, InvalidAuthority, InvalidBackupAccount,
-    InvalidPasswordSignature, NoBackupAccountStored,
+    ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidAuthority,
+    InvalidBackupAccount, InvalidPasswordSignature, InvalidTreasuryAccount, LegateNotInitialized,
+    NoBackupAccountStored,
 };
 use anchor_lang::prelude::*;
 
@@ -31,6 +33,18 @@ pub struct WithdrawSolToBackup<'info> {
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub backup_account: UncheckedAccount<'info>,
+    #[account(
+        seeds = [b"legate"],
+        bump = legate.bump,
+        constraint = legate.is_initialized @LegateNotInitialized,
+    )]
+    pub legate: Account<'info, Legate>,
+    #[account(
+        mut,
+        constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
+    )]
+    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
+    pub treasury: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -81,11 +95,22 @@ pub fn process_withdraw_sol_to_backup(ctx: Context<WithdrawSolToBackup>) -> Resu
     // Only proceed if there's something to withdraw
     require_gt!(withdraw_amount, 0, InsufficientFunds);
 
-    // Debit from centurion account
-    ctx.accounts.centurion.sub_lamports(withdraw_amount)?;
+    let withdraw_fee = withdraw_amount
+        .checked_mul(ctx.accounts.legate.percent_for_fees as u64)
+        .unwrap_or(0)
+        .checked_div(10000)
+        .unwrap_or(0);
+    let amount_after_fee = withdraw_amount
+        .checked_sub(withdraw_fee)
+        .ok_or(ArithmeticOverflow)?;
 
-    // Credit to authority account
-    ctx.accounts.backup_account.add_lamports(withdraw_amount)?;
+    // Subtract the fee from the centurion's balance and add it to the treasury's balance
+    ctx.accounts.centurion.sub_lamports(withdraw_fee)?;
+    ctx.accounts.treasury.add_lamports(withdraw_fee)?;
+
+    // Subtract the amount after fee from the centurion's balance and add it to the backup account's balance
+    ctx.accounts.centurion.sub_lamports(amount_after_fee)?;
+    ctx.accounts.backup_account.add_lamports(amount_after_fee)?;
 
     // Update the centurion's lamport balance in a separate mutable borrow
     let current_datetime: i64 = Clock::get()?.unix_timestamp;

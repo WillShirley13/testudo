@@ -19,12 +19,12 @@ export function HeroSection() {
 								textShadow: "0 2px 4px rgba(0,0,0,0.3)",
 							}}
 						>
-							Impenetrable <br className="hidden md:block" />
+							Impenetrable, <br className="hidden md:block" />
 							By Design. <br className="hidden md:block" />
 						</h1>
 
-						<p className="text-gray-300 text-lg md:text-xl mb-8 max-w-xl mx-auto md:mx-0">
-							Be at the vanguard of crpyto, protected by Testudo&apos;s dual-signature vault system. Find ultimate security with effortless convenience.
+						<p className="text-gray-300 text-md md:text-lg mb-8 max-w-xl mx-auto md:mx-0">
+							Be at the vanguard of crypto, protected by Testudo&apos;s dual-signature vault system. Find ultimate security with effortless convenience.
 						</p>
 
 						<div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-6">

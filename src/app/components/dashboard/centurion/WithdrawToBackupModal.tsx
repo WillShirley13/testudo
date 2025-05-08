@@ -40,13 +40,13 @@ export function WithdrawToBackupModal({
 	const testudoProgram = useTestudoProgram();
 	const provider = testudoProgram.provider;
 	const secureKeypairGenerator = new SecureKeypairGenerator();
+    const [legatePDA] = findLegatePDA(testudoProgram.programId);
 
 	// Fetch token information from Legate
 	useEffect(() => {
 		if (isOpen && centurionData?.testudos?.length > 0) {
 			const fetchTokenInfo = async () => {
 				try {
-					const [legatePDA] = findLegatePDA(testudoProgram.programId);
 					const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
 					
 					const tokenInfoMap = new Map<string, TokenWhitelistData>();
@@ -115,10 +115,8 @@ export function WithdrawToBackupModal({
 				// Check if the mint is owned by the Token2022 program
 				if (mintInfo && mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID)) {
 					tokenProgramId = TOKEN_2022_PROGRAM_ID;
-					setWithdrawalProgress(`Using Token2022 program for ${tokenInfo.get(tokenMint.toString())?.tokenSymbol || 'Token'}`);
 				}
 				
-
 				// Call withdrawToBackup instruction
 				// Note: Linter errors related to the .accounts() method are expected and should be ignored
 				// according to the project's custom rules.
@@ -130,7 +128,7 @@ export function WithdrawToBackupModal({
 						backupAccount: centurionData.backupOwner,
 						tokenProgram: tokenProgramId, // Use the detected token program
 						mint: tokenMint,
-                        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                        treasury: (await testudoProgram.account.legate.fetch(legatePDA))?.treasuryAcc,
 					})
 					.signers([passwordKeypair])
 					.rpc();
@@ -168,16 +166,17 @@ export function WithdrawToBackupModal({
 				// Find the Centurion PDA
 				const [centurionPDA] = findCenturionPDA(userWallet, testudoProgram.programId);
 
+                // Get SOL balance for later use
+                const solAmount = centurionData.lamportBalance / 1e9; // Convert lamports to SOL
+
 				// Call withdrawSolToBackup instruction
-				// Note: Linter errors related to the .accounts() method are expected and should be ignored
-				// according to the project's custom rules.
 				const tx = await testudoProgram.methods
 					.withdrawSolToBackup()
 					.accounts({
 						authority: userWallet,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						backupAccount: centurionData.backupOwner,
-						systemProgram: anchor.web3.SystemProgram.programId,
+						treasury: (await testudoProgram.account.legate.fetch(legatePDA))?.treasuryAcc,
 					})
 					.signers([passwordKeypair])
 					.rpc();
@@ -192,7 +191,6 @@ export function WithdrawToBackupModal({
                     }
                 );
 				
-				const solAmount = centurionData.lamportBalance / 1e9; // Convert lamports to SOL
 				setWithdrawalProgress(`Successfully withdrew ${solAmount} SOL (${totalTokens + 1}/${totalTokens + 1})`);
 				successCount++;
 				
@@ -334,6 +332,7 @@ export function WithdrawToBackupModal({
 								<p className="text-red-300/80 text-sm">
 									All funds will be transferred to:
 									<span className="font-mono block mt-1 text-red-300 text-sm break-all">{centurionData?.backupOwner?.toString() || 'None assigned'}</span>
+                                    (Note: The 0.15% fee will be deducted from each token withdrawal)
 								</p>
 							</div>
 

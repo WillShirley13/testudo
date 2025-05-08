@@ -86,7 +86,7 @@ export function CreateTestudoModal({
 		try {
 			setIsCreating(true);
 
-            console.log("Creating Testudo with mint address:", mintAddress);
+            console.log("Creating Testudo for mint address:", mintAddress);
 
 			const mintPubkey = new PublicKey(mintAddress);
 			const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
@@ -110,8 +110,8 @@ export function CreateTestudoModal({
 			console.log(`Creating Testudo with ${isToken2022 ? "Token 2022" : "Token"} Program`);
 
 			// Create Testudo account with the correct token program
-			// Note: Linter errors related to the .accounts() method are expected and should be ignored
-			// according to the project's custom rules.
+                // Note: Linter errors related to the .accounts() method are expected and should be ignored
+                // according to the project's custom rules.
 			const tx = await testudoProgram.methods
 				.createTestudo()
 				.accounts({

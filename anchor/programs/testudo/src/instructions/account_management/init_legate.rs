@@ -40,12 +40,7 @@ pub fn process_init_legate(ctx: Context<InitLegate>, treasury_acc: Pubkey) -> Re
     // Initially, space allocated for max of the 30 testudos per user/wallet
     legate_data.max_testudos_per_user = 30;
     legate_data.max_whitelisted_mints = 50;
-    legate_data.testudo_token_whitelist = vec![TestudoTokenWhitelist {
-        token_mint: pubkey!("Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr"),
-        token_name: "USD Coin".to_string(),
-        token_symbol: "USDC".to_string(),
-        token_decimals: 6,
-    }];
+    legate_data.testudo_token_whitelist = vec![];
     legate_data.treasury_acc = treasury_acc;
     legate_data.percent_for_fees = 15; // where 15 = 0.15%
 

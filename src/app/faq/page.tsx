@@ -15,11 +15,11 @@ export default function FaqPage() {
 	const faqItems: FaqItem[] = [
 		{
 			question: "What is Testudo?",
-			answer: "Testudo is a secure wallet system on Solana where users can deposit and withdraw funds from Program Derived Addresses (PDAs). It implements a dual-signature security system providing enhanced protection for your digital assets.",
+			answer: "Testudo is a secure wallet system on Solana where users can deposit and withdraw funds from accounts derived by the testudo onchain program but controlled by the user. It implements a dual-signature security system providing enhanced protection for your digital assets.",
 		},
 		{
 			question: "How does the dual-signature security work?",
-			answer: "Testudo requires two signatures for any withdrawal: your wallet signature AND a signature from a special keypair derived from your memorable wordphrase. This creates an on-chain 2FA experience, effectively protecting your funds even if your main wallet is compromised.",
+			answer: "Testudo uses dual-signature security: your wallet signature plus one from a keypair derived from your memorable phrase. Unlike multi-sig wallets, this on-chain 2FA protects your funds even if your main wallet is compromised. The second signature comes from a short, memorable 4-6 word phrase instead of the typical 12-24 words, making it easy to remember while maintaining security and keeping funds instantly accessible.",
 		},
 		{
 			question: "What is a Centurion account?",
@@ -39,7 +39,7 @@ export default function FaqPage() {
 		},
         {
             question: "Is Testudo free to use?",
-            answer: "Yes, Testudo is free to use. In the future we may look to implement minimal withdrawl fees to help support the projects future development.",
+            answer: "No, Testudo is not free to use. But, our fee is minimal at only 0.15% of the total withdrawal amount. For example, if you withdraw 100 SOL, the fee will be only 0.15 SOL.",
         },
         {
             question: "Do we have access to your funds?",

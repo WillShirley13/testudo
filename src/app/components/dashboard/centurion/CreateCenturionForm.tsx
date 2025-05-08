@@ -69,7 +69,7 @@ export function CreateCenturionForm({
                     .signers([])
 					.rpc();
 
-				// Get latest blockhash once
+				// Get latest blockhash
 				const { blockhash, lastValidBlockHeight } = await testudoProgram.provider.connection.getLatestBlockhash();
 				
 				await testudoProgram.provider.connection.confirmTransaction({
@@ -106,7 +106,7 @@ export function CreateCenturionForm({
 				<div className="p-8">
 					<div className="flex items-center justify-center mb-6">
 						<Image
-							src="/on-the-attack2-Photoroom.png"
+							src="/on-the-attack.png"
 							alt="Roman Soldiers"
 							width={150}
 							height={150}

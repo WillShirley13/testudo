@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { charisSIL } from "@/app/fonts";
-import { TestudoData, CenturionData } from "@/app/types/testudo";
+import { TestudoData } from "@/app/types/testudo";
 import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
 import { formatBalance, findCenturionPDA, findLegatePDA } from "@/app/utils/testudo-utils";
 import {
@@ -108,6 +108,8 @@ export function WithdrawModal({
 	const [amount, setAmount] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [solBalance, setSolBalance] = useState<number>(0);
+	const [feePercentage, setFeePercentage] = useState<number>(0);
+	const [feeAmount, setFeeAmount] = useState<string>("0");
 
 	// Get token info from the Legate account
 	const getTokenInfo = async (tokenMint: PublicKey) => {
@@ -142,9 +144,51 @@ export function WithdrawModal({
 		}
 	};
 
+	// Function to fetch the fee percentage from Legate account
+	const fetchFeePercentage = async () => {
+		try {
+			const [legatePDA] = findLegatePDA(testudoProgram.programId);
+			const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+			
+			// percentForFees is stored as a u16, so divide by 100 to get percentage
+			// e.g., 250 => 2.5%
+			const percentage = (legateAccount.percentForFees / 100);
+			setFeePercentage(percentage);
+		} catch (error) {
+			console.error("Error fetching fee percentage:", error);
+			setFeePercentage(0);
+		}
+	};
+	
+	// Calculate fee amount when amount or fee percentage changes
+	useEffect(() => {
+		const calculateFee = () => {
+			if (!amount || isNaN(parseFloat(amount)) || feePercentage <= 0) {
+				setFeeAmount("0");
+				return;
+			}
+			
+			const withdrawAmount = parseFloat(amount);
+			const calculatedFeeAmount = (withdrawAmount * feePercentage / 100).toFixed(tokenDecimals > 6 ? 6 : tokenDecimals);
+			setFeeAmount(calculatedFeeAmount);
+		};
+		
+		calculateFee();
+	}, [amount, feePercentage, tokenDecimals]);
+
+	// Fetch fee percentage when modal opens
+	useEffect(() => {
+		if (isOpen) {
+			fetchFeePercentage();
+		}
+	}, [isOpen, testudoProgram]);
+
 	// Function to handle actual withdrawal
 	const handleWithdraw = async (withdrawAmount: number, passwordKeypair: Keypair) => {
 		if (!publicKey) return;
+
+        const [legatePDA] = findLegatePDA(testudoProgram.programId);
+        const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
 
 		try {
 			setIsWithdrawing(true);
@@ -153,22 +197,27 @@ export function WithdrawModal({
 				// Handle SOL withdrawal
 				const amountInLamports = Math.floor(withdrawAmount * Math.pow(10, 9));
 				const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
+                
 				
 				// Call withdrawSol instruction with required accounts
 				// Note: Linter errors related to the .accounts() method are expected and should be ignored
 				// according to the project's custom rules.
 				const tx = await testudoProgram.methods
-					.withdrawSol(new anchor.BN(amountInLamports))
+					.withdrawSol(new anchor.BN(amountInLamports.toString()))
 					.accounts({
 						authority: publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
-						centurion: centurionPDA,
-						systemProgram: anchor.web3.SystemProgram.programId,
+						treasury: legateAccount.treasuryAcc,
 					})
 					.signers([passwordKeypair])
 					.rpc();
-				
-				await testudoProgram.provider.connection.confirmTransaction(tx);
+
+                const { blockhash, lastValidBlockHeight } = await testudoProgram.provider.connection.getLatestBlockhash();
+				await testudoProgram.provider.connection.confirmTransaction({
+					blockhash,
+					lastValidBlockHeight,
+					signature: tx,
+				});
 				
 				// Refresh Centurion data
 				const updatedCenturionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
@@ -179,7 +228,12 @@ export function WithdrawModal({
 				// Call onSuccess with the updated data
 				onSuccess(updatedCenturionAccount);
 				
-				toast.success(`Successfully withdrew ${withdrawAmount} SOL`);
+				// Display success message with fee information
+				const feeAmountSOL = (withdrawAmount * feePercentage / 100);
+				const receivedAmount = withdrawAmount - feeAmountSOL;
+				toast.success(
+					`Successfully withdrew ${withdrawAmount} SOL (Fee: ${feeAmountSOL.toFixed(6)} SOL, Received: ${receivedAmount.toFixed(6)} SOL)`
+				);
 			} else {
 				// Handle SPL token withdrawal
 				const tokenMint = new PublicKey(testudo.tokenMint);
@@ -187,35 +241,33 @@ export function WithdrawModal({
 				
 				// Get token info for decimals and symbol
 				const tokenInfo = await getTokenInfo(tokenMint);
+
+                const mintInfo = (await testudoProgram.provider.connection.getAccountInfo(tokenMint))?.owner;
 				
 				// Convert amount to token units with decimals
 				const amountWithDecimals = Math.floor(withdrawAmount * Math.pow(10, tokenInfo.decimals));
 				
-				// Find authority's ATA
-				const ata = await anchor.utils.token.associatedAddress({
-					mint: tokenMint,
-					owner: publicKey,
-				});
-				
 				// Call withdrawSpl instruction with required accounts
-				// Note: Linter errors related to the .accounts() method are expected and should be ignored
-				// according to the project's custom rules.
 				const tx = await testudoProgram.methods
-					.withdrawSpl(new anchor.BN(amountWithDecimals))
+					.withdrawSpl(new anchor.BN(amountWithDecimals.toString()))
 					.accounts({
 						authority: publicKey,
-						authorityAta: ata,
 						validSignerOfPassword: passwordKeypair.publicKey,
-						centurion: centurionPDA,
-						testudo: testudo.testudoPubkey,
 						mint: tokenMint,
-						tokenProgram: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
-						systemProgram: anchor.web3.SystemProgram.programId,
+						treasury: legateAccount.treasuryAcc,
+						tokenProgram: mintInfo as PublicKey,
 					})
 					.signers([passwordKeypair])
 					.rpc();
 				
-				await testudoProgram.provider.connection.confirmTransaction(tx);
+                const latestBlockhashInfo = await testudoProgram.provider.connection.getLatestBlockhash();
+				await testudoProgram.provider.connection.confirmTransaction(
+                    {
+                        blockhash: latestBlockhashInfo.blockhash,
+                        lastValidBlockHeight: latestBlockhashInfo.lastValidBlockHeight,
+                        signature: tx,
+                    }
+                );
 				
 				// Refresh Centurion data
 				const updatedCenturionAccount = await testudoProgram.account.centurion.fetch(centurionPDA);
@@ -223,7 +275,12 @@ export function WithdrawModal({
 				// Call onSuccess with the updated data
 				onSuccess(updatedCenturionAccount);
 				
-				toast.success(`Successfully withdrew ${withdrawAmount} ${tokenInfo.symbol}`);
+				// Display success message with fee information
+				const feeAmountToken = (withdrawAmount * feePercentage / 100);
+				const receivedAmount = withdrawAmount - feeAmountToken;
+				toast.success(
+					`Successfully withdrew ${withdrawAmount} ${tokenInfo.symbol} (Fee: ${feeAmountToken.toFixed(tokenInfo.decimals > 6 ? 6 : tokenInfo.decimals)} ${tokenInfo.symbol}, Received: ${receivedAmount.toFixed(tokenInfo.decimals > 6 ? 6 : tokenInfo.decimals)} ${tokenInfo.symbol})`
+				);
 			}
 			
 			// Clear form and close modal
@@ -275,6 +332,7 @@ export function WithdrawModal({
 				setError(`Amount exceeds balance of ${maxAmount.toFixed(tokenDecimals)} ${tokenSymbol}`);
 				return;
 			}
+
 
 			// Get prepared words (filtered non-empty)
 			const words = preparePasswordWords(passwordWords);
@@ -379,6 +437,18 @@ export function WithdrawModal({
 								)}{" "}
 								{tokenSymbol}
 							</p>
+							
+							{/* Fee information */}
+							{feePercentage > 0 && amount && !isNaN(parseFloat(amount)) && (
+								<div className="mt-2 p-2 bg-gray-800/80 rounded-md border border-gray-700">
+									<p className="text-xs text-amber-300">
+										Withdrawal Fee: {feeAmount} {tokenSymbol} ({feePercentage}%)
+									</p>
+									<p className="text-xs text-gray-400 mt-0.5">
+										You will receive: {(parseFloat(amount) - parseFloat(feeAmount)).toFixed(tokenDecimals > 6 ? 6 : tokenDecimals)} {tokenSymbol}
+									</p>
+								</div>
+							)}
 						</div>
 
 						<div>

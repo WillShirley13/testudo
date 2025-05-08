@@ -18,10 +18,10 @@ export function CTASection() {
 					<h2
 						className={`${charisSIL.className} text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-500 mb-6`}
 					>
-						Ready to Secure Your Solana Assets?
+						Ready to Secure Your Assets?
 					</h2>
 					<p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto">
-						Join Testudo and let YOUR Centurion secure YOUR assets.
+						Join Testudo and let your Centurion secure your assets.
 					</p>
 					
 					<div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">

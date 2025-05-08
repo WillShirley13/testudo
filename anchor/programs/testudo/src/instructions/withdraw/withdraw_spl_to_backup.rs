@@ -1,7 +1,9 @@
 use crate::custom_accounts::centurion::*;
+use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
-    CenturionNotInitialized, InvalidATA, InvalidAuthority, InvalidBackupAccount,
-    InvalidPasswordSignature, InvalidTokenMint, NoBackupAccountStored,
+    ArithmeticOverflow, CenturionNotInitialized, InvalidATA, InvalidAuthority,
+    InvalidBackupAccount, InvalidPasswordSignature, InvalidTokenMint, InvalidTreasuryAccount,
+    LegateNotInitialized, NoBackupAccountStored,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -74,6 +76,24 @@ pub struct WithdrawToBackup<'info> {
         constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
     )]
     pub associated_token_program: Program<'info, AssociatedToken>,
+    #[account(
+        seeds = [b"legate"],
+        bump = legate.bump,
+        constraint = legate.is_initialized @LegateNotInitialized,
+    )]
+    pub legate: Account<'info, Legate>,
+    #[account(
+        constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
+    )]
+    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
+    pub treasury: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = treasury,
+        associated_token::token_program = token_program,
+    )]
+    pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
 }
 
 pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> {
@@ -107,15 +127,19 @@ pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> 
         InvalidBackupAccount
     );
 
+    let withdraw_fee = centurion_ata
+        .amount
+        .checked_mul(ctx.accounts.legate.percent_for_fees as u64)
+        .unwrap_or(0)
+        .checked_div(10000)
+        .unwrap_or(0);
+    let amount_after_fee = centurion_ata
+        .amount
+        .checked_sub(withdraw_fee)
+        .ok_or(ArithmeticOverflow)?;
+
     let tokens_in_centurion_ata: u64 = centurion_ata.amount;
     let token_program: &mut Interface<'_, TokenInterface> = &mut ctx.accounts.token_program;
-
-    let cpi_accounts = TransferChecked {
-        from: centurion_ata.to_account_info(),
-        mint: ctx.accounts.mint.to_account_info(),
-        to: backup_ata.to_account_info(),
-        authority: centurion_data.to_account_info(),
-    };
 
     let signer_seeds: &[&[&[u8]]] = &[&[
         b"centurion",
@@ -123,12 +147,43 @@ pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> 
         &[ctx.bumps.centurion],
     ]];
 
-    let cpi_context =
-        CpiContext::new_with_signer(token_program.to_account_info(), cpi_accounts, signer_seeds);
+    // Set up the CPI accounts for the transfer of fee
+    let cpi_accounts_for_fee = TransferChecked {
+        from: centurion_ata.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        to: ctx.accounts.treasury_ata.to_account_info(),
+        authority: centurion_data.to_account_info(),
+    };
+
+    let cpi_context_for_fee = CpiContext::new_with_signer(
+        token_program.to_account_info(),
+        cpi_accounts_for_fee,
+        signer_seeds,
+    );
 
     transfer_checked(
-        cpi_context,
-        tokens_in_centurion_ata,
+        cpi_context_for_fee,
+        withdraw_fee,
+        ctx.accounts.mint.decimals,
+    )?;
+
+    // Set up the CPI accounts for the transfer of amount after fee
+    let cpi_accounts_for_withdraw = TransferChecked {
+        from: centurion_ata.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        to: backup_ata.to_account_info(),
+        authority: centurion_data.to_account_info(),
+    };
+
+    let cpi_context_for_withdraw = CpiContext::new_with_signer(
+        token_program.to_account_info(),
+        cpi_accounts_for_withdraw,
+        signer_seeds,
+    );
+
+    transfer_checked(
+        cpi_context_for_withdraw,
+        amount_after_fee,
         ctx.accounts.mint.decimals,
     )?;
 

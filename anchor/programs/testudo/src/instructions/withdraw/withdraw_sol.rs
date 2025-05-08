@@ -1,7 +1,8 @@
 use crate::custom_accounts::centurion::Centurion;
+use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
     ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidAuthority,
-    InvalidPasswordSignature,
+    InvalidPasswordSignature, InvalidTreasuryAccount, LegateNotInitialized,
 };
 use anchor_lang::prelude::*;
 
@@ -23,6 +24,18 @@ pub struct WithdrawSol<'info> {
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,
+    #[account(
+        seeds = [b"legate"],
+        bump = legate.bump,
+        constraint = legate.is_initialized @LegateNotInitialized,
+    )]
+    pub legate: Account<'info, Legate>,
+    #[account(
+        mut,
+        constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
+    )]
+    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
+    pub treasury: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -57,11 +70,22 @@ pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) 
     );
     msg!("Centurion has enough funds to withdraw");
 
-    // Debit from centurion account
-    ctx.accounts.centurion.sub_lamports(amount_in_lamports)?;
+    let withdraw_fee = amount_in_lamports
+        .checked_mul(ctx.accounts.legate.percent_for_fees as u64)
+        .unwrap_or(0)
+        .checked_div(10000)
+        .unwrap_or(0);
+    let amount_after_fee = amount_in_lamports
+        .checked_sub(withdraw_fee)
+        .ok_or(ArithmeticOverflow)?;
 
-    // Credit to authority account
-    ctx.accounts.authority.add_lamports(amount_in_lamports)?;
+    // Subtract the fee from the centurion's balance and add it to the treasury's balance
+    ctx.accounts.centurion.sub_lamports(withdraw_fee)?;
+    ctx.accounts.treasury.add_lamports(withdraw_fee)?;
+
+    // Subtract the amount after fee from the centurion's balance and add it to the authority's balance
+    ctx.accounts.centurion.sub_lamports(amount_after_fee)?;
+    ctx.accounts.authority.add_lamports(amount_after_fee)?;
 
     // Update the centurion's state in a separate mutable borrow
     let current_datetime = Clock::get()?.unix_timestamp;

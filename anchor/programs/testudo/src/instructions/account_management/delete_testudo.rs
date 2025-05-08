@@ -1,7 +1,8 @@
 use crate::custom_accounts::centurion::Centurion;
+use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
-    CenturionNotInitialized, ErrorTransferringAllTokensOutOfTestudo, InvalidATA, InvalidAuthority,
-    InvalidPasswordSignature, InvalidTokenMint,
+    ArithmeticOverflow, CenturionNotInitialized, InvalidATA, InvalidAuthority,
+    InvalidPasswordSignature, InvalidTokenMint, InvalidTreasuryAccount, LegateNotInitialized,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
@@ -38,6 +39,12 @@ pub struct DeleteTestudo<'info> {
     )]
     pub centurion: Account<'info, Centurion>,
     #[account(
+        seeds = [b"legate"],
+        bump = legate.bump,
+        constraint = legate.is_initialized @LegateNotInitialized,
+    )]
+    pub legate: Account<'info, Legate>,
+    #[account(
         mut,
         token::mint = mint,
         token::authority = centurion,
@@ -52,6 +59,18 @@ pub struct DeleteTestudo<'info> {
     // Centurion ATA
     pub testudo: InterfaceAccount<'info, TokenAccount>,
     pub mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
+    )]
+    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
+    pub treasury: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = treasury,
+        associated_token::token_program = token_program,
+    )]
+    pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
     // Ensure valid token program is passed
     #[account(
         constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
@@ -85,33 +104,68 @@ pub fn process_delete_testudo(ctx: Context<DeleteTestudo>) -> Result<()> {
     );
     msg!("Password signature is valid");
 
-    // Transfer all SPL tokens to the authority
-    // Set up the CPI accounts for the transfer
-    let cpi_accounts = TransferChecked {
+    let amount_in_decimals = testudo_ata.amount;
+
+    let withdraw_fee = amount_in_decimals
+        .checked_mul(ctx.accounts.legate.percent_for_fees as u64)
+        .unwrap_or(0)
+        .checked_div(10000)
+        .unwrap_or(0);
+    let amount_after_fee = amount_in_decimals
+        .checked_sub(withdraw_fee)
+        .ok_or(ArithmeticOverflow)?;
+
+    // Get the testudo account for the token
+    let testudo_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.testudo;
+    // Get the depositor's ATA for the token
+    let authority_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.authority_ata;
+    // Get the treasury ATA for the token
+    let treasury_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.treasury_ata;
+
+    // Get the number of decimals for the token
+    let decimals: u8 = ctx.accounts.mint.decimals;
+
+    let signer_seeds: &[&[&[u8]]] = &[&[
+        b"centurion",
+        ctx.accounts.authority.key.as_ref(),
+        &[ctx.bumps.centurion],
+    ]];
+
+    // Set up the CPI accounts for the transfer of fee
+    let cpi_accounts_for_fee = TransferChecked {
+        from: testudo_ata.to_account_info(),
+        to: treasury_ata.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        authority: centurion.to_account_info(),
+    };
+
+    // Set up the CPI context for the transfer of fee
+    let cpi_context_for_fee = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        cpi_accounts_for_fee,
+        signer_seeds,
+    );
+
+    // Perform the transfer
+    transfer_checked(cpi_context_for_fee, withdraw_fee, decimals)?;
+
+    // Set up the CPI accounts for the transfer of amount after fee
+    let cpi_accounts_for_withdraw = TransferChecked {
         from: testudo_ata.to_account_info(),
         to: authority_ata.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
         authority: centurion.to_account_info(),
     };
 
-    let authority_key_ref = ctx.accounts.authority.key.as_ref();
-    let bump = &[ctx.bumps.centurion];
-    let signer_seeds: &[&[&[u8]]] = &[&[b"centurion", authority_key_ref, bump]];
-
-    let cpi_context = CpiContext::new_with_signer(
+    // Set up the CPI context for the transfer of amount after fee
+    let cpi_context_for_withdraw = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
-        cpi_accounts,
+        cpi_accounts_for_withdraw,
         signer_seeds,
     );
-    // Perform the transfer
-    transfer_checked(cpi_context, testudo_ata.amount, ctx.accounts.mint.decimals)?;
 
-    //Ensure all tokens have been transferred
-    require_eq!(
-        testudo_ata.amount,
-        0,
-        ErrorTransferringAllTokensOutOfTestudo
-    );
+    // Perform the transfer
+    transfer_checked(cpi_context_for_withdraw, amount_after_fee, decimals)?;
 
     // Close the ATA
     let cpi_accounts: CloseAccount<'_> = CloseAccount {

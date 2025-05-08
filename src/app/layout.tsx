@@ -5,6 +5,7 @@ import { ReactQueryProvider } from "./react-query-provider";
 import { Header } from "@/app/components/Header";
 import { Footer } from "@/app/components/Footer";
 import { charisSIL } from "@/app/fonts";
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
 	title: "Testudo",
@@ -32,6 +33,7 @@ export default function RootLayout({
 								<Header />
 								<main className="flex-grow">{children}</main>
 								<Footer />
+								<Toaster position="top-right" />
 							</div>
 						</body>
 					</SolanaProvider>

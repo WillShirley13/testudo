@@ -5,8 +5,8 @@ use crate::errors::ErrorCode::{
     TestudoCreationCannotPreceedCenturionInitialization, UnsupportedTokenMint,
 };
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
+
 // Initialize a testudo account (An ATA from the Centurion PDA) for a user.
 
 #[derive(Accounts)]
@@ -16,7 +16,7 @@ pub struct CreateTestudo<'info> {
     // Get legate PDA
     #[account(
         seeds = [b"legate"],
-        bump = legate.bump,
+        bump,
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
@@ -32,7 +32,7 @@ pub struct CreateTestudo<'info> {
     pub centurion: Account<'info, Centurion>,
 
     // Mint for token the testudo will hold. Must be in legate's whitelist
-    #[account(constraint = legate.testudo_token_whitelist.iter().any(|t| t.token_mint.eq(&mint.key())) @UnsupportedTokenMint)]
+    #[account(constraint = legate.testudo_token_whitelist.iter().any(|t| t.token_mint == mint.key()) @UnsupportedTokenMint)]
     pub mint: InterfaceAccount<'info, Mint>,
 
     // token program + verifying token program passed
@@ -57,11 +57,6 @@ pub struct CreateTestudo<'info> {
         constraint = system_program.key() == anchor_lang::system_program::ID,
     )]
     pub system_program: Program<'info, System>,
-    // Ensure valid associated token program is passed
-    #[account(
-        constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
-    )]
-    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn process_create_testudo(ctx: Context<CreateTestudo>) -> Result<()> {
