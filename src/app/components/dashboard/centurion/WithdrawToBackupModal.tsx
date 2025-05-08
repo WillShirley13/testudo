@@ -122,7 +122,7 @@ export function WithdrawToBackupModal({
 				// according to the project's custom rules.
 				const tx = await testudoProgram.methods
 					.withdrawToBackup()
-					.accounts({
+					.accountsPartial({
 						authority: userWallet,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						backupAccount: centurionData.backupOwner,
@@ -172,7 +172,7 @@ export function WithdrawToBackupModal({
 				// Call withdrawSolToBackup instruction
 				const tx = await testudoProgram.methods
 					.withdrawSolToBackup()
-					.accounts({
+					.accountsPartial({
 						authority: userWallet,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						backupAccount: centurionData.backupOwner,

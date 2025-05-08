@@ -46,6 +46,13 @@ export interface LegateData {
 	percentForFees: number;
 }
 
+export interface TokenData {
+	name: string;
+	symbol: string;
+	mint: string;
+	decimals: number;
+}
+
 export type Testudo = {
 	address: "8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U";
 	metadata: {

@@ -114,7 +114,7 @@ export function CreateTestudoModal({
                 // according to the project's custom rules.
 			const tx = await testudoProgram.methods
 				.createTestudo()
-				.accounts({
+				.accountsPartial({
 					authority: publicKey,
 					mint: mintPubkey,
 					tokenProgram: tokenProgramId,

@@ -70,7 +70,7 @@ export function UpdateBackupOwnerModal({
 			try {
 				const tx = await testudoProgram.methods
 					.updateBackUpAccount(newBackupPubkey)
-					.accounts({
+					.accountsPartial({
 						authority: userWallet,
 						validSignerOfPassword: passwordKeypair.publicKey,
 					})

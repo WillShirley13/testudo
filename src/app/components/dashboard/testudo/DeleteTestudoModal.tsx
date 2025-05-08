@@ -90,7 +90,7 @@ export function DeleteTestudoModal({
             // Call deleteTestudo instruction with required accounts
             const tx = await testudoProgram.methods
                 .deleteTestudo()
-                .accounts({
+                .accountsPartial({
                     authority: publicKey,
                     validSignerOfPassword: passwordKeypair.publicKey,
                     mint: tokenMint,

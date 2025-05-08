@@ -205,7 +205,7 @@ export function WithdrawModal({
 				const tx = await testudoProgram.methods
 					.withdrawSol(new anchor.BN(amountInLamports.toString()))
 					.accounts({
-						authority: publicKey,
+						// authority: publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						treasury: legateAccount.treasuryAcc,
 					})
@@ -251,7 +251,7 @@ export function WithdrawModal({
 				const tx = await testudoProgram.methods
 					.withdrawSpl(new anchor.BN(amountWithDecimals.toString()))
 					.accounts({
-						authority: publicKey,
+						// authority: publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						mint: tokenMint,
 						treasury: legateAccount.treasuryAcc,

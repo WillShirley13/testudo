@@ -120,7 +120,7 @@ export function DepositModal({
 	// Update tokenInfo when props change
 	useEffect(() => {
 		if (testudo !== "SOL") {
-			setTokenInfo(prev => ({
+			setTokenInfo((prev: TokenData) => ({
 				...prev,
 				symbol: tokenSymbol,
 				decimals: tokenDecimals
@@ -150,7 +150,7 @@ export function DepositModal({
 								if (parsedData.info && parsedData.info.decimals) {
 									// Update decimals based on mint info
 									const actualDecimals = parsedData.info.decimals;
-									setTokenInfo(prev => ({
+									setTokenInfo((prev: TokenData) => ({
 										...prev,
 										decimals: actualDecimals
 									}));
@@ -290,7 +290,7 @@ export function DepositModal({
 				// Call depositSpl instruction with string representation
 				const tx = await testudoProgram.methods
 					.depositSpl(new anchor.BN(amountWithDecimalsStr))
-					.accounts({
+					.accountsPartial({
 						authority: publicKey,
 						mint: tokenMint,
 						tokenProgram: tokenProgram as PublicKey,
