@@ -23,7 +23,7 @@ export default function DashboardPage() {
 	const { connected, publicKey } = wallet;
 	const testudoProgramRaw = useTestudoProgram();
 	// Memoize the program to avoid unnecessary re-renders
-	const testudoProgram = useMemo(() => testudoProgramRaw, [testudoProgramRaw.programId.toString()]);
+	const testudoProgram = useMemo(() => testudoProgramRaw, [testudoProgramRaw]);
     const secureKeypairGenerator = new SecureKeypairGenerator();
 
 	// Note: Linter errors related to the .accounts() methods are expected and should be ignored

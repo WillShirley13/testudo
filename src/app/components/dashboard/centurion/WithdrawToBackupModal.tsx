@@ -69,7 +69,7 @@ export function WithdrawToBackupModal({
 			
 			fetchTokenInfo();
 		}
-	}, [isOpen, centurionData, testudoProgram.programId, testudoProgram.account.legate]);
+	}, [isOpen, centurionData, testudoProgram.programId, testudoProgram.account.legate, legatePDA]);
 
 	const handleWithdrawToBackup = async (passwordKeypair: anchor.web3.Keypair) => {
 		if (!centurionData || !centurionData.backupOwner) {
