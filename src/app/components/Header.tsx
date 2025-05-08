@@ -16,11 +16,6 @@ const CustomWalletButton = dynamic(
 	{ ssr: false }
 );
 
-const NetworkIndicatorDynamic = dynamic(
-	() => import("./solana/NetworkIndicator").then(mod => mod.NetworkIndicator),
-	{ ssr: false }
-);
-
 export function Header() {
 	const pathname = usePathname();
 	const [scrolled, setScrolled] = useState(false);
@@ -121,11 +116,6 @@ export function Header() {
 						))}
 					</div>
 
-					{/* Network Indicator */}
-					<div className="mr-4">
-						<NetworkIndicatorDynamic />
-					</div>
-
 					{/* Custom Connect Wallet Button - Desktop */}
 					<CustomWalletButton />
 				</nav>
@@ -192,10 +182,6 @@ export function Header() {
 							))}
 						</ul>
 						<div className="mt-10 pt-6 border-t border-gray-800/50">
-							{/* Network Indicator - Mobile */}
-							<div className="mb-4">
-								<NetworkIndicatorDynamic />
-							</div>
 							{/* Custom Connect Wallet Button - Mobile */}
 							<div onClick={(e) => e.stopPropagation()}>
 								<CustomWalletButton />
