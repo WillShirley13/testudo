@@ -100,7 +100,7 @@ export function CreateCenturionForm({
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.5 }}
-			className="min-h-screen flex items-center justify-center p-6"
+			className="min-h-[calc(100vh-6rem)] pt-36 flex items-center justify-center p-6"
 		>
 			<div className="max-w-xl mx-auto bg-gray-900/60 backdrop-blur-md rounded-lg overflow-hidden shadow-xl border border-amber-500/20">
 				<div className="p-8">
