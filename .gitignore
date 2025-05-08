@@ -37,4 +37,7 @@ next-env.d.ts
 tmp
 
 # keys
-/keys
+**/keys/
+
+# scripts
+**/scripts/
