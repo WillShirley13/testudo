@@ -97,7 +97,7 @@ export default function DashboardPage() {
 				<div className="relative z-20 text-center max-w-xl mx-auto">
 					<div className="mb-8">
 						<Image
-							src="/on-the-attack2-Photoroom.png"
+							src="/on-the-attack.png"
 							alt="Roman Soldiers"
 							width={200}
 							height={200}
@@ -166,7 +166,7 @@ export default function DashboardPage() {
 						<div className="flex items-center">
 							<div className="relative mr-3">
 								<Image
-									src="/on-the-attack2-Photoroom.png"
+									src="/on-the-attack.png"
 									alt="Roman Soldier"
 									width={48}
 									height={48}
