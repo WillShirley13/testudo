@@ -103,7 +103,7 @@ export function WithdrawModal({
 	const provider = useAnchorProvider();
 	const testudoProgram = useTestudoProgram();
 	const [passwordWords, setPasswordWords] = useState<string[]>(
-		Array(6).fill("")
+		Array(12).fill("")
 	);
 	const [amount, setAmount] = useState("");
 	const [error, setError] = useState<string | null>(null);
@@ -284,7 +284,7 @@ export function WithdrawModal({
 			}
 			
 			// Clear form and close modal
-			setPasswordWords(Array(6).fill(""));
+			setPasswordWords(Array(12).fill(""));
 			setAmount("");
 			onClose();
 		} catch (error) {
@@ -369,7 +369,7 @@ export function WithdrawModal({
 	// Reset form when closed
 	useEffect(() => {
 		if (!isOpen) {
-			setPasswordWords(Array(6).fill(""));
+			setPasswordWords(Array(12).fill(""));
 			setAmount("");
 			setError(null);
 			setSolBalance(0);
@@ -458,7 +458,7 @@ export function WithdrawModal({
 							<PasswordPhraseInput
 								words={passwordWords}
 								onChange={setPasswordWords}
-								maxWords={6}
+								maxWords={12}
 								className="mb-1"
 							/>
 							<p className="text-xs text-gray-500 mt-0.5">

@@ -27,7 +27,7 @@ export function UpdateBackupOwnerModal({
 	setIsUpdating,
 }: UpdateBackupOwnerModalProps) {
 	const [backupPubkey, setBackupPubkey] = useState("");
-	const [passwordWords, setPasswordWords] = useState<string[]>(Array(6).fill(""));
+	const [passwordWords, setPasswordWords] = useState<string[]>(Array(12).fill(""));
 	const [error, setError] = useState("");
 	
 	// Get the testudo program instance
@@ -110,7 +110,7 @@ export function UpdateBackupOwnerModal({
 	// Reset form when closed
 	useEffect(() => {
 		if (!isOpen) {
-			setPasswordWords(Array(6).fill(""));
+			setPasswordWords(Array(12).fill(""));
 			setBackupPubkey("");
 			setError("");
 		}
@@ -152,7 +152,7 @@ export function UpdateBackupOwnerModal({
 							<PasswordPhraseInput 
 								words={passwordWords}
 								onChange={setPasswordWords}
-								maxWords={6}
+								maxWords={12}
 								className="mb-2"
 							/>
 							<p className="text-xs text-gray-500 mt-1">

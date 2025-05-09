@@ -31,7 +31,7 @@ export function WithdrawToBackupModal({
 	isWithdrawing,
 	setIsWithdrawing,
 }: WithdrawToBackupModalProps) {
-	const [passwordWords, setPasswordWords] = useState<string[]>(Array(6).fill(""));
+	const [passwordWords, setPasswordWords] = useState<string[]>(Array(12).fill(""));
 	const [error, setError] = useState("");
 	const [withdrawalProgress, setWithdrawalProgress] = useState<string>("");
 	const [tokenInfo, setTokenInfo] = useState<Map<string, TokenWhitelistData>>(new Map());
@@ -275,7 +275,7 @@ export function WithdrawToBackupModal({
 	// Reset form when closed
 	useEffect(() => {
 		if (!isOpen) {
-			setPasswordWords(Array(6).fill(""));
+			setPasswordWords(Array(12).fill(""));
 			setError("");
 			setWithdrawalProgress("");
 		}
@@ -344,7 +344,7 @@ export function WithdrawToBackupModal({
 								<PasswordPhraseInput
 									words={passwordWords}
 									onChange={setPasswordWords}
-									maxWords={6}
+									maxWords={12}
 									className="mb-1"
 								/>
 								<p className="text-sm text-gray-500 mt-2">
