@@ -6,6 +6,7 @@ import { Header } from "@/app/components/Header";
 import { Footer } from "@/app/components/Footer";
 import { charisSIL } from "@/app/fonts";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/react"
 
 export const metadata = {
 	title: "Testudo",
@@ -25,6 +26,7 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
+			<Analytics />
 			<ClusterProvider>
 				<ReactQueryProvider>
 					<SolanaProvider>
