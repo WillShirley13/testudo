@@ -58,7 +58,7 @@ export default function AboutPage() {
 								Testudo was created to solve this dilemma with
 								our innovative dual-signature system. By
 								combining your wallet signature with a key
-								derived from a memorable 4-6 word phrase,
+								derived from a memorable 5-12 word phrase,
 								we&apos;ve created an on-chain 2FA experience
 								that feels natural and intuitive.
 							</p>

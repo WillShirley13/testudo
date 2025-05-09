@@ -5,12 +5,12 @@ import React, { useState, useRef, useEffect } from "react";
 interface PasswordPhraseInputProps {
 	words: string[];
 	onChange: (words: string[]) => void;
-	maxWords?: 4 | 5 | 6; // Default is 6
+	maxWords?: number; // Now accepts any number from 5-12
 	className?: string;
 }
 
 /**
- * A reusable component that renders 4-6 word input boxes for password phrases
+ * A reusable component that renders 5-12 word input boxes for password phrases
  */
 export function PasswordPhraseInput({
 	words,
@@ -18,7 +18,7 @@ export function PasswordPhraseInput({
 	maxWords = 6,
 	className = "",
 }: PasswordPhraseInputProps) {
-	// Create refs for word input fields
+	// Create refs for word input fields (up to 12)
 	const wordInputRefs = useRef<(HTMLInputElement | null)[]>(
 		Array(maxWords).fill(null)
 	);
@@ -77,11 +77,18 @@ export function PasswordPhraseInput({
 		setShowPassword(!showPassword);
 	};
 
+	// Calculate grid columns based on maxWords
+	const getGridCols = () => {
+		if (maxWords <= 6) return "grid-cols-2 sm:grid-cols-3";
+		if (maxWords <= 9) return "grid-cols-2 sm:grid-cols-3";
+		return "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
+	};
+
 	return (
 		<div className={className}>
 			<div className="flex justify-between items-center mb-1">
 				<p className="text-xs text-gray-400">
-					Enter your 4-{maxWords} word phrase. Only fill what applies to
+					Enter your {maxWords <= 12 ? `5-${maxWords}` : "5-12"} word phrase. Only fill what applies to
 					you.
 				</p>
 				<button
@@ -92,7 +99,7 @@ export function PasswordPhraseInput({
 					{showPassword ? "Hide Password" : "Show Password"}
 				</button>
 			</div>
-			<div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+			<div className={`grid ${getGridCols()} gap-1`}>
 				{Array.from({ length: maxWords }).map((_, index) => (
 					<input
 						key={index}
@@ -119,7 +126,7 @@ export function PasswordPhraseInput({
 // Helper function to validate a word array (returns true if valid)
 export function validatePasswordWords(words: string[]): boolean {
 	const filteredWords = words.filter((word) => word.trim() !== "");
-	return filteredWords.length >= 4 && filteredWords.length <= 6;
+	return filteredWords.length >= 5 && filteredWords.length <= 12;
 }
 
 // Helper function to prepare words for the deriveKeypairFromWords function

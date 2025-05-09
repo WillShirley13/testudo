@@ -12,7 +12,7 @@ export interface MnemonicPhraseGeneratorProps {
 export function MnemonicPhraseGenerator({
 	onPhraseConfirmed,
 }: MnemonicPhraseGeneratorProps) {
-	const [phraseLength, setPhraseLength] = useState<4 | 5 | 6>(6);
+	const [phraseLength, setPhraseLength] = useState<number>(6);
 	const [generatedPhrase, setGeneratedPhrase] = useState<string[]>([]);
 	const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 	const [isConfirmed, setIsConfirmed] = useState(false);
@@ -46,20 +46,23 @@ export function MnemonicPhraseGenerator({
 		}, 0);
 	};
 
+	// Word length options to show in the UI
+	const wordLengthOptions = [5, 6, 8, 10, 12];
+
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center space-x-4">
-				<label className="text-sm font-medium text-gray-300">
+			<div>
+				<label className="text-sm font-medium text-gray-300 mb-2 block">
 					Choose Phrase Length:
 				</label>
-				<div className="flex space-x-2">
-					{[4, 5, 6].map((length) => (
+				<div className="flex flex-wrap gap-2 mb-2">
+					{wordLengthOptions.map((length) => (
 						<button
 							key={length}
-							type="button" // Explicitly set button type
+							type="button"
 							onClick={(e) => {
-								e.preventDefault(); // Prevent form submission
-								setPhraseLength(length as 4 | 5 | 6);
+								e.preventDefault();
+								setPhraseLength(length);
 								setGeneratedPhrase([]);
 								setIsConfirmed(false);
 							}}
@@ -73,17 +76,34 @@ export function MnemonicPhraseGenerator({
 						</button>
 					))}
 				</div>
-				<button
-					type="button" // Explicitly set button type
-					onClick={(e) => {
-						e.preventDefault(); // Prevent form submission
-						setShowSecurityInfo(!showSecurityInfo);
-					}}
-					className="text-gray-400 hover:text-amber-500 transition-colors"
-					title="Security Information"
-				>
-					<IconInfoCircle size={20} />
-				</button>
+				
+				{/* Security info preview */}
+				<div className="mt-3 bg-gray-800/30 p-3 rounded-lg border border-amber-500/10 relative">
+					<div className="flex justify-between items-start">
+						<div>
+							<div className="text-amber-400 text-sm font-medium">
+								Security Level: {keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.securityRank}/5
+							</div>
+							<div className="text-gray-400 text-xs mt-1 pr-8">
+								{keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.description.split('.')[0]}.
+								<span className="block mt-1 text-amber-300/80">
+									Time to crack: {keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.timeToCrack}
+								</span>
+							</div>
+						</div>
+						<button
+							type="button"
+							onClick={(e) => {
+								e.preventDefault();
+								setShowSecurityInfo(!showSecurityInfo);
+							}}
+							className="text-gray-400 hover:text-amber-500 transition-colors"
+							title="Security Information"
+						>
+							<IconInfoCircle size={20} />
+						</button>
+					</div>
+				</div>
 			</div>
 
 			{showSecurityInfo && (
@@ -95,14 +115,16 @@ export function MnemonicPhraseGenerator({
 					<h4 className="text-amber-400 font-medium mb-2">
 						Security Information
 					</h4>
-					<div className="space-y-2 text-sm text-gray-300">
-						{Object.entries(keyManager.securityInfo).map(
-							([length, info]) => (
+					<div className="space-y-2 text-sm text-gray-300 max-h-[40vh] overflow-y-auto pr-2">
+						{Object.entries(keyManager.securityInfo)
+							.filter(([length, _]) => parseInt(length) >= 4 && parseInt(length) <= 12)
+							.sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+							.map(([length, info]) => (
 								<div
 									key={length}
 									className={`p-2 rounded ${
 										phraseLength === Number(length)
-											? "bg-gray-700/50"
+											? "bg-gray-700/50 border-l-2 border-amber-500"
 											: ""
 									}`}
 								>
@@ -114,19 +136,17 @@ export function MnemonicPhraseGenerator({
 										Possible combinations:{" "}
 										{info.combinations.toLocaleString()}
 										<br />
-										Bits of entropy:{" "}
-										{info.bitsOfEntropy.toFixed(2)}
+										Time to crack: {info.timeToCrack}
 									</div>
 								</div>
-							)
-						)}
+							))}
 					</div>
 				</motion.div>
 			)}
 
 			<div className="space-y-4">
 				<button
-					type="button" // Explicitly set button type
+					type="button"
 					onClick={generateNewPhrase}
 					className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-medium rounded-md hover:from-amber-600 hover:to-amber-700 transition-all duration-300"
 				>
@@ -154,7 +174,7 @@ export function MnemonicPhraseGenerator({
 
 						<div className="flex justify-between items-center">
 							<button
-								type="button" // Explicitly set button type
+								type="button"
 								onClick={generateNewPhrase}
 								className="text-sm text-gray-400 hover:text-amber-500 transition-colors"
 							>

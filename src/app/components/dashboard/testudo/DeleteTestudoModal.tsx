@@ -135,7 +135,7 @@ export function DeleteTestudoModal({
         
         // Validate password words
         if (!validatePasswordWords(passwordWords)) {
-            setError("Please enter at least 4 words for your password phrase");
+            setError("Please enter at least 5 words for your password phrase");
             return;
         }
         

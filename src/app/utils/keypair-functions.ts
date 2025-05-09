@@ -16,34 +16,56 @@ export class SecureKeypairGenerator {
     
     // Security information for different word lengths
     public readonly securityInfo = {
-        4: {
-            combinations: Math.pow(2048, 4),
-            bitsOfEntropy: Math.log2(Math.pow(2048, 4)),
-            description: "Basic security - suitable for small amounts. About 17.6 trillion possible combinations. With a specialized password-cracking system (using multiple GPUs) attempting 1 million guesses per second, it would take roughly 6 months to try all combinations."
-        },
         5: {
             combinations: Math.pow(2048, 5),
             bitsOfEntropy: Math.log2(Math.pow(2048, 5)),
-            description: "Medium security - good for moderate amounts. About 36 quadrillion possible combinations. With a specialized password-cracking system (using multiple GPUs) attempting 1 million guesses per second, it would take roughly 1,100 years to try all combinations."
+            timeToCrack: "~1,100 years (at 1M attempts/second)",
+            securityRank: 1,
+            description: "Medium security, but memorable - suitable for moderate value assets and where convenience is a priority."
         },
         6: {
             combinations: Math.pow(2048, 6),
             bitsOfEntropy: Math.log2(Math.pow(2048, 6)),
-            description: "High security - recommended for large amounts. About 73 quintillion possible combinations. With a specialized password-cracking system (using multiple GPUs) attempting 1 million guesses per second, it would take roughly 2.3 million years to try all combinations."
+            timeToCrack: "~2.3 million years (at 1M attempts/second)",
+            securityRank: 2,
+            description: "High security and still memorable - recommended for significant value assets and where convenience is important."
+        },
+        8: {
+            combinations: Math.pow(2048, 8),
+            bitsOfEntropy: Math.log2(Math.pow(2048, 8)),
+            timeToCrack: "Trillions of years (at 1M attempts/second)",
+            securityRank: 3,
+            description: "Very high security - comparable to many cryptocurrency wallet seed phrases."
+        },
+        10: {
+            combinations: Math.pow(2048, 10),
+            bitsOfEntropy: Math.log2(Math.pow(2048, 10)),
+            timeToCrack: "Practically uncrackable even with quantum computers",
+            securityRank: 4,
+            description: "Ultra high security - comparable to full BIP39 seed phrases."
+        },
+        12: {
+            combinations: Math.pow(2048, 12),
+            bitsOfEntropy: Math.log2(Math.pow(2048, 12)),
+            timeToCrack: "Impossible to crack with any foreseeable technology",
+            securityRank: 5,
+            description: "Maximum security - industry standard for cryptocurrency seed phrases."
         }
     };
     
     /**
      * Generate a random phrase with specified length and maximum entropy
      */
-    generateRandomPhrase(length: 4 | 5 | 6): string[] {
+    generateRandomPhrase(length: number): string[] {
         // Ensure we have a wordlist
         if (!this.wordlist || this.wordlist.length === 0) {
             throw new Error("Wordlist not available");
         }
         
-        if (![4, 5, 6].includes(length)) {
-            throw new Error("Phrase length must be 4, 5, or 6 words");
+        // Only allow specific phrase lengths
+        const validLengths = [5, 6, 8, 10, 12];
+        if (!validLengths.includes(length)) {
+            throw new Error("Phrase length must be 5, 6, 8, 10, or 12 words");
         }
         
         // Generate N truly random words using cryptographically secure randomness
@@ -72,8 +94,9 @@ export class SecureKeypairGenerator {
      */
     deriveKeypairFromWords(words: string[]): { keypair: Keypair, words: string[] } {
         // Validate input
-        if (!Array.isArray(words) || ![4, 5, 6].includes(words.length)) {
-            throw new Error("Phrase must be 4, 5, or 6 words");
+        const validLengths = [5, 6, 8, 10, 12];
+        if (!Array.isArray(words) || !validLengths.includes(words.length)) {
+            throw new Error("Phrase must be 5, 6, 8, 10, or 12 words");
         }
         
         // Normalize words (lowercase and trim)
