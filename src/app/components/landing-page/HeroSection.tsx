@@ -19,7 +19,7 @@ export function HeroSection() {
 								textShadow: "0 2px 4px rgba(0,0,0,0.3)",
 							}}
 						>
-							Impenetrable, <br className="hidden md:block" />
+							Impenetrable, <br className="block" />
 							By Design. <br className="hidden md:block" />
 						</h1>
 

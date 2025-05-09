@@ -18,16 +18,7 @@ const CustomWalletButton = dynamic(
 
 export function Header() {
 	const pathname = usePathname();
-	const [scrolled, setScrolled] = useState(false);
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-	useEffect(() => {
-		const handleScroll = () => {
-			setScrolled(window.scrollY > 10);
-		};
-		window.addEventListener("scroll", handleScroll);
-		return () => window.removeEventListener("scroll", handleScroll);
-	}, []);
 
 	const isActive = (path: string) => pathname === path;
 
@@ -44,11 +35,7 @@ export function Header() {
 
 	return (
 		<header
-			className={`fixed w-full z-30 transition-all duration-300 shadow-lg ${
-				scrolled
-					? "py-2 bg-gray-900/95 backdrop-blur-md"
-					: "py-2 md:py-4 bg-gradient-to-b from-gray-900 via-[#1a2133] to-[#171e2e]"
-			}`}
+			className="fixed w-full z-30 transition-all duration-300 shadow-lg py-2 md:py-4 bg-gradient-to-b from-gray-900 via-[#1a2133] to-[#171e2e]"
 		>
 			{/* Top gold accent line - full width */}
 			<div className="absolute top-0 left-0 right-0 w-full h-0.5 bg-gradient-to-r from-amber-700/80 via-amber-500 to-amber-700/80" />
@@ -123,7 +110,7 @@ export function Header() {
 				{/* Mobile menu button */}
 				<button
 					onClick={toggleMobileMenu}
-					className="lg:hidden text-amber-400 p-2 relative z-40 focus:outline-none focus:ring-1 focus:ring-amber-500/50 rounded-md"
+					className="lg:hidden text-amber-400 p-2 relative z-60 focus:outline-none focus:ring-1 focus:ring-amber-500/50 rounded-md"
 					aria-label="Toggle menu"
 					aria-expanded={mobileMenuOpen}
 					aria-controls="mobile-menu"
@@ -156,11 +143,32 @@ export function Header() {
 				{/* Mobile Navigation */}
 				<div
 					id="mobile-menu"
-					className={`fixed inset-0 bg-gray-900/98 backdrop-blur-md z-20 lg:hidden transform transition-transform duration-300 ${
+					className={`fixed inset-0 bg-gray-900/98 backdrop-blur-md z-50 lg:hidden transform transition-transform duration-300 ${
 						mobileMenuOpen ? "translate-x-0" : "translate-x-full"
 					}`}
+					style={{
+						position: 'fixed',
+						top: 0,
+						left: 0,
+						right: 0,
+						bottom: 0,
+						width: '100%',
+						height: '100%',
+						overscrollBehavior: 'contain'
+					}}
 				>
-					<div className="h-full flex flex-col pt-24 px-6">
+					<div className="h-full flex flex-col pt-24 px-6 relative">
+						{/* Close button */}
+						<button 
+							onClick={() => setMobileMenuOpen(false)}
+							className="absolute top-6 right-6 text-amber-400 hover:text-amber-300 transition-colors"
+							aria-label="Close menu"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+						
 						<ul className="flex flex-col space-y-5 border-l border-amber-700/30 pl-6">
 							{navLinks.map((link) => (
 								<li key={link.path} className="overflow-hidden">
@@ -168,8 +176,8 @@ export function Header() {
 										href={link.path}
 										className={`block text-lg font-medium tracking-wide transition-all duration-200 relative ${
 											isActive(link.path)
-												? "text-amber-300 pl-2"
-												: "text-gray-300 hover:text-amber-300 hover:pl-2"
+												? "text-amber-300 pl-4"
+												: "text-gray-300 hover:text-amber-300 hover:pl-4"
 										}`}
 										onClick={() => setMobileMenuOpen(false)}
 									>
