@@ -249,7 +249,7 @@ export function WithdrawToBackupModal({
 			setIsWithdrawing(true);
 
 			// Derive keypair from password phrase words array
-			const { keypair: passwordKeypair } = secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
+			const { keypair: passwordKeypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
 			
 			// Execute the withdrawal process
 			await handleWithdrawToBackup(passwordKeypair);

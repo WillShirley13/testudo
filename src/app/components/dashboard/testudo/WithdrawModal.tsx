@@ -347,7 +347,7 @@ export function WithdrawModal({
 			const secureKeypairGenerator = new SecureKeypairGenerator();
 
 			try {
-				const { keypair } = secureKeypairGenerator.deriveKeypairFromWords(words);
+				const { keypair } = await secureKeypairGenerator.deriveKeypairFromWords(words);
 				await handleWithdraw(withdrawAmount, keypair);
 			} catch (error) {
 				// Check for InvalidPasswordSignature error from the on-chain program

@@ -147,7 +147,7 @@ export function DeleteTestudoModal({
             const secureKeypairGenerator = new SecureKeypairGenerator();
             
             try {
-                const { keypair } = secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
+                const { keypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
                 
                 // Fetch centurion to verify password against stored pubkey
                 if (publicKey) {

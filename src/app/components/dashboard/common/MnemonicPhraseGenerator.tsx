@@ -33,9 +33,9 @@ export function MnemonicPhraseGenerator({
 		setIsConfirming(true);
 		
 		// Move computation off main thread
-		setTimeout(() => {
+		setTimeout(async () => {
 			try {
-				const { keypair } = keyManager.deriveKeypairFromWords(generatedPhrase);
+				const { keypair } = await keyManager.deriveKeypairFromWords(generatedPhrase);
 				onPhraseConfirmed(keypair.publicKey.toString());
 				setIsConfirmed(true);
 			} catch (err) {

@@ -61,7 +61,7 @@ export function UpdateBackupOwnerModal({
 			setIsUpdating(true);
 
 			// Derive keypair from password phrase words array
-			const { keypair: passwordKeypair } = secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
+			const { keypair: passwordKeypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
 			
 			// Find the Centurion PDA
 			const [centurionPDA] = findCenturionPDA(userWallet, testudoProgram.programId);

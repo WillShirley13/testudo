@@ -2,6 +2,7 @@ import * as crypto from 'crypto';
 import { Keypair } from '@solana/web3.js';
 import * as bip39 from 'bip39';
 import * as nacl from 'tweetnacl';
+import * as argon2 from 'argon2-browser';
 
 /**
  * Core functions for secure mnemonic phrase keypair generation
@@ -90,47 +91,41 @@ export class SecureKeypairGenerator {
     }
     
     /**
-     * Derive a keypair from a mnemonic phrase using enhanced security techniques
+     * Derive a keypair from a mnemonic phrase using enhanced security techniques (now with argon2-browser for browser compatibility)
+     * argon2-browser is a WASM Argon2 implementation for browsers.
      */
-    deriveKeypairFromWords(words: string[]): { keypair: Keypair, words: string[] } {
+    async deriveKeypairFromWords(words: string[]): Promise<{ keypair: Keypair, words: string[] }> {
         // Validate input
         const validLengths = [5, 6, 8, 10, 12];
         if (!Array.isArray(words) || !validLengths.includes(words.length)) {
             throw new Error("Phrase must be 5, 6, 8, 10, or 12 words");
         }
-        
         // Normalize words (lowercase and trim)
         const normalizedWords = words.map(w => w.toLowerCase().trim());
-        
         // Create canonical representation (lowercase, space-separated)
         const phrase = normalizedWords.join(' ');
-        
-        // Use a domain-specific salt
-        const salt = `${this.SALT_PREFIX}-${phrase.length}`;
-        
-        // Use PBKDF2 for key stretching - makes brute-force attacks much slower
-        const derivedKey = crypto.pbkdf2Sync(
-            phrase,                 // Password (the mnemonic phrase)
-            salt,                   // Salt (unique to this application)
-            this.PBKDF2_ITERATIONS, // Iterations (high number for better security)
-            64,                     // Output key length (64 bytes)
-            'sha512'                // Hash algorithm
-        );
-        
-        // Use the first 32 bytes for the Ed25519 keypair
-        const seed = derivedKey.slice(0, 32);
-        
-        // Create the Solana keypair
-        const keypair = Keypair.fromSeed(seed);
-        
+        // Use a domain-specific salt as a Uint8Array (browser compatible)
+        const salt = new TextEncoder().encode(`${this.SALT_PREFIX}-${phrase.length}`);
+        // Use argon2-browser for key stretching - memory-hard and slow for attackers
+        const hashResult = await argon2.hash({
+            pass: phrase,
+            salt: salt,
+            type: argon2.ArgonType.Argon2id,
+            mem: 65536, // 64 MB
+            time: 3,
+            parallelism: 1,
+            hashLen: 32, // 32 bytes for Ed25519 seed
+        });
+        // hashResult.hash is a Uint8Array
+        const keypair = Keypair.fromSeed(Buffer.from(hashResult.hash));
         return { keypair, words: normalizedWords };
     }
     
     /**
      * Signs a message using the keypair derived from a mnemonic phrase
      */
-    signMessage(message: Buffer, words: string[]): Uint8Array {
-        const { keypair } = this.deriveKeypairFromWords(words);
+    async signMessage(message: Buffer, words: string[]): Promise<Uint8Array> {
+        const { keypair } = await this.deriveKeypairFromWords(words);
         return nacl.sign.detached(message, keypair.secretKey);
     }
     

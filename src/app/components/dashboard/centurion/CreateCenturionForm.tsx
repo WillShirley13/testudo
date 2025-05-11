@@ -121,7 +121,7 @@ export function CreateCenturionForm({
 
 					<p className="text-gray-300 mb-6 text-center">
 						You need to create a Centurion account to use
-						Testudo&apos;s secure wallet system.
+						Testudo&apos;s secure wallet system. Remember, the following phrase is your second layer of security. Your wallet is your primary layer of security.
 					</p>
 
 					{showForm ? (
