@@ -15,11 +15,11 @@ export default function FaqPage() {
 	const faqItems: FaqItem[] = [
 		{
 			question: "What is Testudo?",
-			answer: "Testudo is a secure wallet system on Solana where users can deposit and withdraw funds from accounts derived by the testudo onchain program but controlled by the user. It implements a dual-signature security system providing enhanced protection for your digital assets.",
+			answer: "Testudo is a secure wallet system on Solana where users can deposit and withdraw funds from accounts derived by the testudo onchain program but controlled by the user. It implements a dual-signature security system providing enhanced protection for your digital assets. But, it is not dual-signature as you know it. See below if you're interested in the system architecture!",
 		},
 		{
 			question: "How does the dual-signature security work?",
-			answer: "Testudo uses dual-signature security: your wallet signature plus one from a keypair derived from your memorable phrase. Unlike multi-sig wallets, this on-chain 2FA protects your funds even if your main wallet is compromised. The second signature comes from a short, memorable 4-6 word phrase instead of the typical 12-24 words, making it easy to remember while maintaining security and keeping funds instantly accessible.",
+			answer: "Testudo uses dual-signature security: your wallet signature plus one from a keypair derived from your memorable phrase. Unlike traditional multi-sig wallets, this on-chain 2FA protects your funds even if your main wallet is compromised. The second signature comes from a shorter, memorable word phrase instead of the typical 12-24 words, making it easy to remember while maintaining security and keeping funds instantly accessible.",
 		},
 		{
 			question: "What is a Centurion account?",

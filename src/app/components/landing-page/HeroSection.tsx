@@ -13,14 +13,14 @@ export function HeroSection() {
 				<div className="grid md:grid-cols-2 gap-12 items-center">
 					<div className="text-center md:text-left">
 						<h1
-							className={`${charisSIL.className} text-4xl md:text-5xl lg:text-6xl tracking-wider mb-6 pb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500`}
+							className={`${charisSIL.className} text-3xl md:text-4xl lg:text-5xl tracking-wider mb-6 pb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500`}
 							style={{
 								letterSpacing: "0.05em",
 								textShadow: "0 2px 4px rgba(0,0,0,0.3)",
 							}}
 						>
-							Impenetrable, <br className="block" />
-							By Design. <br className="hidden md:block" />
+							Impenetrable Security, <br className="block" />
+							Refreshingly Simple. <br className="hidden md:block" />
 						</h1>
 
 						<p className="text-gray-300 text-md md:text-lg mb-8 max-w-xl mx-auto md:mx-0">

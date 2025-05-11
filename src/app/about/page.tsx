@@ -26,7 +26,7 @@ export default function AboutPage() {
 								plagued by a fundamental dilemma: balancing
 								security with convenience. Hardware ledgers
 								offer strong security but are cumbersome to use,
-								while multisig solutions add complexity that
+								while traditional multisig solutions add complexity that
 								creates barriers for everyday users.
 							</p>
 							<p className="text-gray-300">
@@ -58,7 +58,7 @@ export default function AboutPage() {
 								Testudo was created to solve this dilemma with
 								our innovative dual-signature system. By
 								combining your wallet signature with a key
-								derived from a memorable 5-12 word phrase,
+								derived from a memorable word phrase,
 								we&apos;ve created an on-chain 2FA experience
 								that feels natural and intuitive.
 							</p>
