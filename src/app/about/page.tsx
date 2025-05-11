@@ -73,10 +73,10 @@ export default function AboutPage() {
 						</div>
 						<div className="md:w-1/2 flex justify-center items-center">
 							<Image
-								src="/logo3.png"
+								src="/on-the-attack.png"
 								alt="Roman military formation advancing"
-								width={400}
-								height={250}
+								width={500}
+								height={350}
 								className="rounded-lg shadow-lg shadow-amber-900/40"
 							/>
 						</div>

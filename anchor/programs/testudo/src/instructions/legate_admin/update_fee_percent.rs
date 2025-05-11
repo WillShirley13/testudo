@@ -22,7 +22,7 @@ pub struct UpdateFeePercent<'info> {
 
 pub fn process_update_fee_percent(
     ctx: Context<UpdateFeePercent>,
-    new_fee_percent: u16,
+    new_fee_percent: u16, // where 10000 = 100% (decimals are 10000)
 ) -> Result<()> {
     let legate = &mut ctx.accounts.legate;
 

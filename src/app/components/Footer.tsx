@@ -20,7 +20,7 @@ export function Footer() {
 						>
 							<div className="relative h-12 w-12 flex-shrink-0 overflow-hidden mb-3">
 								<Image
-									src="/logo2.png"
+									src="/logo-big.png"
 									alt="Testudo Logo"
 									fill
 									className="object-contain transition-transform duration-300 group-hover:scale-110"

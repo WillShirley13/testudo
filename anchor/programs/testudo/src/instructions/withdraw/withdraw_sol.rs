@@ -53,8 +53,8 @@ pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) 
 
     // Calculate rent exemption
     let rent = Rent::get()?;
-    let min_rent = rent.minimum_balance(8 + Centurion::INIT_SPACE);
-
+    let pda_size = ctx.accounts.centurion.to_account_info().data_len();
+    let min_rent = rent.minimum_balance(pda_size);
     // Get current account lamports
     let account_lamports = centurion_info.lamports();
 
@@ -100,6 +100,6 @@ pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) 
     // Update last accessed timestamp
     centurion_data.last_accessed = current_datetime as u64;
 
-    msg!("Withdrawal successful");
+    msg!("Withdrawal of {} SOL successful", amount_in_lamports);
     Ok(())
 }

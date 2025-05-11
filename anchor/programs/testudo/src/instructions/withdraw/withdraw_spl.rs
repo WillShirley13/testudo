@@ -193,6 +193,6 @@ pub fn process_withdraw_spl_token(
         .ok_or(InvalidTokenMint)?;
     testudo_data.testudo_token_count -= amount_in_decimals;
 
-    msg!("Withdrawal successful");
+    msg!("Withdrawal of {} tokens successful", amount_in_decimals);
     Ok(())
 }

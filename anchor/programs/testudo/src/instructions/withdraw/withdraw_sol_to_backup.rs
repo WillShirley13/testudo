@@ -77,7 +77,8 @@ pub fn process_withdraw_sol_to_backup(ctx: Context<WithdrawSolToBackup>) -> Resu
     // Calculate the amount to transfer (all available lamports)
     // We need to keep some lamports for rent-exemption, so let's calculate that
     let rent = Rent::get()?;
-    let min_rent = rent.minimum_balance(8 + Centurion::INIT_SPACE);
+    let pda_size = ctx.accounts.centurion.to_account_info().data_len();
+    let min_rent = rent.minimum_balance(pda_size);
 
     // Calculate the amount that can be withdrawn, ensuring the account stays rent-exempt
     let account_lamports = centurion_info.lamports();

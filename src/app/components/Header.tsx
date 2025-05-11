@@ -48,7 +48,7 @@ export function Header() {
 				<Link href="/" className="flex items-center group select-none">
 					<div className="relative h-8 w-8 md:h-10 lg:h-16 md:w-10 lg:w-16 flex-shrink-0 overflow-hidden">
 						<Image
-							src="/logo2.png"
+							src="/logo-big.png"
 							alt="Testudo Logo"
 							fill
 							className="object-contain transition-transform duration-300 group-hover:scale-110"

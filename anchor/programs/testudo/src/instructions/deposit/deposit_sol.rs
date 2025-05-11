@@ -51,6 +51,6 @@ pub fn process_deposit_sol(ctx: Context<DepositSol>, amount_in_lamports: u64) ->
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
     centurion_data.last_accessed = current_datetime as u64;
 
-    msg!("Deposit successful");
+    msg!("Deposit of {} SOL successful", amount_in_lamports);
     Ok(())
 }
