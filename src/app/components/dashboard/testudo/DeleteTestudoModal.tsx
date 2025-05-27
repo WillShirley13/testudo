@@ -9,6 +9,7 @@ import {
     PasswordPhraseInput,
     validatePasswordWords,
     preparePasswordWords,
+    validateNumberPin,
 } from "@/app/components/common/PasswordPhraseInput";
 import { useTestudoProgram } from "@/app/components/solana/solana-provider";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -71,6 +72,7 @@ export function DeleteTestudoModal({
     const { publicKey } = wallet;
     const testudoProgram = useTestudoProgram();
     const [passwordWords, setPasswordWords] = useState<string[]>(Array(6).fill(""));
+    const [numberPin, setNumberPin] = useState("");
     const [error, setError] = useState<string | null>(null);
 
     // Function to handle Testudo deletion
@@ -111,6 +113,7 @@ export function DeleteTestudoModal({
             
             // Clear form and close modal
             setPasswordWords(Array(6).fill(""));
+            setNumberPin("");
             onClose();
         } catch (error) {
             console.error("Delete error:", error);
@@ -147,7 +150,7 @@ export function DeleteTestudoModal({
             const secureKeypairGenerator = new SecureKeypairGenerator();
             
             try {
-                const { keypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
+                const { keypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords, publicKey?.toString() || "", numberPin);
                 
                 // Fetch centurion to verify password against stored pubkey
                 if (publicKey) {
@@ -205,6 +208,8 @@ export function DeleteTestudoModal({
                             <PasswordPhraseInput
                                 words={passwordWords}
                                 onChange={setPasswordWords}
+                                numberPin={numberPin}
+                                onNumberPinChange={setNumberPin}
                                 maxWords={6}
                             />
                             {error && <p className="text-red-400 text-sm mt-1">{error}</p>}

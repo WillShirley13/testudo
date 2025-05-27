@@ -9,6 +9,7 @@ import {
 	PasswordPhraseInput,
 	validatePasswordWords,
 	preparePasswordWords,
+	validateNumberPin,
 } from "@/app/components/common/PasswordPhraseInput";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -105,6 +106,7 @@ export function WithdrawModal({
 	const [passwordWords, setPasswordWords] = useState<string[]>(
 		Array(12).fill("")
 	);
+	const [numberPin, setNumberPin] = useState("");
 	const [amount, setAmount] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [solBalance, setSolBalance] = useState<number>(0);
@@ -285,6 +287,7 @@ export function WithdrawModal({
 			
 			// Clear form and close modal
 			setPasswordWords(Array(12).fill(""));
+			setNumberPin("");
 			setAmount("");
 			onClose();
 		} catch (error) {
@@ -347,7 +350,7 @@ export function WithdrawModal({
 			const secureKeypairGenerator = new SecureKeypairGenerator();
 
 			try {
-				const { keypair } = await secureKeypairGenerator.deriveKeypairFromWords(words);
+				const { keypair } = await secureKeypairGenerator.deriveKeypairFromWords(words, publicKey?.toString() || "", numberPin);
 				await handleWithdraw(withdrawAmount, keypair);
 			} catch (error) {
 				// Check for InvalidPasswordSignature error from the on-chain program
@@ -370,6 +373,7 @@ export function WithdrawModal({
 	useEffect(() => {
 		if (!isOpen) {
 			setPasswordWords(Array(12).fill(""));
+			setNumberPin("");
 			setAmount("");
 			setError(null);
 			setSolBalance(0);
@@ -458,6 +462,8 @@ export function WithdrawModal({
 							<PasswordPhraseInput
 								words={passwordWords}
 								onChange={setPasswordWords}
+								numberPin={numberPin}
+								onNumberPinChange={setNumberPin}
 								maxWords={12}
 								className="mb-1"
 							/>

@@ -4,13 +4,16 @@ import React, { useState } from "react";
 import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
 import { motion } from "framer-motion";
 import { IconInfoCircle } from "@tabler/icons-react";
+import { useAnchorProvider } from "@/app/components/solana/solana-provider";
 
 export interface MnemonicPhraseGeneratorProps {
 	onPhraseConfirmed: (publicKey: string) => void;
+    userNumberPin: string;
 }
 
 export function MnemonicPhraseGenerator({
 	onPhraseConfirmed,
+    userNumberPin
 }: MnemonicPhraseGeneratorProps) {
 	const [phraseLength, setPhraseLength] = useState<number>(6);
 	const [generatedPhrase, setGeneratedPhrase] = useState<string[]>([]);
@@ -18,7 +21,8 @@ export function MnemonicPhraseGenerator({
 	const [isConfirmed, setIsConfirmed] = useState(false);
 	const [isConfirming, setIsConfirming] = useState(false);
 	const [error, setError] = useState<string>("");
-
+	const provider = useAnchorProvider();
+    const publicKey = provider.publicKey;
 	const keyManager = new SecureKeypairGenerator();
 
 	const generateNewPhrase = (e: React.MouseEvent) => {
@@ -35,7 +39,7 @@ export function MnemonicPhraseGenerator({
 		// Move computation off main thread
 		setTimeout(async () => {
 			try {
-				const { keypair } = await keyManager.deriveKeypairFromWords(generatedPhrase);
+				const { keypair } = await keyManager.deriveKeypairFromWords(generatedPhrase, publicKey?.toString() || "", userNumberPin);
 				onPhraseConfirmed(keypair.publicKey.toString());
 				setIsConfirmed(true);
 			} catch (err) {
@@ -81,15 +85,39 @@ export function MnemonicPhraseGenerator({
 				<div className="mt-3 bg-gray-800/30 p-3 rounded-lg border border-amber-500/10 relative">
 					<div className="flex justify-between items-start">
 						<div>
-							<div className="text-amber-400 text-sm font-medium">
-								Security Level: {keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.securityRank}/5
-							</div>
-							<div className="text-gray-400 text-xs mt-1 pr-8">
-								{keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.description.split('.')[0]}.
-								<span className="block mt-1 text-amber-300/80">
-									Time to crack: {keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.timeToCrack}
-								</span>
-							</div>
+							{userNumberPin ? (
+								(() => {
+									const enhancedInfo = keyManager.getEnhancedSecurityInfo(phraseLength, userNumberPin.length);
+									return enhancedInfo ? (
+										<>
+											<div className="text-amber-400 text-sm font-medium">
+												Enhanced Security Level: {enhancedInfo.securityRank}/5
+											</div>
+											<div className="text-gray-400 text-xs mt-1 pr-8">
+												{enhancedInfo.description.split('.')[0]}.
+												<span className="block mt-1 text-amber-300/80">
+													Time to crack: {enhancedInfo.timeToCrack}
+												</span>
+												<span className="block mt-1 text-green-400/80">
+													{enhancedInfo.enhancement.improvementFactor.toLocaleString()}x stronger with {userNumberPin.length} digits
+												</span>
+											</div>
+										</>
+									) : null;
+								})()
+							) : (
+								<>
+									<div className="text-amber-400 text-sm font-medium">
+										Security Level: {keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.securityRank}/5
+									</div>
+									<div className="text-gray-400 text-xs mt-1 pr-8">
+										{keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.description.split('.')[0]}.
+										<span className="block mt-1 text-amber-300/80">
+											Time to crack: {keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.timeToCrack}
+										</span>
+									</div>
+								</>
+							)}
 						</div>
 						<button
 							type="button"
@@ -116,30 +144,76 @@ export function MnemonicPhraseGenerator({
 						Security Information
 					</h4>
 					<div className="space-y-2 text-sm text-gray-300 max-h-[40vh] overflow-y-auto pr-2">
-						{Object.entries(keyManager.securityInfo)
-							.filter(([length, _]) => parseInt(length) >= 4 && parseInt(length) <= 12)
-							.sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
-							.map(([length, info]) => (
-								<div
-									key={length}
-									className={`p-2 rounded ${
-										phraseLength === Number(length)
-											? "bg-gray-700/50 border-l-2 border-amber-500"
-											: ""
-									}`}
-								>
+						{userNumberPin ? (
+							// Show enhanced security info when numbers are added
+							<div className="space-y-3">
+								<div className="p-3 rounded bg-green-900/30 border border-green-500/30">
+									<div className="text-green-400 font-medium mb-2">
+										Current Configuration: {phraseLength} words + {userNumberPin.length} digits
+									</div>
+									{(() => {
+										const enhancedInfo = keyManager.getEnhancedSecurityInfo(phraseLength, userNumberPin.length);
+										return enhancedInfo ? (
+											<div>
+												<div className="text-sm">
+													<span className="text-amber-400 font-medium">Enhanced Security: </span>
+													{enhancedInfo.description}
+												</div>
+												<div className="text-xs text-gray-400 mt-2">
+													Possible combinations: {enhancedInfo.combinations.toExponential(2)}
+													<br />
+													Time to crack: {enhancedInfo.timeToCrack}
+													<br />
+													<span className="text-green-400">
+														Security improvement: {enhancedInfo.enhancement.improvementFactor.toLocaleString()}x stronger
+													</span>
+												</div>
+											</div>
+										) : null;
+									})()}
+								</div>
+								
+								<div className="text-xs text-gray-500 italic">
+									Comparison without numbers:
+								</div>
+								
+								<div className="p-2 rounded bg-gray-700/30 border-l-2 border-amber-500">
 									<span className="font-medium text-amber-400">
-										{length} Words:{" "}
+										{phraseLength} Words Only: 
 									</span>
-									<span>{info.description}</span>
+									<span>{keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.description}</span>
 									<div className="text-xs text-gray-400 mt-1">
-										Possible combinations:{" "}
-										{info.combinations.toLocaleString()}
-										<br />
-										Time to crack: {info.timeToCrack}
+										Time to crack: {keyManager.securityInfo[phraseLength as keyof typeof keyManager.securityInfo]?.timeToCrack}
 									</div>
 								</div>
-							))}
+							</div>
+						) : (
+							// Show standard security info when no numbers
+							Object.entries(keyManager.securityInfo)
+								.filter(([length, _]) => parseInt(length) >= 4 && parseInt(length) <= 12)
+								.sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+								.map(([length, info]) => (
+									<div
+										key={length}
+										className={`p-2 rounded ${
+											phraseLength === Number(length)
+												? "bg-gray-700/50 border-l-2 border-amber-500"
+												: ""
+										}`}
+									>
+										<span className="font-medium text-amber-400">
+											{length} Words:{" "}
+										</span>
+										<span>{info.description}</span>
+										<div className="text-xs text-gray-400 mt-1">
+											Possible combinations:{" "}
+											{info.combinations.toLocaleString()}
+											<br />
+											Time to crack: {info.timeToCrack}
+										</div>
+									</div>
+								))
+						)}
 					</div>
 				</motion.div>
 			)}
@@ -169,7 +243,17 @@ export function MnemonicPhraseGenerator({
 										{word}
 									</div>
 								))}
+								{userNumberPin && (
+									<div className="bg-green-700/50 px-3 py-1.5 rounded text-green-300 border border-green-500/30">
+										{userNumberPin}
+									</div>
+								)}
 							</div>
+							{userNumberPin && (
+								<p className="text-xs text-green-400 mt-2">
+									Numbers added for enhanced security (makes your phrase {Math.pow(10, userNumberPin.length).toLocaleString()}x harder to guess)
+								</p>
+							)}
 						</div>
 
 						<div className="flex justify-between items-center">

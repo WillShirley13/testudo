@@ -5,16 +5,20 @@ import React, { useState, useRef, useEffect } from "react";
 interface PasswordPhraseInputProps {
 	words: string[];
 	onChange: (words: string[]) => void;
+	numberPin: string;
+	onNumberPinChange: (pin: string) => void;
 	maxWords?: number; // Now accepts any number from 5-12
 	className?: string;
 }
 
 /**
- * A reusable component that renders 5-12 word input boxes for password phrases
+ * A reusable component that renders 5-12 word input boxes for password phrases plus an optional number PIN
  */
 export function PasswordPhraseInput({
 	words,
 	onChange,
+	numberPin,
+	onNumberPinChange,
 	maxWords = 6,
 	className = "",
 }: PasswordPhraseInputProps) {
@@ -38,6 +42,13 @@ export function PasswordPhraseInput({
 			onChange(newWords);
 			wordInputRefs.current[index + 1]?.focus();
 		}
+	};
+
+	// Handle number PIN change
+	const handleNumberPinChange = (value: string) => {
+		// Only allow digits and limit to 8 characters
+		const numericValue = value.replace(/\D/g, '').slice(0, 8);
+		onNumberPinChange(numericValue);
 	};
 
 	// Handle keyboard navigation between inputs
@@ -119,6 +130,21 @@ export function PasswordPhraseInput({
 					/>
 				))}
 			</div>
+			
+			{/* Number PIN Input */}
+			<div className="mt-3">
+				<label className="block text-xs font-medium text-gray-400 mb-1">
+					Security PIN (If required)
+				</label>
+				<input
+					type={showPassword ? "text" : "password"}
+					placeholder="Enter your security PIN"
+					className="w-full p-1.5 bg-gray-800/60 rounded border border-gray-700 text-white placeholder-gray-500 focus:border-amber-500 focus:ring focus:ring-amber-500/20 focus:outline-none text-sm"
+					value={numberPin}
+					onChange={(e) => handleNumberPinChange(e.target.value)}
+					maxLength={8}
+				/>
+			</div>
 		</div>
 	);
 }
@@ -134,4 +160,9 @@ export function preparePasswordWords(words: string[]): string[] {
 	return words
 		.map((word) => word.trim().toLowerCase())
 		.filter((word) => word !== "");
+}
+
+// Helper function to validate number PIN
+export function validateNumberPin(pin: string): boolean {
+	return pin === "" || /^\d{1,8}$/.test(pin);
 }

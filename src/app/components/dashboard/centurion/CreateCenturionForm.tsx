@@ -10,6 +10,7 @@ import { useTestudoProgram } from "@/app/components/solana/solana-provider";
 import { findCenturionPDA } from "@/app/utils/testudo-utils";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { CenturionData } from "@/app/types/testudo";
+import { useAnchorProvider } from "@/app/components/solana/solana-provider";
 
 
 interface CreateCenturionFormProps {
@@ -26,11 +27,13 @@ export function CreateCenturionForm({
 	const [showForm, setShowForm] = useState(false);
 	const [derivedPublicKey, setDerivedPublicKey] = useState("");
 	const [backupOwner, setBackupOwner] = useState("");
+	const [userNumberPin, setUserNumberPin] = useState("");
 	const [error, setError] = useState("");
 
 	// Get necessary Solana components
-	const { publicKey } = useWallet();
 	const testudoProgram = useTestudoProgram();
+	const provider = useAnchorProvider();
+    const publicKey = provider.publicKey;
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -127,10 +130,31 @@ export function CreateCenturionForm({
 					{showForm ? (
 						<form className="space-y-4" onSubmit={handleSubmit}>
 							<div>
+								<label className="block text-sm font-medium text-gray-300 mb-2">
+									Security PIN (Optional)
+								</label>
+								<input
+									type="text"
+									placeholder="Enter up to 8 numbers (e.g., 12345678)"
+									className="w-full p-3 bg-gray-800/60 rounded border border-gray-700 text-white placeholder-gray-500 focus:border-amber-500 focus:ring focus:ring-amber-500/20 focus:outline-none"
+									value={userNumberPin}
+									onChange={(e) => {
+										const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+										setUserNumberPin(value);
+									}}
+									maxLength={8}
+								/>
+								<p className="text-xs text-gray-500 mt-1">
+									Adding numbers significantly increases security. Each digit makes your phrase much harder to guess.
+								</p>
+							</div>
+
+							<div>
 								<MnemonicPhraseGenerator
 									onPhraseConfirmed={(publicKey) =>
 										setDerivedPublicKey(publicKey)
 									}
+									userNumberPin={userNumberPin}
 								/>
 							</div>
 

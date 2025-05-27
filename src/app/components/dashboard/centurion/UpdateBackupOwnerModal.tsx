@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { charisSIL } from "@/app/fonts";
 import { PublicKey } from "@solana/web3.js";
-import { PasswordPhraseInput, validatePasswordWords, preparePasswordWords } from "@/app/components/common/PasswordPhraseInput";
+import { PasswordPhraseInput, validatePasswordWords, preparePasswordWords, validateNumberPin } from "@/app/components/common/PasswordPhraseInput";
 import { useTestudoProgram } from "@/app/components/solana/solana-provider";
 import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
 import { findCenturionPDA } from "@/app/utils/testudo-utils";
@@ -28,6 +28,7 @@ export function UpdateBackupOwnerModal({
 }: UpdateBackupOwnerModalProps) {
 	const [backupPubkey, setBackupPubkey] = useState("");
 	const [passwordWords, setPasswordWords] = useState<string[]>(Array(12).fill(""));
+	const [numberPin, setNumberPin] = useState("");
 	const [error, setError] = useState("");
 	
 	// Get the testudo program instance
@@ -61,7 +62,7 @@ export function UpdateBackupOwnerModal({
 			setIsUpdating(true);
 
 			// Derive keypair from password phrase words array
-			const { keypair: passwordKeypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
+			const { keypair: passwordKeypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords, userWallet.toString(), numberPin);
 			
 			// Find the Centurion PDA
 			const [centurionPDA] = findCenturionPDA(userWallet, testudoProgram.programId);
@@ -111,6 +112,7 @@ export function UpdateBackupOwnerModal({
 	useEffect(() => {
 		if (!isOpen) {
 			setPasswordWords(Array(12).fill(""));
+			setNumberPin("");
 			setBackupPubkey("");
 			setError("");
 		}
@@ -152,6 +154,8 @@ export function UpdateBackupOwnerModal({
 							<PasswordPhraseInput 
 								words={passwordWords}
 								onChange={setPasswordWords}
+								numberPin={numberPin}
+								onNumberPinChange={setNumberPin}
 								maxWords={12}
 								className="mb-2"
 							/>

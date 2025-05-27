@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { charisSIL } from "@/app/fonts";
 import { PublicKey } from "@solana/web3.js";
-import { PasswordPhraseInput, validatePasswordWords, preparePasswordWords } from "@/app/components/common/PasswordPhraseInput";
+import { PasswordPhraseInput, validatePasswordWords, preparePasswordWords, validateNumberPin } from "@/app/components/common/PasswordPhraseInput";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
 import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
 import { findCenturionPDA, findLegatePDA, formatBalance } from "@/app/utils/testudo-utils";
@@ -32,6 +32,7 @@ export function WithdrawToBackupModal({
 	setIsWithdrawing,
 }: WithdrawToBackupModalProps) {
 	const [passwordWords, setPasswordWords] = useState<string[]>(Array(12).fill(""));
+	const [numberPin, setNumberPin] = useState("");
 	const [error, setError] = useState("");
 	const [withdrawalProgress, setWithdrawalProgress] = useState<string>("");
 	const [tokenInfo, setTokenInfo] = useState<Map<string, TokenWhitelistData>>(new Map());
@@ -249,7 +250,7 @@ export function WithdrawToBackupModal({
 			setIsWithdrawing(true);
 
 			// Derive keypair from password phrase words array
-			const { keypair: passwordKeypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords);
+			const { keypair: passwordKeypair } = await secureKeypairGenerator.deriveKeypairFromWords(preparedWords, userWallet.toString(), numberPin);
 			
 			// Execute the withdrawal process
 			await handleWithdrawToBackup(passwordKeypair);
@@ -276,6 +277,7 @@ export function WithdrawToBackupModal({
 	useEffect(() => {
 		if (!isOpen) {
 			setPasswordWords(Array(12).fill(""));
+			setNumberPin("");
 			setError("");
 			setWithdrawalProgress("");
 		}
@@ -344,6 +346,8 @@ export function WithdrawToBackupModal({
 								<PasswordPhraseInput
 									words={passwordWords}
 									onChange={setPasswordWords}
+									numberPin={numberPin}
+									onNumberPinChange={setNumberPin}
 									maxWords={12}
 									className="mb-1"
 								/>

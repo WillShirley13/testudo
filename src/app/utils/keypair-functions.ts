@@ -94,18 +94,27 @@ export class SecureKeypairGenerator {
      * Derive a keypair from a mnemonic phrase using enhanced security techniques (now with argon2-browser for browser compatibility)
      * argon2-browser is a WASM Argon2 implementation for browsers.
      */
-    async deriveKeypairFromWords(words: string[]): Promise<{ keypair: Keypair, words: string[] }> {
+    async deriveKeypairFromWords(words: string[], userPublicKey: string, userNumberPin: string = ""): Promise<{ keypair: Keypair, words: string[] }> {
         // Validate input
         const validLengths = [5, 6, 8, 10, 12];
         if (!Array.isArray(words) || !validLengths.includes(words.length)) {
             throw new Error("Phrase must be 5, 6, 8, 10, or 12 words");
         }
+        
+        // Validate userNumberPin if provided
+        if (userNumberPin && (!/^\d{1,8}$/.test(userNumberPin))) {
+            throw new Error("User number PIN must be 1-8 digits");
+        }
+        
         // Normalize words (lowercase and trim)
         const normalizedWords = words.map(w => w.toLowerCase().trim());
-        // Create canonical representation (lowercase, space-separated)
-        const phrase = normalizedWords.join(' ');
+        
+        // Create canonical representation (lowercase, space-separated, with optional PIN appended)
+        const phrase = normalizedWords.join(' ') + (userNumberPin ? userNumberPin : '');
+        
         // Use a domain-specific salt as a Uint8Array (browser compatible)
-        const salt = new TextEncoder().encode(`${this.SALT_PREFIX}-${phrase.length}`);
+        const salt = new TextEncoder().encode(`${this.SALT_PREFIX}-${words.length}-${userNumberPin.length}-${userPublicKey}`);
+        
         // Use argon2-browser for key stretching - memory-hard and slow for attackers
         const hashResult = await argon2.hash({
             pass: phrase,
@@ -116,6 +125,7 @@ export class SecureKeypairGenerator {
             parallelism: 1,
             hashLen: 32, // 32 bytes for Ed25519 seed
         });
+        
         // hashResult.hash is a Uint8Array
         const keypair = Keypair.fromSeed(Buffer.from(hashResult.hash));
         return { keypair, words: normalizedWords };
@@ -124,8 +134,8 @@ export class SecureKeypairGenerator {
     /**
      * Signs a message using the keypair derived from a mnemonic phrase
      */
-    async signMessage(message: Buffer, words: string[]): Promise<Uint8Array> {
-        const { keypair } = await this.deriveKeypairFromWords(words);
+    async signMessage(message: Buffer, words: string[], userPublicKey: string, userNumberPin: string = ""): Promise<Uint8Array> {
+        const { keypair } = await this.deriveKeypairFromWords(words, userPublicKey, userNumberPin);
         return nacl.sign.detached(message, keypair.secretKey);
     }
     
@@ -134,5 +144,55 @@ export class SecureKeypairGenerator {
      */
     verifySignature(message: Buffer, signature: Uint8Array, publicKey: Uint8Array): boolean {
         return nacl.sign.detached.verify(message, signature, publicKey);
+    }
+
+    /**
+     * Calculate enhanced security information when numbers are appended
+     */
+    getEnhancedSecurityInfo(wordLength: number, numberLength: number) {
+        const baseInfo = this.securityInfo[wordLength as keyof typeof this.securityInfo];
+        if (!baseInfo) return null;
+
+        // Each digit adds log2(10) ≈ 3.32 bits of entropy
+        const additionalBits = numberLength * Math.log2(10);
+        const totalBits = baseInfo.bitsOfEntropy + additionalBits;
+        const totalCombinations = Math.pow(2, totalBits);
+        
+        // Calculate time to crack at 1M attempts/second
+        const secondsToCrack = totalCombinations / (2 * 1000000); // Divide by 2 for average case
+        const yearsToCrack = secondsToCrack / (365.25 * 24 * 3600);
+        
+        let timeToCrackDescription: string;
+        if (yearsToCrack < 1000) {
+            timeToCrackDescription = `~${Math.round(yearsToCrack)} years (at 1M attempts/second)`;
+        } else if (yearsToCrack < 1000000) {
+            timeToCrackDescription = `~${Math.round(yearsToCrack / 1000)} thousand years (at 1M attempts/second)`;
+        } else if (yearsToCrack < 1000000000) {
+            timeToCrackDescription = `~${Math.round(yearsToCrack / 1000000)} million years (at 1M attempts/second)`;
+        } else if (yearsToCrack < 1000000000000) {
+            timeToCrackDescription = `~${Math.round(yearsToCrack / 1000000000)} billion years (at 1M attempts/second)`;
+        } else {
+            timeToCrackDescription = "Practically impossible to crack with any foreseeable technology";
+        }
+
+        // Determine security rank based on total bits
+        let securityRank: number;
+        if (totalBits < 60) securityRank = 2;
+        else if (totalBits < 80) securityRank = 3;
+        else if (totalBits < 100) securityRank = 4;
+        else securityRank = 5;
+
+        return {
+            combinations: totalCombinations,
+            bitsOfEntropy: totalBits,
+            timeToCrack: timeToCrackDescription,
+            securityRank,
+            description: `${baseInfo.description.split('.')[0]} Enhanced with ${numberLength} digits (${Math.pow(10, numberLength).toLocaleString()}x stronger).`,
+            enhancement: {
+                additionalBits,
+                numberLength,
+                improvementFactor: Math.pow(10, numberLength)
+            }
+        };
     }
 } 
