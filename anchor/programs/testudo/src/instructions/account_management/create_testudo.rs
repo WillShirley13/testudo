@@ -1,8 +1,8 @@
 use crate::custom_accounts::centurion::{Centurion, TestudoData};
 use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
-    InvalidAuthority, LegateNotInitialized, MaxTestudosReached,
-    TestudoCreationCannotPreceedCenturionInitialization, UnsupportedTokenMint,
+    CenturionNotInitialized, InvalidAuthority, LegateNotInitialized, MaxTestudosReached,
+    UnsupportedTokenMint,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
@@ -26,7 +26,7 @@ pub struct CreateTestudo<'info> {
         mut,
         seeds = [b"centurion", authority.key.as_ref()],
         bump,
-        constraint = centurion.is_initialized @TestudoCreationCannotPreceedCenturionInitialization,
+        constraint = centurion.is_initialized @CenturionNotInitialized,
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,

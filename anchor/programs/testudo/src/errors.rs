@@ -42,4 +42,6 @@ pub enum ErrorCode {
     ErrorTransferringAllTokensOutOfTestudo,
     #[msg("Invalid treasury account")]
     InvalidTreasuryAccount,
+    #[msg("Centurion must be empty of spl tokens before closing (no testudos remaining)")]
+    CenturionNotEmptyOfSplTokens,
 }

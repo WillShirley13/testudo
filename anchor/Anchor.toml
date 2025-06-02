@@ -7,16 +7,19 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-testudo = "8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U"
+testudo = "EEDx38FPqWhtj5qDftss355r7tkdD9bWgJFgSfTTi9v6"
 
 [programs.devnet]
+testudo = "8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U"
+
+[programs.mainnet]
 testudo = "8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

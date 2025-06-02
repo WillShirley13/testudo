@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 // Testudo accounts are created for each mint. Facilitates deposits and withdrawals for that mint.
+// NOT USED IN PRODUCTION. ATA accounts are used instead.
 
 #[account]
 #[derive(InitSpace)]

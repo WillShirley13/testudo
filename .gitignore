@@ -41,3 +41,9 @@ tmp
 
 # scripts
 **/scripts/
+
+# test-ledger
+**/test-ledger/
+
+# cursor rules
+.cursor/

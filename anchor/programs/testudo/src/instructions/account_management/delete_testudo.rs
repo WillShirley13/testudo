@@ -82,7 +82,6 @@ pub fn process_delete_testudo(ctx: Context<DeleteTestudo>) -> Result<()> {
     let centurion: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
     let testudo_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.testudo;
     let authority: &Signer<'_> = &ctx.accounts.authority;
-    let authority_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.authority_ata;
     let token_program: &Interface<'_, TokenInterface> = &ctx.accounts.token_program;
     let password_pubkey: Pubkey = centurion.pubkey_to_password;
 

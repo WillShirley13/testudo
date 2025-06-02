@@ -5,7 +5,7 @@ mod custom_accounts;
 mod errors;
 mod instructions;
 
-declare_id!("8ZkK4KPmwwskr2YTjejuHL2sHYyvSmkZauUJY7gyrZ5U");
+declare_id!("EEDx38FPqWhtj5qDftss355r7tkdD9bWgJFgSfTTi9v6");
 
 #[program]
 pub mod testudo {
@@ -13,6 +13,10 @@ pub mod testudo {
 
     pub fn init_legate(ctx: Context<InitLegate>, treasury_acc: Pubkey) -> Result<()> {
         instructions::process_init_legate(ctx, treasury_acc)
+    }
+
+    pub fn close_legate(ctx: Context<CloseLegate>) -> Result<()> {
+        process_close_legate(ctx)
     }
 
     pub fn init_centurion(
@@ -23,6 +27,10 @@ pub mod testudo {
         instructions::process_init_centurion(ctx, password_pubkey, backup_owner)
     }
 
+    pub fn close_centurion(ctx: Context<CloseCenturion>) -> Result<()> {
+        instructions::process_close_centurion(ctx)
+    }
+
     pub fn create_testudo(ctx: Context<CreateTestudo>) -> Result<()> {
         instructions::process_create_testudo(ctx)
     }
@@ -31,20 +39,20 @@ pub mod testudo {
         instructions::process_delete_testudo(ctx)
     }
 
-    pub fn deposit_sol(ctx: Context<DepositSol>, amount: u64) -> Result<()> {
-        instructions::process_deposit_sol(ctx, amount)
+    pub fn deposit_sol(ctx: Context<DepositSol>, amount_in_lamports: u64) -> Result<()> {
+        instructions::process_deposit_sol(ctx, amount_in_lamports)
     }
 
-    pub fn deposit_spl(ctx: Context<DepositSplToken>, amount: u64) -> Result<()> {
-        instructions::process_deposit_spl_token(ctx, amount)
+    pub fn deposit_spl(ctx: Context<DepositSplToken>, amount_with_decimals: u64) -> Result<()> {
+        instructions::process_deposit_spl_token(ctx, amount_with_decimals)
     }
 
-    pub fn withdraw_sol(ctx: Context<WithdrawSol>, amount: u64) -> Result<()> {
-        instructions::process_withdraw_sol(ctx, amount)
+    pub fn withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) -> Result<()> {
+        instructions::process_withdraw_sol(ctx, amount_in_lamports)
     }
 
-    pub fn withdraw_spl(ctx: Context<WithdrawSplToken>, amount: u64) -> Result<()> {
-        instructions::process_withdraw_spl_token(ctx, amount)
+    pub fn withdraw_spl(ctx: Context<WithdrawSplToken>, amount_with_decimals: u64) -> Result<()> {
+        instructions::process_withdraw_spl_token(ctx, amount_with_decimals)
     }
 
     pub fn withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> {
@@ -73,7 +81,7 @@ pub mod testudo {
         instructions::process_update_max_whitelisted_mints(ctx, new_max_whitelisted_mints)
     }
 
-    pub fn add_mint_testudo(
+    pub fn add_mint_to_testudo_token_whitelist(
         ctx: Context<AddMintToTestudoTokenWhitelist>,
         mint: custom_accounts::legate::TestudoTokenWhitelist,
     ) -> Result<()> {
@@ -95,10 +103,7 @@ pub mod testudo {
         instructions::process_update_fee_percent(ctx, new_fee_percent)
     }
 
-    pub fn add_mint_to_testudo_token_whitelist(
-        ctx: Context<AddMintToTestudoTokenWhitelist>,
-        mint: custom_accounts::legate::TestudoTokenWhitelist,
-    ) -> Result<()> {
-        instructions::process_add_mint_to_testudo_token_whitelist(ctx, mint)
+    pub fn swap(ctx: Context<Swap>, jupiter_data: Vec<u8>) -> Result<()> {
+        process_swap(ctx, jupiter_data)
     }
 }
