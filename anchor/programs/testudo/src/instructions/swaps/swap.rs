@@ -78,7 +78,7 @@ pub struct Swap<'info> {
 pub fn process_swap(
     ctx: Context<Swap>,
     jupiter_data: Vec<u8>,
-    testudo_data: [TestudoData; 2],
+    testudo_data: Vec<TestudoData>,
 ) -> Result<()> {
     msg!(
         "Starting swap process for authority: {}",
@@ -132,8 +132,7 @@ pub fn process_swap(
         remaining_accounts
             .clone()
             .iter_mut()
-            .map(|acc| acc.to_account_metas(None))
-            .flatten()
+            .flat_map(|acc| acc.to_account_metas(Some(acc.is_signer)))
             .collect(),
     );
 
@@ -176,25 +175,6 @@ pub fn process_swap(
         ctx.accounts.destination_mint.key()
     );
 
-    // Update centurion tracking
-    msg!("Updating centurion testudo tracking");
-    ctx.accounts
-        .centurion
-        .testudos
-        .iter_mut()
-        .for_each(|testudo| {
-            if testudo.token_mint == ctx.accounts.source_mint.key() {
-                testudo.testudo_token_count = testudo
-                    .testudo_token_count
-                    .saturating_sub(source_amount_swapped);
-            } else if testudo.token_mint == ctx.accounts.destination_mint.key() {
-                testudo.testudo_token_count = testudo
-                    .testudo_token_count
-                    .saturating_add(dest_amount_received);
-            }
-        });
-
     msg!("Swap process completed successfully");
-
     Ok(())
 }

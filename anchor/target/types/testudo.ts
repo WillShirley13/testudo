@@ -161,6 +161,10 @@ export type Testudo = {
           ]
         },
         {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
           "name": "centurion",
           "writable": true,
           "pda": {
@@ -983,6 +987,16 @@ export type Testudo = {
         {
           "name": "jupiterData",
           "type": "bytes"
+        },
+        {
+          "name": "testudoData",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "testudoData"
+              }
+            }
+          }
         }
       ]
     },
@@ -2161,14 +2175,6 @@ export type Testudo = {
           {
             "name": "testudoPubkey",
             "type": "pubkey"
-          },
-          {
-            "name": "testudoBump",
-            "type": "u8"
-          },
-          {
-            "name": "testudoTokenCount",
-            "type": "u64"
           }
         ]
       }

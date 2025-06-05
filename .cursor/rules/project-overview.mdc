@@ -7,8 +7,8 @@ This project, 'Testudo', is a Solana application implementing a secure wallet sy
 
 Each user owns a "Centurion" account that acts as their main wallet container. A Centurion can hold multiple token accounts (called "Testudos") for different SPL tokens.
 
-The key security innovation is a dual-signature system: all fund withdrawals require both the user's wallet signature AND a signature from a special keypair derived from a memorable 6-word mnemonic phrase. This creates an on-chain 2FA experience, where the public key of this password-derived keypair is stored in the Centurion account for verification during transactions.
+The key security innovation is a dual-signature system: all fund withdrawals require both the user's wallet signature AND a signature from a special keypair derived from a memorable 5-12 mnemonic word phrase (they may also add a numerical pin to the end of the phrase for additonal security). This creates an on-chain 2FA experience, where the public key of this password-derived keypair is stored in the Centurion account for verification during transactions.
 
-The system aims to balance security and usability - users can memorize their 6-word phrase instead of needing to retrieve it from secure storage each time, while still maintaining strong protection against unauthorized access. For recovery, users can optionally configure a backup owner address (called "Optio").
+The system aims to balance security and usability - users can memorize their pass phrase instead of needing to retrieve it from secure storage each time, while still maintaining strong protection against unauthorized access. For recovery, users can optionally configure a backup owner address (called "Optio").
 
 The program enforces that all withdrawals, token transfers, and account management operations verify both the account owner's signature and a valid signature from the mnemonic-derived keypair before executing any sensitive operations.
