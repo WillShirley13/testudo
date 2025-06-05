@@ -39,11 +39,8 @@ tmp
 # keys
 **/keys/
 
-# scripts
-**/scripts/
+# devnet keys
+**/devnet_keys/
 
 # test-ledger
 **/test-ledger/
-
-# cursor rules
-.cursor/

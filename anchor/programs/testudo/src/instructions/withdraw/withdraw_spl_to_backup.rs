@@ -138,7 +138,6 @@ pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> 
         .checked_sub(withdraw_fee)
         .ok_or(ArithmeticOverflow)?;
 
-    let tokens_in_centurion_ata: u64 = centurion_ata.amount;
     let token_program: &mut Interface<'_, TokenInterface> = &mut ctx.accounts.token_program;
 
     let signer_seeds: &[&[&[u8]]] = &[&[
@@ -190,14 +189,6 @@ pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> 
     // Update the last accessed timestamp
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_datetime as u64;
-
-    // Update the testudo token count
-    let testudo_data: &mut TestudoData = centurion_data
-        .testudos
-        .iter_mut()
-        .find(|testudo| testudo.token_mint == ctx.accounts.mint.key())
-        .ok_or(InvalidTokenMint)?;
-    testudo_data.testudo_token_count -= tokens_in_centurion_ata;
 
     msg!(
         "Mint ({}) tokens in centurion ({}) have been transferred to backup account ({})",

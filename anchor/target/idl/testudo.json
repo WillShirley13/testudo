@@ -155,6 +155,10 @@
           ]
         },
         {
+          "name": "valid_signer_of_password",
+          "signer": true
+        },
+        {
           "name": "centurion",
           "writable": true,
           "pda": {
@@ -977,6 +981,16 @@
         {
           "name": "jupiter_data",
           "type": "bytes"
+        },
+        {
+          "name": "testudo_data",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "TestudoData"
+              }
+            }
+          }
         }
       ]
     },
@@ -2155,14 +2169,6 @@
           {
             "name": "testudo_pubkey",
             "type": "pubkey"
-          },
-          {
-            "name": "testudo_bump",
-            "type": "u8"
-          },
-          {
-            "name": "testudo_token_count",
-            "type": "u64"
           }
         ]
       }

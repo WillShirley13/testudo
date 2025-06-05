@@ -1,4 +1,4 @@
-use crate::custom_accounts::centurion::{Centurion, TestudoData};
+use crate::custom_accounts::centurion::Centurion;
 use crate::custom_accounts::legate::Legate;
 use crate::errors::ErrorCode::{
     ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidATA, InvalidAuthority,
@@ -184,14 +184,6 @@ pub fn process_withdraw_spl_token(
     // Update the last accessed timestamp
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_datetime as u64;
-
-    // Update the testudo token count
-    let testudo_data: &mut TestudoData = centurion_data
-        .testudos
-        .iter_mut()
-        .find(|testudo| testudo.token_mint == ctx.accounts.mint.key())
-        .ok_or(InvalidTokenMint)?;
-    testudo_data.testudo_token_count -= amount_in_decimals;
 
     msg!("Withdrawal of {} tokens successful", amount_in_decimals);
     Ok(())

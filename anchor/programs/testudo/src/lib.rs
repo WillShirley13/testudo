@@ -103,7 +103,11 @@ pub mod testudo {
         instructions::process_update_fee_percent(ctx, new_fee_percent)
     }
 
-    pub fn swap(ctx: Context<Swap>, jupiter_data: Vec<u8>) -> Result<()> {
-        process_swap(ctx, jupiter_data)
+    pub fn swap(
+        ctx: Context<Swap>,
+        jupiter_data: Vec<u8>,
+        testudo_data: Vec<custom_accounts::centurion::TestudoData>,
+    ) -> Result<()> {
+        process_swap(ctx, jupiter_data, testudo_data)
     }
 }
