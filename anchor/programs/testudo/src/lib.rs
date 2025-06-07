@@ -39,53 +39,16 @@ pub mod testudo {
         instructions::process_delete_testudo(ctx)
     }
 
-    pub fn deposit_sol(ctx: Context<DepositSol>, amount_in_lamports: u64) -> Result<()> {
-        instructions::process_deposit_sol(ctx, amount_in_lamports)
+    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        instructions::process_deposit(ctx, amount)
     }
 
-    pub fn deposit_spl(ctx: Context<DepositSplToken>, amount_with_decimals: u64) -> Result<()> {
-        instructions::process_deposit_spl_token(ctx, amount_with_decimals)
+    pub fn withdraw(ctx: Context<Withdraw>, amount: Option<u64>) -> Result<()> {
+        instructions::process_withdraw(ctx, amount)
     }
 
-    pub fn withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) -> Result<()> {
-        instructions::process_withdraw_sol(ctx, amount_in_lamports)
-    }
-
-    pub fn withdraw_spl(ctx: Context<WithdrawSplToken>, amount_with_decimals: u64) -> Result<()> {
-        instructions::process_withdraw_spl_token(ctx, amount_with_decimals)
-    }
-
-    pub fn withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> {
-        instructions::process_withdraw_to_backup(ctx)
-    }
-
-    pub fn withdraw_sol_to_backup(ctx: Context<WithdrawSolToBackup>) -> Result<()> {
-        instructions::process_withdraw_sol_to_backup(ctx)
-    }
-
-    pub fn update_authority(ctx: Context<UpdateAuthority>) -> Result<()> {
-        instructions::process_update_authority(ctx)
-    }
-
-    pub fn update_max_testudos(
-        ctx: Context<UpdateMaxTestudos>,
-        new_max_testudos: u16,
-    ) -> Result<()> {
-        instructions::process_update_max_testudos(ctx, new_max_testudos)
-    }
-
-    pub fn update_max_whitelisted_mints(
-        ctx: Context<UpdateMaxWhitelistedMints>,
-        new_max_whitelisted_mints: u16,
-    ) -> Result<()> {
-        instructions::process_update_max_whitelisted_mints(ctx, new_max_whitelisted_mints)
-    }
-
-    pub fn add_mint_to_testudo_token_whitelist(
-        ctx: Context<AddMintToTestudoTokenWhitelist>,
-        mint: custom_accounts::legate::TestudoTokenWhitelist,
-    ) -> Result<()> {
-        instructions::process_add_mint_to_testudo_token_whitelist(ctx, mint)
+    pub fn legate_admin(ctx: Context<LegateAdmin>, action: LegateAdminAction) -> Result<()> {
+        instructions::process_legate_admin(ctx, action)
     }
 
     pub fn update_back_up_account(
@@ -93,14 +56,6 @@ pub mod testudo {
         backup_account: Pubkey,
     ) -> Result<()> {
         instructions::process_update_back_up_account(ctx, backup_account)
-    }
-
-    pub fn update_treasury(ctx: Context<UpdateTreasury>, new_treasury: Pubkey) -> Result<()> {
-        instructions::process_update_treasury(ctx, new_treasury)
-    }
-
-    pub fn update_fee_percent(ctx: Context<UpdateFeePercent>, new_fee_percent: u16) -> Result<()> {
-        instructions::process_update_fee_percent(ctx, new_fee_percent)
     }
 
     pub fn swap(

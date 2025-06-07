@@ -33,7 +33,7 @@ pub enum ErrorCode {
     #[msg("Max testudos reached")]
     MaxTestudosReached,
     #[msg("Cannot update max testudos to less than current number of testudos")]
-    CannotUpdateMaxTestudosToLessThanCurrentNumberOfTestudos,
+    CannotDecreaseMaxTestudos,
     #[msg("Max whitelisted mints reached")]
     MaxWhitelistedMintsReached,
     #[msg("Cannot update max whitelisted mints to less than current number of whitelisted mints")]
@@ -44,4 +44,6 @@ pub enum ErrorCode {
     InvalidTreasuryAccount,
     #[msg("Centurion must be empty of spl tokens before closing (no testudos remaining)")]
     CenturionNotEmptyOfSplTokens,
+    #[msg("Invalid token program")]
+    InvalidTokenProgram,
 }

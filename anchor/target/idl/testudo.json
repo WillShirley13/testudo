@@ -8,132 +8,6 @@
   },
   "instructions": [
     {
-      "name": "add_mint_to_testudo_token_whitelist",
-      "discriminator": [
-        91,
-        215,
-        205,
-        240,
-        164,
-        75,
-        222,
-        213
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury"
-        },
-        {
-          "name": "treasury_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "treasury"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "mint"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "mint",
-          "type": {
-            "defined": {
-              "name": "TestudoTokenWhitelist"
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "close_centurion",
       "discriminator": [
         132,
@@ -544,16 +418,16 @@
       "args": []
     },
     {
-      "name": "deposit_sol",
+      "name": "deposit",
       "discriminator": [
-        108,
-        81,
-        78,
-        117,
-        125,
-        155,
-        56,
-        200
+        242,
+        35,
+        198,
+        137,
+        82,
+        225,
+        242,
+        182
       ],
       "accounts": [
         {
@@ -591,41 +465,13 @@
           }
         },
         {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "amount_in_lamports",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "deposit_spl",
-      "discriminator": [
-        224,
-        0,
-        198,
-        175,
-        198,
-        47,
-        105,
-        204
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
+          "name": "mint",
+          "optional": true
         },
         {
           "name": "authority_ata",
           "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -681,34 +527,9 @@
           }
         },
         {
-          "name": "centurion",
+          "name": "testudo_ata",
           "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
-          "name": "testudo",
-          "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -723,11 +544,13 @@
           }
         },
         {
-          "name": "mint",
-          "writable": true
+          "name": "token_program",
+          "optional": true
         },
         {
-          "name": "token_program"
+          "name": "associated_token_program",
+          "optional": true,
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "system_program",
@@ -736,7 +559,7 @@
       ],
       "args": [
         {
-          "name": "amount_with_decimals",
+          "name": "amount",
           "type": "u64"
         }
       ]
@@ -849,6 +672,71 @@
         {
           "name": "treasury_acc",
           "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "legate_admin",
+      "discriminator": [
+        187,
+        74,
+        94,
+        95,
+        161,
+        60,
+        54,
+        37
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "legate"
+          ]
+        },
+        {
+          "name": "legate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_authority",
+          "signer": true,
+          "optional": true
+        },
+        {
+          "name": "new_treasury",
+          "optional": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "action",
+          "type": {
+            "defined": {
+              "name": "LegateAdminAction"
+            }
+          }
         }
       ]
     },
@@ -995,54 +883,6 @@
       ]
     },
     {
-      "name": "update_authority",
-      "discriminator": [
-        32,
-        46,
-        64,
-        28,
-        149,
-        75,
-        243,
-        88
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "new_authority",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "update_back_up_account",
       "discriminator": [
         238,
@@ -1102,212 +942,16 @@
       ]
     },
     {
-      "name": "update_fee_percent",
-      "discriminator": [
-        13,
-        225,
-        121,
-        54,
-        23,
-        94,
-        253,
-        17
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "new_fee_percent",
-          "type": "u16"
-        }
-      ]
-    },
-    {
-      "name": "update_max_testudos",
+      "name": "withdraw",
       "discriminator": [
         183,
-        108,
-        192,
-        5,
-        181,
-        251,
-        228,
-        2
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "new_max_testudos",
-          "type": "u16"
-        }
-      ]
-    },
-    {
-      "name": "update_max_whitelisted_mints",
-      "discriminator": [
-        202,
-        184,
-        37,
-        142,
-        189,
-        21,
-        26,
-        193
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "new_max_whitelisted_mints",
-          "type": "u16"
-        }
-      ]
-    },
-    {
-      "name": "update_treasury",
-      "discriminator": [
-        60,
-        16,
-        243,
-        66,
-        96,
-        59,
-        254,
-        131
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "new_treasury",
-          "type": "pubkey"
-        }
-      ]
-    },
-    {
-      "name": "withdraw_sol",
-      "discriminator": [
-        145,
-        131,
-        74,
-        136,
-        65,
-        137,
-        42,
-        38
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
       ],
       "accounts": [
         {
@@ -1369,127 +1013,19 @@
         {
           "name": "treasury",
           "writable": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "amount_in_lamports",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "withdraw_sol_to_backup",
-      "discriminator": [
-        254,
-        230,
-        17,
-        116,
-        161,
-        54,
-        93,
-        145
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
-        },
-        {
-          "name": "valid_signer_of_password",
-          "signer": true
-        },
-        {
-          "name": "centurion",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
         },
         {
           "name": "backup_account",
-          "writable": true
+          "optional": true
         },
         {
-          "name": "legate",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury",
-          "writable": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "withdraw_spl",
-      "discriminator": [
-        181,
-        154,
-        94,
-        86,
-        62,
-        115,
-        6,
-        186
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
+          "name": "mint",
+          "optional": true
         },
         {
           "name": "authority_ata",
           "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -1545,38 +1081,9 @@
           }
         },
         {
-          "name": "valid_signer_of_password",
-          "signer": true
-        },
-        {
-          "name": "centurion",
+          "name": "testudo_ata",
           "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
-          "name": "testudo",
-          "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -1591,32 +1098,9 @@
           }
         },
         {
-          "name": "mint"
-        },
-        {
-          "name": "legate",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury"
-        },
-        {
           "name": "treasury_ata",
           "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -1672,247 +1156,31 @@
           }
         },
         {
-          "name": "token_program"
+          "name": "backup_ata",
+          "optional": true
+        },
+        {
+          "name": "token_program",
+          "optional": true
+        },
+        {
+          "name": "associated_token_program",
+          "optional": true,
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": [
         {
-          "name": "amount_with_decimals",
-          "type": "u64"
+          "name": "amount",
+          "type": {
+            "option": "u64"
+          }
         }
       ]
-    },
-    {
-      "name": "withdraw_to_backup",
-      "discriminator": [
-        36,
-        27,
-        114,
-        22,
-        47,
-        242,
-        235,
-        148
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
-        },
-        {
-          "name": "valid_signer_of_password",
-          "signer": true
-        },
-        {
-          "name": "centurion",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
-          "name": "testudo",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "centurion"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "backup_account",
-          "writable": true
-        },
-        {
-          "name": "backup_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "backup_account"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "mint",
-          "writable": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "legate",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury"
-        },
-        {
-          "name": "treasury_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "treasury"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -2021,7 +1289,7 @@
     },
     {
       "code": 6015,
-      "name": "CannotUpdateMaxTestudosToLessThanCurrentNumberOfTestudos",
+      "name": "CannotDecreaseMaxTestudos",
       "msg": "Cannot update max testudos to less than current number of testudos"
     },
     {
@@ -2048,6 +1316,11 @@
       "code": 6020,
       "name": "CenturionNotEmptyOfSplTokens",
       "msg": "Centurion must be empty of spl tokens before closing (no testudos remaining)"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidTokenProgram",
+      "msg": "Invalid token program"
     }
   ],
   "types": [
@@ -2153,6 +1426,72 @@
                 }
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "LegateAdminAction",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "UpdateAuthority",
+            "fields": [
+              {
+                "name": "new_authority",
+                "type": "pubkey"
+              }
+            ]
+          },
+          {
+            "name": "UpdateMaxTestudos",
+            "fields": [
+              {
+                "name": "new_max",
+                "type": "u16"
+              }
+            ]
+          },
+          {
+            "name": "UpdateMaxWhitelistedMints",
+            "fields": [
+              {
+                "name": "new_max",
+                "type": "u16"
+              }
+            ]
+          },
+          {
+            "name": "UpdateTreasury",
+            "fields": [
+              {
+                "name": "new_treasury",
+                "type": "pubkey"
+              }
+            ]
+          },
+          {
+            "name": "UpdateFeePercent",
+            "fields": [
+              {
+                "name": "new_percent",
+                "type": "u16"
+              }
+            ]
+          },
+          {
+            "name": "AddMintToWhitelist",
+            "fields": [
+              {
+                "name": "mint_data",
+                "type": {
+                  "defined": {
+                    "name": "TestudoTokenWhitelist"
+                  }
+                }
+              }
+            ]
           }
         ]
       }

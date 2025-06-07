@@ -14,132 +14,6 @@ export type Testudo = {
   },
   "instructions": [
     {
-      "name": "addMintToTestudoTokenWhitelist",
-      "discriminator": [
-        91,
-        215,
-        205,
-        240,
-        164,
-        75,
-        222,
-        213
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury"
-        },
-        {
-          "name": "treasuryAta",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "treasury"
-              },
-              {
-                "kind": "account",
-                "path": "tokenProgram"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "tokenProgram"
-        },
-        {
-          "name": "mint"
-        },
-        {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "mint",
-          "type": {
-            "defined": {
-              "name": "testudoTokenWhitelist"
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "closeCenturion",
       "discriminator": [
         132,
@@ -550,16 +424,16 @@ export type Testudo = {
       "args": []
     },
     {
-      "name": "depositSol",
+      "name": "deposit",
       "discriminator": [
-        108,
-        81,
-        78,
-        117,
-        125,
-        155,
-        56,
-        200
+        242,
+        35,
+        198,
+        137,
+        82,
+        225,
+        242,
+        182
       ],
       "accounts": [
         {
@@ -597,41 +471,13 @@ export type Testudo = {
           }
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "amountInLamports",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "depositSpl",
-      "discriminator": [
-        224,
-        0,
-        198,
-        175,
-        198,
-        47,
-        105,
-        204
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
+          "name": "mint",
+          "optional": true
         },
         {
           "name": "authorityAta",
           "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -687,34 +533,9 @@ export type Testudo = {
           }
         },
         {
-          "name": "centurion",
+          "name": "testudoAta",
           "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
-          "name": "testudo",
-          "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -729,11 +550,13 @@ export type Testudo = {
           }
         },
         {
-          "name": "mint",
-          "writable": true
+          "name": "tokenProgram",
+          "optional": true
         },
         {
-          "name": "tokenProgram"
+          "name": "associatedTokenProgram",
+          "optional": true,
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "systemProgram",
@@ -742,7 +565,7 @@ export type Testudo = {
       ],
       "args": [
         {
-          "name": "amountWithDecimals",
+          "name": "amount",
           "type": "u64"
         }
       ]
@@ -855,6 +678,71 @@ export type Testudo = {
         {
           "name": "treasuryAcc",
           "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "legateAdmin",
+      "discriminator": [
+        187,
+        74,
+        94,
+        95,
+        161,
+        60,
+        54,
+        37
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "legate"
+          ]
+        },
+        {
+          "name": "legate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "newAuthority",
+          "signer": true,
+          "optional": true
+        },
+        {
+          "name": "newTreasury",
+          "optional": true
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "action",
+          "type": {
+            "defined": {
+              "name": "legateAdminAction"
+            }
+          }
         }
       ]
     },
@@ -1001,54 +889,6 @@ export type Testudo = {
       ]
     },
     {
-      "name": "updateAuthority",
-      "discriminator": [
-        32,
-        46,
-        64,
-        28,
-        149,
-        75,
-        243,
-        88
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "newAuthority",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "updateBackUpAccount",
       "discriminator": [
         238,
@@ -1108,212 +948,16 @@ export type Testudo = {
       ]
     },
     {
-      "name": "updateFeePercent",
-      "discriminator": [
-        13,
-        225,
-        121,
-        54,
-        23,
-        94,
-        253,
-        17
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "newFeePercent",
-          "type": "u16"
-        }
-      ]
-    },
-    {
-      "name": "updateMaxTestudos",
+      "name": "withdraw",
       "discriminator": [
         183,
-        108,
-        192,
-        5,
-        181,
-        251,
-        228,
-        2
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "newMaxTestudos",
-          "type": "u16"
-        }
-      ]
-    },
-    {
-      "name": "updateMaxWhitelistedMints",
-      "discriminator": [
-        202,
-        184,
-        37,
-        142,
-        189,
-        21,
-        26,
-        193
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "newMaxWhitelistedMints",
-          "type": "u16"
-        }
-      ]
-    },
-    {
-      "name": "updateTreasury",
-      "discriminator": [
-        60,
-        16,
-        243,
-        66,
-        96,
-        59,
-        254,
-        131
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "legate"
-          ]
-        },
-        {
-          "name": "legate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "newTreasury",
-          "type": "pubkey"
-        }
-      ]
-    },
-    {
-      "name": "withdrawSol",
-      "discriminator": [
-        145,
-        131,
-        74,
-        136,
-        65,
-        137,
-        42,
-        38
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
       ],
       "accounts": [
         {
@@ -1375,127 +1019,19 @@ export type Testudo = {
         {
           "name": "treasury",
           "writable": true
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "amountInLamports",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "withdrawSolToBackup",
-      "discriminator": [
-        254,
-        230,
-        17,
-        116,
-        161,
-        54,
-        93,
-        145
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
-        },
-        {
-          "name": "validSignerOfPassword",
-          "signer": true
-        },
-        {
-          "name": "centurion",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
         },
         {
           "name": "backupAccount",
-          "writable": true
+          "optional": true
         },
         {
-          "name": "legate",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury",
-          "writable": true
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "withdrawSpl",
-      "discriminator": [
-        181,
-        154,
-        94,
-        86,
-        62,
-        115,
-        6,
-        186
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
+          "name": "mint",
+          "optional": true
         },
         {
           "name": "authorityAta",
           "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -1551,38 +1087,9 @@ export type Testudo = {
           }
         },
         {
-          "name": "validSignerOfPassword",
-          "signer": true
-        },
-        {
-          "name": "centurion",
+          "name": "testudoAta",
           "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
-          "name": "testudo",
-          "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -1597,32 +1104,9 @@ export type Testudo = {
           }
         },
         {
-          "name": "mint"
-        },
-        {
-          "name": "legate",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury"
-        },
-        {
           "name": "treasuryAta",
           "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -1678,247 +1162,31 @@ export type Testudo = {
           }
         },
         {
-          "name": "tokenProgram"
+          "name": "backupAta",
+          "optional": true
+        },
+        {
+          "name": "tokenProgram",
+          "optional": true
+        },
+        {
+          "name": "associatedTokenProgram",
+          "optional": true,
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": [
         {
-          "name": "amountWithDecimals",
-          "type": "u64"
+          "name": "amount",
+          "type": {
+            "option": "u64"
+          }
         }
       ]
-    },
-    {
-      "name": "withdrawToBackup",
-      "discriminator": [
-        36,
-        27,
-        114,
-        22,
-        47,
-        242,
-        235,
-        148
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
-        },
-        {
-          "name": "validSignerOfPassword",
-          "signer": true
-        },
-        {
-          "name": "centurion",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
-          "name": "testudo",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "centurion"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "backupAccount",
-          "writable": true
-        },
-        {
-          "name": "backupAta",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "backupAccount"
-              },
-              {
-                "kind": "account",
-                "path": "tokenProgram"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "tokenProgram"
-        },
-        {
-          "name": "mint",
-          "writable": true
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "legate",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury"
-        },
-        {
-          "name": "treasuryAta",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "treasury"
-              },
-              {
-                "kind": "account",
-                "path": "tokenProgram"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -2027,7 +1295,7 @@ export type Testudo = {
     },
     {
       "code": 6015,
-      "name": "cannotUpdateMaxTestudosToLessThanCurrentNumberOfTestudos",
+      "name": "cannotDecreaseMaxTestudos",
       "msg": "Cannot update max testudos to less than current number of testudos"
     },
     {
@@ -2054,6 +1322,11 @@ export type Testudo = {
       "code": 6020,
       "name": "centurionNotEmptyOfSplTokens",
       "msg": "Centurion must be empty of spl tokens before closing (no testudos remaining)"
+    },
+    {
+      "code": 6021,
+      "name": "invalidTokenProgram",
+      "msg": "Invalid token program"
     }
   ],
   "types": [
@@ -2159,6 +1432,72 @@ export type Testudo = {
                 }
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "legateAdminAction",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "updateAuthority",
+            "fields": [
+              {
+                "name": "newAuthority",
+                "type": "pubkey"
+              }
+            ]
+          },
+          {
+            "name": "updateMaxTestudos",
+            "fields": [
+              {
+                "name": "newMax",
+                "type": "u16"
+              }
+            ]
+          },
+          {
+            "name": "updateMaxWhitelistedMints",
+            "fields": [
+              {
+                "name": "newMax",
+                "type": "u16"
+              }
+            ]
+          },
+          {
+            "name": "updateTreasury",
+            "fields": [
+              {
+                "name": "newTreasury",
+                "type": "pubkey"
+              }
+            ]
+          },
+          {
+            "name": "updateFeePercent",
+            "fields": [
+              {
+                "name": "newPercent",
+                "type": "u16"
+              }
+            ]
+          },
+          {
+            "name": "addMintToWhitelist",
+            "fields": [
+              {
+                "name": "mintData",
+                "type": {
+                  "defined": {
+                    "name": "testudoTokenWhitelist"
+                  }
+                }
+              }
+            ]
           }
         ]
       }

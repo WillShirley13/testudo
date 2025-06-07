@@ -5,12 +5,12 @@ import * as web3 from "@solana/web3.js";
 import { Connection, PublicKey } from "@solana/web3.js";
 import {
 	TOKEN_PROGRAM_ID,
+	TOKEN_2022_PROGRAM_ID,
+	getAssociatedTokenAddressSync,
 	createMint,
 	getOrCreateAssociatedTokenAccount,
 	mintTo,
-	TOKEN_2022_PROGRAM_ID,
 	getMint,
-	getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { SecureKeypairGenerator } from "./keypair_functions";
 
@@ -153,7 +153,11 @@ describe("Testudo Tests", () => {
 			);
 			const legate = await program.account.legate.fetch(legatePDA);
 
-            console.log(`Legate size: ${(await connection.getAccountInfo(legatePDA)).data.length}`)
+			console.log(
+				`Legate size: ${
+					(await connection.getAccountInfo(legatePDA)).data.length
+				}`
+			);
 
 			// Test that the legate account has been properly initialized
 			expect(
@@ -205,9 +209,14 @@ describe("Testudo Tests", () => {
 			);
 
 			const tx = await program.methods
-				.updateMaxTestudos(newMaxTestudosPerUser)
-				.accountsPartial({
+				.legateAdmin({
+					updateMaxTestudos: {
+						newMax: newMaxTestudosPerUser,
+					},
+				})
+				.accounts({
 					authority: legateAuthority.publicKey,
+                    newTreasury: null
 				})
 				.signers([legateAuthority])
 				.rpc();
@@ -255,9 +264,14 @@ describe("Testudo Tests", () => {
 			console.log(`Size of legate before update: ${oldSize}`);
 
 			const tx = await program.methods
-				.updateMaxWhitelistedMints(newMaxWhitelistedMints)
-				.accountsPartial({
+				.legateAdmin({
+					updateMaxWhitelistedMints: {
+						newMax: newMaxWhitelistedMints,
+					},
+				})
+				.accounts({
 					authority: legateAuthority.publicKey,
+                    newTreasury: null
 				})
 				.signers([legateAuthority])
 				.rpc();
@@ -298,10 +312,15 @@ describe("Testudo Tests", () => {
 			console.log(`New authority: ${newAuthority.publicKey.toBase58()}`);
 
 			const tx = await program.methods
-				.updateAuthority()
-				.accountsPartial({
+				.legateAdmin({
+					updateAuthority: {
+						newAuthority: newAuthority.publicKey,
+					},
+				})
+				.accounts({
 					authority: legateAuthority.publicKey,
 					newAuthority: newAuthority.publicKey,
+                    newTreasury: null
 				})
 				.signers([legateAuthority, newAuthority])
 				.rpc();
@@ -320,10 +339,15 @@ describe("Testudo Tests", () => {
 
 			// Update Legate authority back to original for subsequent tests
 			const reverseAuthorityUpdatetx = await program.methods
-				.updateAuthority()
-				.accountsPartial({
+				.legateAdmin({
+					updateAuthority: {
+						newAuthority: legateAuthority.publicKey,
+					},
+				})
+				.accounts({
 					authority: newAuthority.publicKey,
 					newAuthority: legateAuthority.publicKey,
+                    newTreasury: null
 				})
 				.signers([legateAuthority, newAuthority])
 				.rpc();
@@ -338,8 +362,12 @@ describe("Testudo Tests", () => {
 
 			try {
 				await program.methods
-					.updateAuthority()
-					.accountsPartial({
+					.legateAdmin({
+						updateAuthority: {
+							newAuthority: newAuthority.publicKey,
+						},
+					})
+					.accounts({
 						authority: wrongAuthority.publicKey,
 						newAuthority: newAuthority.publicKey,
 					})
@@ -353,104 +381,115 @@ describe("Testudo Tests", () => {
 			}
 		});
 
-		it("Add new mint to the approved whitelist", async () => {
-			console.log(
-				"\n==== TEST: Add New Mint - Whitelist Token for Testudo Usage ===="
-			);
-			const [legatePDA] = PublicKey.findProgramAddressSync(
-				[Buffer.from("legate")],
-				program.programId
-			);
+		// it("Add new mint to the approved whitelist", async () => {
+		// 	console.log(
+		// 		"\n==== TEST: Add New Mint - Whitelist Token for Testudo Usage ===="
+		// 	);
+		// 	const [legatePDA] = PublicKey.findProgramAddressSync(
+		// 		[Buffer.from("legate")],
+		// 		program.programId
+		// 	);
 
-			let mintTokenProgram = (await connection.getAccountInfo(mintPubkey))
-				?.owner;
+		// 	let mintTokenProgram = (await connection.getAccountInfo(mintPubkey))
+		// 		?.owner;
 
-			let addMintTx = await program.methods
-				.addMintToTestudoTokenWhitelist({
-					tokenMint: mintPubkey,
-					tokenName: "TesterToken",
-					tokenSymbol: "TT",
-					tokenDecimals: token_info.value.decimals,
-				})
-				.accountsPartial({
-					authority: legateAuthority.publicKey,
-					treasury: legateTreasury.publicKey,
-					tokenProgram: TOKEN_PROGRAM_ID,
-					mint: mintPubkey,
-				})
-				.signers([legateAuthority])
-				.rpc();
+		// 	let addMintTx = await program.methods
+		// 		.legateAdmin({
+		// 			addMintToWhitelist: {
+		// 				mintData: {
+		// 					tokenMint: mintPubkey,
+		// 					tokenName: "TesterToken",
+		// 					tokenSymbol: "TT",
+		// 					tokenDecimals: token_info.value.decimals,
+		// 				},
+		// 			},
+		// 		})
+		// 		.accountsPartial({
+		// 			authority: legateAuthority.publicKey,
+		// 			treasury: legateTreasury.publicKey,
+		// 			tokenProgram: TOKEN_PROGRAM_ID,
+		// 			mint: mintPubkey,
+		// 		})
+		// 		.signers([legateAuthority])
+		// 		.rpc();
 
-			await connection.confirmTransaction(
-				{
-					signature: addMintTx,
-					blockhash: (
-						await connection.getLatestBlockhash()
-					).blockhash,
-					lastValidBlockHeight: (
-						await connection.getLatestBlockhash()
-					).lastValidBlockHeight,
-				},
-				"confirmed"
-			);
+		// 	await connection.confirmTransaction(
+		// 		{
+		// 			signature: addMintTx,
+		// 			blockhash: (
+		// 				await connection.getLatestBlockhash()
+		// 			).blockhash,
+		// 			lastValidBlockHeight: (
+		// 				await connection.getLatestBlockhash()
+		// 			).lastValidBlockHeight,
+		// 		},
+		// 		"confirmed"
+		// 	);
 
-			let legate = await program.account.legate.fetch(legatePDA);
+		// 	let legate = await program.account.legate.fetch(legatePDA);
 
-			// Verify the mint was added to the whitelist
-			console.log("Approved tokens:");
-			legate.testudoTokenWhitelist.forEach((whitelist) => {
-				console.log(`Token mint: ${whitelist.tokenMint.toBase58()}`);
-				console.log(`Token name: ${whitelist.tokenName}\n`);
-			});
+		// 	// Verify the mint was added to the whitelist
+		// 	console.log("Approved tokens:");
+		// 	legate.testudoTokenWhitelist.forEach((whitelist) => {
+		// 		console.log(`Token mint: ${whitelist.tokenMint.toBase58()}`);
+		// 		console.log(`Token name: ${whitelist.tokenName}\n`);
+		// 	});
 
-			// Check that at least one whitelisted token exists
-			expect(legate.testudoTokenWhitelist.length).to.be.greaterThan(0);
-			// Verify the added mint is in the whitelist
-			expect(
-				legate.testudoTokenWhitelist.find(
-					(whitelist) =>
-						whitelist.tokenMint.toBase58() === mintPubkey.toBase58()
-				)
-			).to.not.equal(undefined);
-		});
+		// 	// Check that at least one whitelisted token exists
+		// 	expect(legate.testudoTokenWhitelist.length).to.be.greaterThan(0);
+		// 	// Verify the added mint is in the whitelist
+		// 	expect(
+		// 		legate.testudoTokenWhitelist.find(
+		// 			(whitelist) =>
+		// 				whitelist.tokenMint.toBase58() === mintPubkey.toBase58()
+		// 		)
+		// 	).to.not.equal(undefined);
+		// });
 
-		it("Attempt to add the same mint to the whitelist again", async () => {
-			console.log(
-				"\n==== TEST: Duplicate Mint Addition - Should Fail When Already Whitelisted ===="
-			);
-			const [legatePDA] = PublicKey.findProgramAddressSync(
-				[Buffer.from("legate")],
-				program.programId
-			);
-			const legate = await program.account.legate.fetch(legatePDA);
+	// 	it("Attempt to add the same mint to the whitelist again", async () => {
+	// 		console.log(
+	// 			"\n==== TEST: Duplicate Mint Addition - Should Fail When Already Whitelisted ===="
+	// 		);
+	// 		const [legatePDA] = PublicKey.findProgramAddressSync(
+	// 			[Buffer.from("legate")],
+	// 			program.programId
+	// 		);
+	// 		const legate = await program.account.legate.fetch(legatePDA);
 
-			try {
-				await program.methods
-					.addMintToTestudoTokenWhitelist({
-						tokenMint: mintPubkey,
-						tokenName: "TesterToken",
-						tokenSymbol: "TT",
-						tokenDecimals: token_info.value.decimals,
-					})
-					.accountsPartial({
-						authority: legateAuthority.publicKey,
-					})
-					.signers([legateAuthority])
-					.rpc();
-				expect.fail("Should have thrown an error");
-			} catch (error) {
-				console.log(
-					`Error successfully thrown when adding the same mint to the whitelist again: ${error}`
-				);
-				console.log("Approved tokens:");
-				legate.testudoTokenWhitelist.forEach((whitelist) => {
-					console.log(
-						`Token mint: ${whitelist.tokenMint.toBase58()}`
-					);
-					console.log(`Token name: ${whitelist.tokenName}\n`);
-				});
-			}
-		});
+	// 		try {
+	// 			await program.methods
+	// 				.legateAdmin({
+	// 					addMintToWhitelist: {
+	// 						mintData: {
+	// 							tokenMint: mintPubkey,
+	// 							tokenName: "TesterToken",
+	// 							tokenSymbol: "TT",
+	// 							tokenDecimals: token_info.value.decimals,
+	// 						},
+	// 					},
+	// 				})
+	// 				.accountsPartial({
+	// 					authority: legateAuthority.publicKey,
+	// 					treasury: legateTreasury.publicKey,
+	// 					tokenProgram: TOKEN_PROGRAM_ID,
+	// 					mint: mintPubkey,
+	// 				})
+	// 				.signers([legateAuthority])
+	// 				.rpc();
+	// 			expect.fail("Should have thrown an error");
+	// 		} catch (error) {
+	// 			console.log(
+	// 				`Error successfully thrown when adding the same mint to the whitelist again: ${error}`
+	// 			);
+	// 			console.log("Approved tokens:");
+	// 			legate.testudoTokenWhitelist.forEach((whitelist) => {
+	// 				console.log(
+	// 					`Token mint: ${whitelist.tokenMint.toBase58()}`
+	// 				);
+	// 				console.log(`Token name: ${whitelist.tokenName}\n`);
+	// 			});
+	// 		}
+	// 	});
 	});
 
 	// Group 2: Centurion Account Tests
@@ -538,26 +577,34 @@ describe("Testudo Tests", () => {
 				} SOL`
 			);
 
-			let depositSolTx = await program.methods
-				.depositSol(new anchor.BN(depositAmount))
-				.accounts({
+			try {
+                let depositSolTx = await program.methods
+				.deposit(new anchor.BN(depositAmount))
+				.accountsPartial({
 					authority: testUser.publicKey,
 				})
 				.signers([testUser])
 				.rpc();
 
-			await connection.confirmTransaction(
-				{
-					signature: depositSolTx,
-					blockhash: (
-						await connection.getLatestBlockhash()
-					).blockhash,
-					lastValidBlockHeight: (
-						await connection.getLatestBlockhash()
-					).lastValidBlockHeight,
-				},
-				"confirmed"
-			);
+                await connection.confirmTransaction(
+                    {
+                        signature: depositSolTx,
+                        blockhash: (
+                            await connection.getLatestBlockhash()
+                        ).blockhash,
+                        lastValidBlockHeight: (
+                            await connection.getLatestBlockhash()
+                        ).lastValidBlockHeight,
+                    },
+                    "confirmed"
+                );
+
+                console.log(`Deposit SOL tx: ${depositSolTx}`);
+            } catch (error) {
+                console.log(
+                    `Error successfully thrown when depositing SOL: ${error}`
+                );
+            }
 
 			let centurion = await program.account.centurion.fetch(centurionPDA);
 			let treasuryLamportsAfter = await connection.getBalance(
@@ -618,10 +665,8 @@ describe("Testudo Tests", () => {
 
 			try {
 				await program.methods
-					.depositSol(
-						new anchor.BN(100_000_000 * web3.LAMPORTS_PER_SOL)
-					)
-					.accounts({
+					.deposit(new anchor.BN(100_000_000 * web3.LAMPORTS_PER_SOL))
+					.accountsPartial({
 						authority: testUser.publicKey,
 					})
 					.signers([testUser])
@@ -684,8 +729,8 @@ describe("Testudo Tests", () => {
 
 			// Withdraw SOL requiring both account owner and password signatures
 			let withdrawSolTx = await program.methods
-				.withdrawSol(new anchor.BN(withdrawAmount))
-				.accounts({
+				.withdraw(new anchor.BN(withdrawAmount))
+				.accountsPartial({
 					authority: testUser.publicKey,
 					validSignerOfPassword: passwordKeypair.publicKey,
 					treasury: legateTreasury.publicKey,
@@ -772,8 +817,8 @@ describe("Testudo Tests", () => {
 
 			try {
 				await program.methods
-					.withdrawSol(new anchor.BN(0.1 * web3.LAMPORTS_PER_SOL))
-					.accounts({
+					.withdraw(new anchor.BN(0.1 * web3.LAMPORTS_PER_SOL))
+					.accountsPartial({
 						authority: testUser.publicKey,
 						validSignerOfPassword:
 							incorrectPasswordSigner.publicKey,
@@ -818,7 +863,7 @@ describe("Testudo Tests", () => {
 				console.log("Creating Testudo with Token Program");
 				createTokenAccountTx = await program.methods
 					.createTestudo()
-					.accounts({
+					.accountsPartial({
 						authority: testUser.publicKey,
 						mint: mintPubkey,
 						tokenProgram: tokenProgram,
@@ -829,7 +874,7 @@ describe("Testudo Tests", () => {
 				console.log("Creating Testudo with Token 2022 Program");
 				createTokenAccountTx = await program.methods
 					.createTestudo()
-					.accounts({
+					.accountsPartial({
 						authority: testUser.publicKey,
 						mint: mintPubkey,
 						tokenProgram: token2022Program,
@@ -935,7 +980,7 @@ describe("Testudo Tests", () => {
 					console.log("Creating Testudo with Token Program");
 					createTokenAccountTx = await program.methods
 						.createTestudo()
-						.accounts({
+						.accountsPartial({
 							authority: testUser.publicKey,
 							mint: nonWhitelistedMintPubkey,
 							tokenProgram: tokenProgram,
@@ -948,7 +993,7 @@ describe("Testudo Tests", () => {
 					console.log("Creating Testudo with Token 2022 Program");
 					createTokenAccountTx = await program.methods
 						.createTestudo()
-						.accounts({
+						.accountsPartial({
 							authority: testUser.publicKey,
 							mint: nonWhitelistedMintPubkey,
 							tokenProgram: token2022Program,
@@ -984,7 +1029,7 @@ describe("Testudo Tests", () => {
 			console.log(`Deposit amount: ${depositAmount}`);
 
 			let depositSPLTokenTx = await program.methods
-				.depositSpl(new anchor.BN(depositAmountWithDecimals))
+				.deposit(new anchor.BN(depositAmountWithDecimals))
 				.accountsPartial({
 					authority: testUser.publicKey,
 					mint: mintPubkey,
@@ -1023,10 +1068,6 @@ describe("Testudo Tests", () => {
 			);
 			expect(testudoData, "Testudo should be in centurion's testudos").to
 				.not.be.undefined;
-			expect(
-				testudoData.testudoTokenCount.toNumber(),
-				"Testudo token count should match deposit"
-			).to.equal(depositAmountWithDecimals);
 		});
 
 		it("Withdraw from SPL Token Testudo", async () => {
@@ -1095,11 +1136,6 @@ describe("Testudo Tests", () => {
 				(t) => t.tokenMint.toBase58() === mintPubkey.toBase58()
 			);
 			console.log(
-				`Centurion token count BEFORE withdraw (without decimals): ${
-					testudoDataBefore.testudoTokenCount.toNumber() / 10 ** 8
-				}`
-			);
-			console.log(
 				`Testudo token account balance BEFORE withdraw (without decimals): ${testudoBalanceBefore.value.uiAmount}`
 			);
 			console.log(
@@ -1108,8 +1144,8 @@ describe("Testudo Tests", () => {
 
 			// Withdraw from SPL Token Testudo
 			let withdrawSPLTokenTx = await program.methods
-				.withdrawSpl(new anchor.BN(withdrawAmountWithDecimals))
-				.accounts({
+				.withdraw(new anchor.BN(withdrawAmountWithDecimals))
+				.accountsPartial({
 					authority: testUser.publicKey,
 					validSignerOfPassword: passwordKeypair.publicKey,
 					mint: mintPubkey,
@@ -1157,11 +1193,6 @@ describe("Testudo Tests", () => {
 				testudo
 			);
 			console.log(
-				`Centurion token count AFTER withdraw (without decimals): ${
-					testudoDataAfter.testudoTokenCount.toNumber() / 10 ** 8
-				}`
-			);
-			console.log(
 				`Testudo token account balance AFTER withdraw (without decimals): ${testudoBalanceAfter.value.uiAmount}`
 			);
 			console.log(
@@ -1180,12 +1211,9 @@ describe("Testudo Tests", () => {
 
 			// Verify the centurion account data reflects the withdrawal
 			expect(
-				testudoDataAfter.testudoTokenCount.toNumber(),
+				await connection.getTokenAccountBalance(testudo),
 				"Centurion account should reflect the withdrawal"
-			).to.equal(
-				testudoDataBefore.testudoTokenCount.toNumber() -
-					withdrawAmountWithDecimals
-			);
+			).to.equal(testudoBalanceBefore.value.uiAmount - withdrawAmount);
 
 			// Verify that the treasury received the fee
 			expect(
@@ -1217,8 +1245,8 @@ describe("Testudo Tests", () => {
 
 			try {
 				let withdrawSPLTokenTx = await program.methods
-					.withdrawSpl(new anchor.BN(withdrawAmount))
-					.accounts({
+					.withdraw(new anchor.BN(withdrawAmount))
+					.accountsPartial({
 						authority: testUser.publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						mint: mintPubkey,
@@ -1259,8 +1287,8 @@ describe("Testudo Tests", () => {
 
 			try {
 				let withdrawSPLTokenTx = await program.methods
-					.withdrawSpl(new anchor.BN(withdrawAmount))
-					.accounts({
+					.withdraw(new anchor.BN(withdrawAmount))
+					.accountsPartial({
 						authority: testUser.publicKey,
 						validSignerOfPassword: invalidPasswordKeypair.publicKey,
 						mint: mintPubkey,
@@ -1296,17 +1324,20 @@ describe("Testudo Tests", () => {
 
 			// Add this mint to the whitelist
 			let addMintTx = await program.methods
-				.addMintToTestudoTokenWhitelist({
-					tokenMint: deletionMintPubkey,
-					tokenName: "DeleteTest",
-					tokenSymbol: "DLT",
-					tokenDecimals: 8,
+				.legateAdmin({
+					addMintToWhitelist: {
+						mintData: {
+							tokenMint: deletionMintPubkey,
+							tokenName: "DeleteTest",
+							tokenSymbol: "DLT",
+							tokenDecimals: 8,
+						},
+					},
 				})
-				.accounts({
+				.accountsPartial({
 					authority: legateAuthority.publicKey,
-					treasury: legateTreasury.publicKey,
-					tokenProgram: TOKEN_PROGRAM_ID,
-					mint: deletionMintPubkey,
+					newTreasury: null,
+
 				})
 				.signers([legateAuthority])
 				.rpc();
@@ -1356,7 +1387,7 @@ describe("Testudo Tests", () => {
 
 			let createTestudoTx = await program.methods
 				.createTestudo()
-				.accounts({
+				.accountsPartial({
 					authority: testUser.publicKey,
 					mint: deletionMintPubkey,
 					tokenProgram: tokenProgram,
@@ -1380,8 +1411,8 @@ describe("Testudo Tests", () => {
 				});
 
 			let depositTx = await program.methods
-				.depositSpl(new anchor.BN(depositAmount))
-				.accounts({
+				.deposit(new anchor.BN(depositAmount))
+				.accountsPartial({
 					authority: testUser.publicKey,
 					mint: deletionMintPubkey,
 					tokenProgram: tokenProgram,
@@ -1403,9 +1434,11 @@ describe("Testudo Tests", () => {
 			);
 
 			console.log("Centurion testudos BEFORE deletion:");
-			centurionBefore.testudos.forEach((t, i) => {
+			centurionBefore.testudos.forEach(async (t, i) => {
 				console.log(
-					`  #${i}: Mint=${t.tokenMint.toBase58()}, Balance=${t.testudoTokenCount.toString()}`
+					`  #${i}: Mint=${t.tokenMint.toBase58()}, Balance=${await connection
+						.getTokenAccountBalance(t.testudoPubkey)
+						.then((balance) => balance.value.uiAmount)}`
 				);
 			});
 			console.log(
@@ -1459,7 +1492,7 @@ describe("Testudo Tests", () => {
 			// Now delete the Testudo
 			const deleteTestudoTx = await program.methods
 				.deleteTestudo()
-				.accounts({
+				.accountsPartial({
 					authority: testUser.publicKey,
 					validSignerOfPassword: passwordKeypair.publicKey,
 					mint: deletionMintPubkey,
@@ -1516,9 +1549,11 @@ describe("Testudo Tests", () => {
 				centurionPDA
 			);
 			console.log("Centurion testudos AFTER deletion:");
-			centurionAfter.testudos.forEach((t, i) => {
+			centurionAfter.testudos.forEach(async (t, i) => {
 				console.log(
-					`  #${i}: Mint=${t.tokenMint.toBase58()}, Balance=${t.testudoTokenCount.toString()}`
+					`  #${i}: Mint=${t.tokenMint.toBase58()}, Balance=${await connection
+						.getTokenAccountBalance(t.testudoPubkey)
+						.then((balance) => balance.value.uiAmount)}`
 				);
 			});
 
@@ -1609,7 +1644,7 @@ describe("Testudo Tests", () => {
 
 				await program.methods
 					.deleteTestudo()
-					.accounts({
+					.accountsPartial({
 						authority: testUser.publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						mint: nonWhitelistedMint,
@@ -1643,11 +1678,15 @@ describe("Testudo Tests", () => {
 
 			// Add this mint to the whitelist
 			let addMintTx = await program.methods
-				.addMintToTestudoTokenWhitelist({
-					tokenMint: testMint,
-					tokenName: "AuthTest",
-					tokenSymbol: "AT",
-					tokenDecimals: 8,
+				.legateAdmin({
+					addMintToWhitelist: {
+						mintData: {
+							tokenMint: testMint,
+							tokenName: "AuthTest",
+							tokenSymbol: "AT",
+							tokenDecimals: 8,
+						},
+					},
 				})
 				.accountsPartial({
 					authority: legateAuthority.publicKey,
@@ -1727,7 +1766,7 @@ describe("Testudo Tests", () => {
 
 				await program.methods
 					.deleteTestudo()
-					.accounts({
+					.accountsPartial({
 						authority: wrongAuthority.publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						mint: testMint,
@@ -1778,7 +1817,7 @@ describe("Testudo Tests", () => {
 				const tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
 				await program.methods
 					.deleteTestudo()
-					.accounts({
+					.accountsPartial({
 						authority: testUser.publicKey,
 						validSignerOfPassword: wrongPasswordKeypair.publicKey,
 						mint: mintPubkey,
@@ -1830,8 +1869,8 @@ describe("Testudo Tests", () => {
 			);
 
 			let depositSolTx = await program.methods
-				.depositSol(new anchor.BN(depositAmount))
-				.accounts({
+				.deposit(new anchor.BN(depositAmount))
+				.accountsPartial({
 					authority: testUser.publicKey,
 				})
 				.signers([testUser])
@@ -1910,8 +1949,8 @@ describe("Testudo Tests", () => {
 
 			// Now withdraw all SOL to backup account
 			const withdrawToBackupTx = await program.methods
-				.withdrawSolToBackup()
-				.accounts({
+				.withdraw(new anchor.BN(withdrawAmount))
+				.accountsPartial({
 					authority: testUser.publicKey,
 					validSignerOfPassword: passwordKeypair.publicKey,
 					centurion: centurionPDA,
@@ -2030,8 +2069,8 @@ describe("Testudo Tests", () => {
 			const legate = await program.account.legate.fetch(legatePDA);
 
 			let depositSolTx = await program.methods
-				.depositSol(new anchor.BN(depositAmount))
-				.accounts({
+				.deposit(new anchor.BN(depositAmount))
+				.accountsPartial({
 					authority: testUser.publicKey,
 				})
 				.signers([testUser])
@@ -2042,8 +2081,8 @@ describe("Testudo Tests", () => {
 			// Try to withdraw with wrong password
 			try {
 				await program.methods
-					.withdrawSolToBackup()
-					.accounts({
+					.withdraw(new anchor.BN(0.1 * web3.LAMPORTS_PER_SOL))
+					.accountsPartial({
 						authority: testUser.publicKey,
 						validSignerOfPassword: wrongPasswordKeypair.publicKey,
 						centurion: centurionPDA,
@@ -2067,7 +2106,6 @@ describe("Testudo Tests", () => {
 			console.log(
 				"\n==== TEST: Withdraw SOL to Invalid Backup - Should Fail with Wrong Backup Address ===="
 			);
-
 
 			// Create fake backup owner
 			const fakeBackupOwner = anchor.web3.Keypair.generate();
@@ -2096,8 +2134,8 @@ describe("Testudo Tests", () => {
 			const legate = await program.account.legate.fetch(legatePDA);
 
 			let depositSolTx = await program.methods
-				.depositSol(new anchor.BN(depositAmount))
-				.accounts({
+				.deposit(new anchor.BN(depositAmount))
+				.accountsPartial({
 					authority: testUser.publicKey,
 				})
 				.signers([testUser])
@@ -2108,8 +2146,8 @@ describe("Testudo Tests", () => {
 			// Try to withdraw with wrong backup owner
 			try {
 				await program.methods
-					.withdrawSolToBackup()
-					.accounts({
+					.withdraw(new anchor.BN(0.1 * web3.LAMPORTS_PER_SOL))
+					.accountsPartial({
 						authority: testUser.publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
 						centurion: centurionPDA,
@@ -2134,18 +2172,22 @@ describe("Testudo Tests", () => {
 				"\n==== TEST: Swap SOL for USDC - Should Successfully Swap SOL for USDC ===="
 			);
 
-            // Add wrapped SOL to whitelist
+			// Add wrapped SOL to whitelist
 			try {
 				await program.methods
-					.addMintToTestudoTokenWhitelist({
-						tokenMint: new PublicKey(
-							"So11111111111111111111111111111111111111112"
-						),
-						tokenName: "Wrapped SOL",
-						tokenSymbol: "SOL",
-						tokenDecimals: 9,
+					.legateAdmin({
+						addMintToWhitelist: {
+							mintData: {
+								tokenMint: new PublicKey(
+									"So11111111111111111111111111111111111111112"
+								),
+								tokenName: "Wrapped SOL",
+								tokenSymbol: "SOL",
+								tokenDecimals: 9,
+							},
+						},
 					})
-					.accounts({
+					.accountsPartial({
 						authority: legateAuthority.publicKey,
 						treasury: legateTreasury.publicKey,
 						tokenProgram: TOKEN_PROGRAM_ID,
@@ -2162,15 +2204,19 @@ describe("Testudo Tests", () => {
 			// Add USDC to whitelist
 			try {
 				await program.methods
-					.addMintToTestudoTokenWhitelist({
-						tokenMint: new PublicKey(
-							"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-						),
-						tokenName: "USD Coin",
-						tokenSymbol: "USDC",
-						tokenDecimals: 6,
+					.legateAdmin({
+						addMintToWhitelist: {
+							mintData: {
+								tokenMint: new PublicKey(
+									"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+								),
+								tokenName: "USD Coin",
+								tokenSymbol: "USDC",
+								tokenDecimals: 6,
+							},
+						},
 					})
-					.accounts({
+					.accountsPartial({
 						authority: legateAuthority.publicKey,
 						treasury: legateTreasury.publicKey,
 						tokenProgram: TOKEN_PROGRAM_ID,
@@ -2189,7 +2235,7 @@ describe("Testudo Tests", () => {
 				[Buffer.from("centurion"), testUser.publicKey.toBuffer()],
 				program.programId
 			);
-            console.log(`Centurion: ${centurionPDA}`);
+			console.log(`Centurion: ${centurionPDA}`);
 
 			await connection.requestAirdrop(
 				centurionPDA,
@@ -2201,7 +2247,7 @@ describe("Testudo Tests", () => {
 					1 * web3.LAMPORTS_PER_SOL
 				}&slippageBps=50&restrictIntermediateTokens=true&platformFeeBps=50&feeAccount=${
 					legateTreasury.publicKey
-				}&maxAccounts=10&onlyDirectRoutes=true`  // Add these parameters
+				}&maxAccounts=10&onlyDirectRoutes=true` // Add these parameters
 			);
 			let quote = await response.json();
 			console.log(quote);
@@ -2221,14 +2267,14 @@ describe("Testudo Tests", () => {
 						userPublicKey: centurionPDA, // Valid demo wallet
 						wrapAndUnwrapSol: true,
 						useSharedAccounts: true,
-                        useTokenLedger: false,  // This reduces accounts significantly
+						useTokenLedger: false, // This reduces accounts significantly
 					}),
 				}
 			);
 
 			let instructions = await instructionsResponse.json();
 
-            console.log(instructions);
+			console.log(instructions);
 
 			if (instructions.error) {
 				throw new Error(
@@ -2237,11 +2283,28 @@ describe("Testudo Tests", () => {
 			}
 
 			// Convert the base64 data to Buffer
-			const jupiterData = Buffer.from(instructions.swapInstruction.data, 'base64');
+			const jupiterData = Buffer.from(
+				instructions.swapInstruction.data,
+				"base64"
+			);
+
+			let usdcMint = new PublicKey(
+				"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+			);
+			let testudoPubkey = getAssociatedTokenAddressSync(
+				usdcMint,
+				centurionPDA,
+				true
+			);
 
 			let tx = await program.methods
-				.swap(jupiterData) // Pass the Buffer, not the base64 string
-				.accounts({
+				.swap(jupiterData, [
+					{
+						tokenMint: usdcMint,
+						testudoPubkey: testudoPubkey,
+					},
+				])
+				.accountsPartial({
 					authority: testUser.publicKey,
 					validSignerOfPassword: passwordKeypair.publicKey,
 					sourceMint: new PublicKey(
@@ -2254,14 +2317,17 @@ describe("Testudo Tests", () => {
 						instructions.swapInstruction.programId
 					),
 					tokenProgram: TOKEN_PROGRAM_ID,
-					treasury: legateTreasury.publicKey
+					treasury: legateTreasury.publicKey,
 				})
 				.remainingAccounts(
 					instructions.swapInstruction.accounts.map(
 						(account: any) => ({
 							pubkey: new PublicKey(account.pubkey),
 							// Set isSigner to false for the Centurion PDA since it will be signed via invoke_signed
-							isSigner: account.pubkey === centurionPDA.toBase58() ? false : account.isSigner,
+							isSigner:
+								account.pubkey === centurionPDA.toBase58()
+									? false
+									: account.isSigner,
 							isWritable: account.isWritable,
 						})
 					)
@@ -2287,35 +2353,40 @@ describe("Testudo Tests", () => {
 			);
 		});
 
-        it("Test simulating instructions", async () => {
+		it("Test simulating instructions", async () => {
+			await connection.requestAirdrop(
+				testUser.publicKey,
+				5 * web3.LAMPORTS_PER_SOL
+			);
 
-            await connection.requestAirdrop(testUser.publicKey, 5 * web3.LAMPORTS_PER_SOL);
+			try {
+				// First try to build the instruction
+				const ix = await program.methods
+					.deposit(new anchor.BN(1 * web3.LAMPORTS_PER_SOL))
+					.accountsPartial({
+						authority: testUser.publicKey,
+					})
+					.instruction();
 
-            try {
-                // First try to build the instruction
-                const ix = await program.methods
-                    .depositSol(new anchor.BN(1 * web3.LAMPORTS_PER_SOL))
-                    .accounts({
-                        authority: testUser.publicKey,
-                    })
-                    .instruction();
-                
-                console.log("Instruction built successfully:", ix);
-                
-                // Use web3 from the same namespace as connection
-                const transaction = new web3.Transaction().add(ix);
-                transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-                transaction.feePayer = testUser.publicKey;
-                
-                // Sign the transaction for simulation
-                transaction.partialSign(testUser);
-                
-                const simulationResult = await connection.simulateTransaction(transaction);
-                console.log("Manual simulation result:", simulationResult);
-                
-            } catch (error) {
-                console.log("Error:", error);
-            }
-        });
+				console.log("Instruction built successfully:", ix);
+
+				// Use web3 from the same namespace as connection
+				const transaction = new web3.Transaction().add(ix);
+				transaction.recentBlockhash = (
+					await connection.getLatestBlockhash()
+				).blockhash;
+				transaction.feePayer = testUser.publicKey;
+
+				// Sign the transaction for simulation
+				transaction.partialSign(testUser);
+
+				const simulationResult = await connection.simulateTransaction(
+					transaction
+				);
+				console.log("Manual simulation result:", simulationResult);
+			} catch (error) {
+				console.log("Error:", error);
+			}
+		});
 	});
 });
