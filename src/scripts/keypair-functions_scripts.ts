@@ -1,8 +1,7 @@
-import * as crypto from 'crypto';
 import { Keypair } from '@solana/web3.js';
 import * as bip39 from 'bip39';
 import * as nacl from 'tweetnacl';
-import * as argon2 from 'argon2';
+import * as argon2 from 'argon2-browser';
 
 /**
  * Core functions for secure mnemonic phrase keypair generation
@@ -73,10 +72,11 @@ export class SecureKeypairGenerator {
         const words: string[] = [];
         const usedIndices = new Set<number>();
         
-        // Use crypto.randomBytes for better randomness than Math.random()
+        // Use Web Crypto API for better randomness than Math.random()
         while (words.length < length) {
             // Generate 2 bytes (16 bits) of randomness for each word index
-            const randomBuffer = crypto.randomBytes(2);
+            const randomBuffer = new Uint8Array(2);
+            crypto.getRandomValues(randomBuffer);
             // Convert to number between 0-2047
             const randomIndex = (randomBuffer[0] << 8 | randomBuffer[1]) % this.wordlist.length;
             
@@ -115,19 +115,19 @@ export class SecureKeypairGenerator {
         // Use a domain-specific salt as a Uint8Array (browser compatible)
         const salt = new TextEncoder().encode(`${this.SALT_PREFIX}-${words.length}-${userNumberPin.length}-${userPublicKey}`);
         
-        // Use argon2 for key stretching - memory-hard and slow for attackers
-        const hashResult = await argon2.hash(phrase, {
-            type: argon2.argon2id,
-            memoryCost: 2 ** 16, // 64 MB
-            timeCost: 3,
+        // Use argon2-browser for key stretching - memory-hard and slow for attackers
+        const hashResult = await argon2.hash({
+            pass: phrase,
+            salt: salt,
+            type: argon2.ArgonType.Argon2id,
+            mem: 65536, // 64 MB
+            time: 3,
             parallelism: 1,
-            hashLength: 32,
-            salt: Buffer.from(salt),
-            raw: true
+            hashLen: 32, // 32 bytes for Ed25519 seed
         });
 
-        // hashResult is now a Buffer of raw bytes
-        const keypair = Keypair.fromSeed(hashResult);
+        // hashResult.hash is a Uint8Array
+        const keypair = Keypair.fromSeed(Buffer.from(hashResult.hash));
         return { keypair, words: normalizedWords };
     }
     

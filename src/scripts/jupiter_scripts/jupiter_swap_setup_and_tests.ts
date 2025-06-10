@@ -1,7 +1,7 @@
 import { Keypair, Connection, PublicKey, LAMPORTS_PER_SOL, SystemProgram, Transaction, TransactionStatus, sendAndConfirmTransaction } from "@solana/web3.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { saveKeypair, loadKeypair } from "./keypair_security_functions";
-import { SecureKeypairGenerator } from "../../app/utils/keypair-functions_scripts";
+import { SecureKeypairGenerator } from "../keypair-functions_scripts";
 import testudoIdl from "../../../anchor/target/idl/testudo.json";
 import { Program, setProvider, AnchorProvider, Wallet, web3, Provider } from "@coral-xyz/anchor";
 import BN from "bn.js";
