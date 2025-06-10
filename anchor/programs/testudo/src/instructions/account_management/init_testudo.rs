@@ -64,8 +64,6 @@ pub fn process_init_testudo(ctx: Context<InitTestudo>) -> Result<()> {
     let testudo_data: TestudoData = TestudoData {
         token_mint: ctx.accounts.mint.key(),
         testudo_pubkey: ctx.accounts.testudo.key(),
-        testudo_bump: ctx.bumps.testudo,
-        testudo_token_count: 0,
     };
 
     // Check if the user has reached the max number of testudos

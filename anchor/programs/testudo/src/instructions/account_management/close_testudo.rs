@@ -5,6 +5,7 @@ use crate::errors::ErrorCode::{
     InvalidPasswordSignature, InvalidTokenMint, InvalidTreasuryAccount, LegateNotInitialized,
 };
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{
     close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
     TransferChecked,
@@ -76,6 +77,11 @@ pub struct CloseTestudo<'info> {
         constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
     )]
     pub token_program: Interface<'info, TokenInterface>,
+    #[account(
+        constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
+    )]
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
 }
 
 pub fn process_close_testudo(ctx: Context<CloseTestudo>) -> Result<()> {
@@ -130,41 +136,45 @@ pub fn process_close_testudo(ctx: Context<CloseTestudo>) -> Result<()> {
         &[ctx.bumps.centurion],
     ]];
 
-    // Set up the CPI accounts for the transfer of fee
-    let cpi_accounts_for_fee = TransferChecked {
-        from: testudo_ata.to_account_info(),
-        to: treasury_ata.to_account_info(),
-        mint: ctx.accounts.mint.to_account_info(),
-        authority: centurion.to_account_info(),
-    };
+    if withdraw_fee > 0 {
+        // Set up the CPI accounts for the transfer of fee
+        let cpi_accounts_for_fee = TransferChecked {
+            from: testudo_ata.to_account_info(),
+            to: treasury_ata.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
+            authority: centurion.to_account_info(),
+        };
 
-    // Set up the CPI context for the transfer of fee
-    let cpi_context_for_fee = CpiContext::new_with_signer(
-        ctx.accounts.token_program.to_account_info(),
-        cpi_accounts_for_fee,
-        signer_seeds,
-    );
+        // Set up the CPI context for the transfer of fee
+        let cpi_context_for_fee = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            cpi_accounts_for_fee,
+            signer_seeds,
+        );
 
-    // Perform the transfer
-    transfer_checked(cpi_context_for_fee, withdraw_fee, decimals)?;
+        // Perform the transfer
+        transfer_checked(cpi_context_for_fee, withdraw_fee, decimals)?;
+    }
 
-    // Set up the CPI accounts for the transfer of amount after fee
-    let cpi_accounts_for_withdraw = TransferChecked {
-        from: testudo_ata.to_account_info(),
-        to: authority_ata.to_account_info(),
-        mint: ctx.accounts.mint.to_account_info(),
-        authority: centurion.to_account_info(),
-    };
+    if amount_after_fee > 0 {
+        // Set up the CPI accounts for the transfer of amount after fee
+        let cpi_accounts_for_withdraw = TransferChecked {
+            from: testudo_ata.to_account_info(),
+            to: authority_ata.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
+            authority: centurion.to_account_info(),
+        };
 
-    // Set up the CPI context for the transfer of amount after fee
-    let cpi_context_for_withdraw = CpiContext::new_with_signer(
-        ctx.accounts.token_program.to_account_info(),
-        cpi_accounts_for_withdraw,
-        signer_seeds,
-    );
+        // Set up the CPI context for the transfer of amount after fee
+        let cpi_context_for_withdraw = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            cpi_accounts_for_withdraw,
+            signer_seeds,
+        );
 
-    // Perform the transfer
-    transfer_checked(cpi_context_for_withdraw, amount_after_fee, decimals)?;
+        // Perform the transfer
+        transfer_checked(cpi_context_for_withdraw, amount_after_fee, decimals)?;
+    }
 
     // Close the ATA
     let cpi_accounts: CloseAccount<'_> = CloseAccount {

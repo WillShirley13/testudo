@@ -5,7 +5,7 @@ mod custom_accounts;
 mod errors;
 mod instructions;
 
-declare_id!("EEDx38FPqWhtj5qDftss355r7tkdD9bWgJFgSfTTi9v6");
+declare_id!("BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN");
 
 #[program]
 pub mod testudo {
@@ -31,12 +31,12 @@ pub mod testudo {
         instructions::process_close_centurion(ctx)
     }
 
-    pub fn create_testudo(ctx: Context<CreateTestudo>) -> Result<()> {
-        instructions::process_create_testudo(ctx)
+    pub fn init_testudo(ctx: Context<InitTestudo>) -> Result<()> {
+        instructions::process_init_testudo(ctx)
     }
 
-    pub fn delete_testudo(ctx: Context<DeleteTestudo>) -> Result<()> {
-        instructions::process_delete_testudo(ctx)
+    pub fn close_testudo(ctx: Context<CloseTestudo>) -> Result<()> {
+        instructions::process_close_testudo(ctx)
     }
 
     pub fn deposit_sol(ctx: Context<DepositSol>, amount_in_lamports: u64) -> Result<()> {

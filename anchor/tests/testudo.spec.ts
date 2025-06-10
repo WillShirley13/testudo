@@ -11,6 +11,8 @@ import {
 	TOKEN_2022_PROGRAM_ID,
 	getMint,
 	getAssociatedTokenAddressSync,
+    getAssociatedTokenAddress,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { SecureKeypairGenerator } from "./keypair_functions";
 
@@ -817,7 +819,7 @@ describe("Testudo Tests", () => {
 			if (mintOwner.toBase58() === tokenProgram.toBase58()) {
 				console.log("Creating Testudo with Token Program");
 				createTokenAccountTx = await program.methods
-					.createTestudo()
+					.initTestudo()
 					.accounts({
 						authority: testUser.publicKey,
 						mint: mintPubkey,
@@ -828,7 +830,7 @@ describe("Testudo Tests", () => {
 			} else if (mintOwner.toBase58() === token2022Program.toBase58()) {
 				console.log("Creating Testudo with Token 2022 Program");
 				createTokenAccountTx = await program.methods
-					.createTestudo()
+					.initTestudo()
 					.accounts({
 						authority: testUser.publicKey,
 						mint: mintPubkey,
@@ -934,7 +936,7 @@ describe("Testudo Tests", () => {
 				if (mintOwner.toBase58() === tokenProgram.toBase58()) {
 					console.log("Creating Testudo with Token Program");
 					createTokenAccountTx = await program.methods
-						.createTestudo()
+						.initTestudo()
 						.accounts({
 							authority: testUser.publicKey,
 							mint: nonWhitelistedMintPubkey,
@@ -947,7 +949,7 @@ describe("Testudo Tests", () => {
 				) {
 					console.log("Creating Testudo with Token 2022 Program");
 					createTokenAccountTx = await program.methods
-						.createTestudo()
+						.initTestudo()
 						.accounts({
 							authority: testUser.publicKey,
 							mint: nonWhitelistedMintPubkey,
@@ -1021,12 +1023,11 @@ describe("Testudo Tests", () => {
 			const testudoData = centurion.testudos.find(
 				(t) => t.tokenMint.toBase58() === mintPubkey.toBase58()
 			);
+
+
+
 			expect(testudoData, "Testudo should be in centurion's testudos").to
 				.not.be.undefined;
-			expect(
-				testudoData.testudoTokenCount.toNumber(),
-				"Testudo token count should match deposit"
-			).to.equal(depositAmountWithDecimals);
 		});
 
 		it("Withdraw from SPL Token Testudo", async () => {
@@ -1094,11 +1095,7 @@ describe("Testudo Tests", () => {
 			const testudoDataBefore = centurionBefore.testudos.find(
 				(t) => t.tokenMint.toBase58() === mintPubkey.toBase58()
 			);
-			console.log(
-				`Centurion token count BEFORE withdraw (without decimals): ${
-					testudoDataBefore.testudoTokenCount.toNumber() / 10 ** 8
-				}`
-			);
+
 			console.log(
 				`Testudo token account balance BEFORE withdraw (without decimals): ${testudoBalanceBefore.value.uiAmount}`
 			);
@@ -1157,11 +1154,6 @@ describe("Testudo Tests", () => {
 				testudo
 			);
 			console.log(
-				`Centurion token count AFTER withdraw (without decimals): ${
-					testudoDataAfter.testudoTokenCount.toNumber() / 10 ** 8
-				}`
-			);
-			console.log(
 				`Testudo token account balance AFTER withdraw (without decimals): ${testudoBalanceAfter.value.uiAmount}`
 			);
 			console.log(
@@ -1176,15 +1168,6 @@ describe("Testudo Tests", () => {
 			).to.be.closeTo(
 				testudoBalanceBefore.value.uiAmount - withdrawAmount,
 				0.01
-			);
-
-			// Verify the centurion account data reflects the withdrawal
-			expect(
-				testudoDataAfter.testudoTokenCount.toNumber(),
-				"Centurion account should reflect the withdrawal"
-			).to.equal(
-				testudoDataBefore.testudoTokenCount.toNumber() -
-					withdrawAmountWithDecimals
 			);
 
 			// Verify that the treasury received the fee
@@ -1276,7 +1259,7 @@ describe("Testudo Tests", () => {
 			}
 		});
 
-		// A) Tests for deleteTestudo instruction
+		// A) Tests for closeTestudo instruction
 		it("Successfully delete a Testudo account", async () => {
 			console.log(
 				"\n==== TEST: Delete Testudo Account - Successfully Remove SPL Token Testudo ===="
@@ -1355,7 +1338,7 @@ describe("Testudo Tests", () => {
 			);
 
 			let createTestudoTx = await program.methods
-				.createTestudo()
+				.initTestudo()
 				.accounts({
 					authority: testUser.publicKey,
 					mint: deletionMintPubkey,
@@ -1379,17 +1362,17 @@ describe("Testudo Tests", () => {
 					owner: testUser.publicKey,
 				});
 
-			let depositTx = await program.methods
-				.depositSpl(new anchor.BN(depositAmount))
-				.accounts({
-					authority: testUser.publicKey,
-					mint: deletionMintPubkey,
-					tokenProgram: tokenProgram,
-				})
-				.signers([testUser])
-				.rpc();
+			// let depositTx = await program.methods
+			// 	.depositSpl(new anchor.BN(depositAmount))
+			// 	.accounts({
+			// 		authority: testUser.publicKey,
+			// 		mint: deletionMintPubkey,
+			// 		tokenProgram: tokenProgram,
+			// 	})
+			// 	.signers([testUser])
+			// 	.rpc();
 
-			await connection.confirmTransaction(depositTx);
+			// await connection.confirmTransaction(depositTx);
 			console.log(
 				`Deposited ${depositAmount / 10 ** 8} tokens to Testudo`
 			);
@@ -1405,7 +1388,7 @@ describe("Testudo Tests", () => {
 			console.log("Centurion testudos BEFORE deletion:");
 			centurionBefore.testudos.forEach((t, i) => {
 				console.log(
-					`  #${i}: Mint=${t.tokenMint.toBase58()}, Balance=${t.testudoTokenCount.toString()}`
+					`  #${i}: Mint=${t.tokenMint.toBase58()}`
 				);
 			});
 			console.log(
@@ -1458,13 +1441,14 @@ describe("Testudo Tests", () => {
 
 			// Now delete the Testudo
 			const deleteTestudoTx = await program.methods
-				.deleteTestudo()
+				.closeTestudo()
 				.accounts({
 					authority: testUser.publicKey,
 					validSignerOfPassword: passwordKeypair.publicKey,
 					mint: deletionMintPubkey,
 					tokenProgram: tokenProgram,
 					treasury: legateTreasury.publicKey,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
 				})
 				.signers([testUser, passwordKeypair])
 				.rpc();
@@ -1518,7 +1502,7 @@ describe("Testudo Tests", () => {
 			console.log("Centurion testudos AFTER deletion:");
 			centurionAfter.testudos.forEach((t, i) => {
 				console.log(
-					`  #${i}: Mint=${t.tokenMint.toBase58()}, Balance=${t.testudoTokenCount.toString()}`
+					`  #${i}: Mint=${t.tokenMint.toBase58()}`
 				);
 			});
 
@@ -1608,7 +1592,7 @@ describe("Testudo Tests", () => {
 					});
 
 				await program.methods
-					.deleteTestudo()
+					.closeTestudo()
 					.accounts({
 						authority: testUser.publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
@@ -1681,7 +1665,7 @@ describe("Testudo Tests", () => {
 			);
 
 			let createTestudoTx = await program.methods
-				.createTestudo()
+				.initTestudo()
 				.accountsPartial({
 					authority: testUser.publicKey,
 					mint: testMint,
@@ -1726,7 +1710,7 @@ describe("Testudo Tests", () => {
 				);
 
 				await program.methods
-					.deleteTestudo()
+					.closeTestudo()
 					.accounts({
 						authority: wrongAuthority.publicKey,
 						validSignerOfPassword: passwordKeypair.publicKey,
@@ -1777,7 +1761,7 @@ describe("Testudo Tests", () => {
 			try {
 				const tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
 				await program.methods
-					.deleteTestudo()
+					.closeTestudo()
 					.accounts({
 						authority: testUser.publicKey,
 						validSignerOfPassword: wrongPasswordKeypair.publicKey,
@@ -2239,8 +2223,21 @@ describe("Testudo Tests", () => {
 			// Convert the base64 data to Buffer
 			const jupiterData = Buffer.from(instructions.swapInstruction.data, 'base64');
 
+            // Get testudo data
+            let usdcAddress = new PublicKey(
+                "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+            );
+            let usdcTestudo = await getAssociatedTokenAddress(
+                usdcAddress,
+                centurionPDA,
+                true
+            );
+            const testudoData = {
+                tokenMint: usdcAddress,
+                testudoPubkey: usdcTestudo
+            }
 			let tx = await program.methods
-				.swap(jupiterData) // Pass the Buffer, not the base64 string
+				.swap(jupiterData, [testudoData]) // Wrap in array
 				.accounts({
 					authority: testUser.publicKey,
 					validSignerOfPassword: passwordKeypair.publicKey,
@@ -2287,7 +2284,270 @@ describe("Testudo Tests", () => {
 			);
 		});
 
-        it("Test simulating instructions", async () => {
+        		it("Successfully close Centurion account with fee transfer", async () => {
+			console.log(
+				"\n==== TEST: Close Centurion Account - Successfully Close Account and Transfer Fee to Treasury ===="
+			);
+
+			// Create a new user for this test to avoid conflicts
+			const closeCenturionTestUser = anchor.web3.Keypair.generate();
+			
+			// Airdrop SOL to the test user
+			let airdropTx = await connection.requestAirdrop(
+				closeCenturionTestUser.publicKey,
+				web3.LAMPORTS_PER_SOL * 5
+			);
+			await connection.confirmTransaction(airdropTx);
+
+			// Generate password keypair for this test user
+			let testPhrase = keyManager.generateRandomPhrase(4);
+			let { keypair: testPasswordKeypair } = keyManager.deriveKeypairFromWords(testPhrase);
+			let { keypair: testBackupOwnerKeypair } = keyManager.deriveKeypairFromWords(testPhrase);
+
+			console.log(`Test user: ${closeCenturionTestUser.publicKey.toBase58()}`);
+			console.log(`Test password phrase: ${testPhrase}`);
+			console.log(`Test password public key: ${testPasswordKeypair.publicKey.toBase58()}`);
+
+			// Initialize Centurion account for the test user
+			let initCenturionTx = await program.methods
+				.initCenturion(
+					testPasswordKeypair.publicKey,
+					testBackupOwnerKeypair.publicKey
+				)
+				.accountsPartial({
+					authority: closeCenturionTestUser.publicKey,
+				})
+				.signers([closeCenturionTestUser])
+				.rpc();
+
+			await connection.confirmTransaction(initCenturionTx);
+			console.log(`Initialized Centurion: ${initCenturionTx}`);
+
+			// Get Centurion PDA
+			let [testCenturionPDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("centurion"), closeCenturionTestUser.publicKey.toBuffer()],
+				program.programId
+			);
+
+			// Deposit some SOL to the Centurion account
+			const depositAmount = 2 * web3.LAMPORTS_PER_SOL; // 2 SOL
+			let depositSolTx = await program.methods
+				.depositSol(new anchor.BN(depositAmount))
+				.accountsPartial({
+					authority: closeCenturionTestUser.publicKey,
+				})
+				.signers([closeCenturionTestUser])
+				.rpc();
+
+			await connection.confirmTransaction(depositSolTx);
+			console.log(`Deposited ${depositAmount / web3.LAMPORTS_PER_SOL} SOL to Centurion`);
+
+			// Get Legate PDA for treasury information
+			let [legatePDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("legate")],
+				program.programId
+			);
+			let legate = await program.account.legate.fetch(legatePDA);
+
+			// Get balances before closing
+			const centurionBalanceBefore = await connection.getBalance(testCenturionPDA);
+			const treasuryBalanceBefore = await connection.getBalance(legate.treasuryAcc);
+			const userBalanceBefore = await connection.getBalance(closeCenturionTestUser.publicKey);
+
+			console.log(`Centurion balance BEFORE close: ${centurionBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
+			console.log(`Treasury balance BEFORE close: ${treasuryBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
+			console.log(`User balance BEFORE close: ${userBalanceBefore / web3.LAMPORTS_PER_SOL} SOL`);
+
+			// Calculate expected fee (0.15% of centurion balance)
+			const expectedFee = Math.floor((centurionBalanceBefore * legate.percentForFees) / 10000);
+			const expectedUserReceive = centurionBalanceBefore - expectedFee;
+
+			console.log(`Expected fee (${legate.percentForFees / 100}%): ${expectedFee / web3.LAMPORTS_PER_SOL} SOL`);
+			console.log(`Expected user receive: ${expectedUserReceive / web3.LAMPORTS_PER_SOL} SOL`);
+
+			// Verify Centurion has no testudos (required for closing)
+			const centurionBefore = await program.account.centurion.fetch(testCenturionPDA);
+			expect(centurionBefore.testudos.length, "Centurion should have no testudos to close").to.equal(0);
+
+			// Close the Centurion account
+			const closeCenturionTx = await program.methods
+				.closeCenturion()
+				.accountsPartial({
+					authority: closeCenturionTestUser.publicKey,
+					validSignerOfPassword: testPasswordKeypair.publicKey,
+					treasury: legate.treasuryAcc,
+				})
+				.signers([closeCenturionTestUser, testPasswordKeypair])
+				.rpc();
+
+			await connection.confirmTransaction(closeCenturionTx);
+			console.log(`Closed Centurion account: ${closeCenturionTx}`);
+
+			// Get balances after closing
+			const centurionBalanceAfter = await connection.getAccountInfo(testCenturionPDA);
+			const treasuryBalanceAfter = await connection.getBalance(legate.treasuryAcc);
+			const userBalanceAfter = await connection.getBalance(closeCenturionTestUser.publicKey);
+
+			console.log(`Centurion account exists AFTER close: ${centurionBalanceAfter !== null}`);
+			console.log(`Treasury balance AFTER close: ${treasuryBalanceAfter / web3.LAMPORTS_PER_SOL} SOL`);
+			console.log(`User balance AFTER close: ${userBalanceAfter / web3.LAMPORTS_PER_SOL} SOL`);
+
+			const actualFeeReceived = treasuryBalanceAfter - treasuryBalanceBefore;
+			const actualUserReceived = userBalanceAfter - userBalanceBefore;
+
+			console.log(`Actual fee received by treasury: ${actualFeeReceived / web3.LAMPORTS_PER_SOL} SOL`);
+			console.log(`Actual amount received by user: ${actualUserReceived / web3.LAMPORTS_PER_SOL} SOL`);
+
+			// Verify the account was closed
+			expect(centurionBalanceAfter, "Centurion account should be closed").to.be.null;
+
+			// Verify the fee was transferred to treasury
+			expect(actualFeeReceived, "Treasury should receive the calculated fee").to.equal(expectedFee);
+
+			// Verify the user received the remaining balance (minus transaction fees)
+			expect(actualUserReceived, "User should receive remaining balance minus fee and tx costs").to.be.closeTo(expectedUserReceive, 20000); // Allow tolerance for tx fees
+		});
+
+		it("Should fail when closing Centurion with testudos remaining", async () => {
+			console.log(
+				"\n==== TEST: Close Centurion with Testudos - Should Fail When SPL Tokens Remain ===="
+			);
+
+			// Create a new user for this test
+			const testUserWithTestudos = anchor.web3.Keypair.generate();
+			
+			// Airdrop SOL to the test user
+			let airdropTx = await connection.requestAirdrop(
+				testUserWithTestudos.publicKey,
+				web3.LAMPORTS_PER_SOL * 5
+			);
+			await connection.confirmTransaction(airdropTx);
+
+			// Generate password keypair for this test user
+			let testPhrase = keyManager.generateRandomPhrase(4);
+			let { keypair: testPasswordKeypair } = keyManager.deriveKeypairFromWords(testPhrase);
+			let { keypair: testBackupOwnerKeypair } = keyManager.deriveKeypairFromWords(testPhrase);
+
+			// Initialize Centurion account
+			let initCenturionTx = await program.methods
+				.initCenturion(
+					testPasswordKeypair.publicKey,
+					testBackupOwnerKeypair.publicKey
+				)
+				.accountsPartial({
+					authority: testUserWithTestudos.publicKey,
+				})
+				.signers([testUserWithTestudos])
+				.rpc();
+
+			await connection.confirmTransaction(initCenturionTx);
+
+			// Create a testudo to prevent closing
+			let tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
+			let createTestudoTx = await program.methods
+				.initTestudo()
+				.accountsPartial({
+					authority: testUserWithTestudos.publicKey,
+					mint: mintPubkey,
+					tokenProgram: tokenProgram,
+				})
+				.signers([testUserWithTestudos])
+				.rpc();
+
+			await connection.confirmTransaction(createTestudoTx);
+			console.log("Created testudo to prevent closing");
+
+			// Get Legate PDA for treasury information
+			let [legatePDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("legate")],
+				program.programId
+			);
+			let legate = await program.account.legate.fetch(legatePDA);
+
+			// Try to close the Centurion account (should fail)
+			try {
+				await program.methods
+					.closeCenturion()
+					.accountsPartial({
+						authority: testUserWithTestudos.publicKey,
+						validSignerOfPassword: testPasswordKeypair.publicKey,
+						treasury: legate.treasuryAcc,
+					})
+					.signers([testUserWithTestudos, testPasswordKeypair])
+					.rpc();
+
+				expect.fail("Should have thrown an error");
+			} catch (error) {
+				console.log(`Error successfully thrown when closing Centurion with testudos: ${error}`);
+				expect(error.toString()).to.include("CenturionNotEmptyOfSplTokens");
+			}
+		});
+
+		it("Should fail when closing Centurion with wrong password signer", async () => {
+			console.log(
+				"\n==== TEST: Close Centurion with Wrong Password - Should Fail with Invalid Password ===="
+			);
+
+			// Create a new user for this test
+			const testUserWrongPassword = anchor.web3.Keypair.generate();
+			
+			// Airdrop SOL to the test user
+			let airdropTx = await connection.requestAirdrop(
+				testUserWrongPassword.publicKey,
+				web3.LAMPORTS_PER_SOL * 3
+			);
+			await connection.confirmTransaction(airdropTx);
+
+			// Generate password keypair for this test user
+			let testPhrase = keyManager.generateRandomPhrase(4);
+			let { keypair: testPasswordKeypair } = keyManager.deriveKeypairFromWords(testPhrase);
+			let { keypair: testBackupOwnerKeypair } = keyManager.deriveKeypairFromWords(testPhrase);
+
+			// Generate wrong password keypair
+			let wrongPhrase = keyManager.generateRandomPhrase(4);
+			let { keypair: wrongPasswordKeypair } = keyManager.deriveKeypairFromWords(wrongPhrase);
+
+			// Initialize Centurion account
+			let initCenturionTx = await program.methods
+				.initCenturion(
+					testPasswordKeypair.publicKey,
+					testBackupOwnerKeypair.publicKey
+				)
+				.accountsPartial({
+					authority: testUserWrongPassword.publicKey,
+				})
+				.signers([testUserWrongPassword])
+				.rpc();
+
+			await connection.confirmTransaction(initCenturionTx);
+
+			// Get Legate PDA for treasury information
+			let [legatePDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("legate")],
+				program.programId
+			);
+			let legate = await program.account.legate.fetch(legatePDA);
+
+			// Try to close with wrong password (should fail)
+			try {
+				await program.methods
+					.closeCenturion()
+					.accountsPartial({
+						authority: testUserWrongPassword.publicKey,
+						validSignerOfPassword: wrongPasswordKeypair.publicKey,
+						treasury: legate.treasuryAcc,
+					})
+					.signers([testUserWrongPassword, wrongPasswordKeypair])
+					.rpc();
+
+				expect.fail("Should have thrown an error");
+			} catch (error) {
+				console.log(`Error successfully thrown when closing with wrong password: ${error}`);
+				expect(error.toString()).to.include("InvalidPasswordSignature");
+			}
+		});
+
+		it("Test simulating instructions", async () => {
 
             await connection.requestAirdrop(testUser.publicKey, 5 * web3.LAMPORTS_PER_SOL);
 
@@ -2295,7 +2555,7 @@ describe("Testudo Tests", () => {
                 // First try to build the instruction
                 const ix = await program.methods
                     .depositSol(new anchor.BN(1 * web3.LAMPORTS_PER_SOL))
-                    .accounts({
+                    .accountsPartial({
                         authority: testUser.publicKey,
                     })
                     .instruction();

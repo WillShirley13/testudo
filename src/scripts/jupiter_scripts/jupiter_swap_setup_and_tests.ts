@@ -1,5 +1,5 @@
 import { Keypair, Connection, PublicKey, LAMPORTS_PER_SOL, SystemProgram, Transaction, TransactionStatus, sendAndConfirmTransaction } from "@solana/web3.js";
-import { getAssociatedTokenAddress } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { saveKeypair, loadKeypair } from "./keypair_security_functions";
 import { SecureKeypairGenerator } from "../../app/utils/keypair-functions";
 import testudoIdl from "../../../anchor/target/idl/testudo.json";
@@ -9,7 +9,7 @@ import { Testudo } from "../../../anchor/target/types/testudo";
 import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 import * as readline from 'readline';
 import fetch from "cross-fetch";
-import { error } from "console";
+import { Console, error } from "console";
 
 // To pause program while manuall funding of accounts can occur
 async function pauseForInput(message: string): Promise<void> {
@@ -26,7 +26,8 @@ async function pauseForInput(message: string): Promise<void> {
     });
 }
 
-async function returnSolToMyWallet(sender: Keypair, receiver: Keypair, provider: Provider, accountMakingTransfer: String): Promise<String> {
+async function returnSolToMyWallet(sender: Keypair, provider: Provider, accountMakingTransfer: String): Promise<String> {
+    const receiver = new PublicKey("HWzE9NoAKkghMEKYhbj8vQefbeUkTpUtPiA4kmmnsye2");
     const accountInfo = await provider.connection.getAccountInfo(sender.publicKey);
     if (accountInfo === null) {
         return `${accountMakingTransfer}: Account not found`;
@@ -47,7 +48,7 @@ async function returnSolToMyWallet(sender: Keypair, receiver: Keypair, provider:
     try {
         const transferInstruction = SystemProgram.transfer({
             fromPubkey: sender.publicKey,
-            toPubkey: receiver.publicKey,
+            toPubkey: receiver,
             lamports: transferableBalance
         });
         
@@ -68,32 +69,38 @@ async function returnSolToMyWallet(sender: Keypair, receiver: Keypair, provider:
         return `❌ ${accountMakingTransfer}: Error - ${error}`;
     }
 }
-const testPrimaryWallet = Keypair.generate();
-console.log(`Test primary wallet keypair: ${testPrimaryWallet.publicKey}`);
-const legateKeypair = Keypair.generate();
+
+const legateKeypair = loadKeypair("legate", "CupTipMouse417");
+const treasuryKeypair = loadKeypair("treasury", "PadCribToe265");
+const userKeypair = loadKeypair("centurion", "TreeCandyPup946");
+const passwordKeypair = loadKeypair("password", "TvTabPill384");
+legateKeypair.secretKey
+//const testPrimaryWallet = Keypair.generate();
+//console.log(`Test primary wallet keypair: ${testPrimaryWallet.publicKey}`);
+//const legateKeypair = Keypair.generate();
 console.log(`Legate keypair: ${legateKeypair.publicKey}`);
-const treasuryKeypair = Keypair.generate();
+//const treasuryKeypair = Keypair.generate();
 console.log(`Treasury keypair: ${treasuryKeypair.publicKey}`);
-const userKeypair = Keypair.generate();
+//const userKeypair = Keypair.generate();
 console.log(`Centurion keypair: ${userKeypair.publicKey}`);
-const passwordPhrase = new SecureKeypairGenerator().generateRandomPhrase(5);
-let passwordKeypair: Keypair;
-let words: string[];
+//const passwordPhrase = new SecureKeypairGenerator().generateRandomPhrase(5);
+// let passwordKeypair: Keypair;
+// let words: string[];
 
 (async () => {
     await pauseForInput("PAUSING DURING MANUAL FUNDING OF ACCOUNTS");
 
-    const result = await new SecureKeypairGenerator()
-        .deriveKeypairFromWords(passwordPhrase, userKeypair.publicKey.toString());
-    passwordKeypair = result.keypair;
-    words = result.words;
+    // const result = await new SecureKeypairGenerator()
+    //     .deriveKeypairFromWords(passwordPhrase, userKeypair.publicKey.toString());
+    // passwordKeypair = result.keypair;
+    // words = result.words;
 
-    saveKeypair(legateKeypair, "legate", "CupTipMouse417");
-    saveKeypair(treasuryKeypair, "treasury", "PadCribToe265");
-    saveKeypair(userKeypair, "centurion", "TreeCandyPup946");
-    saveKeypair(passwordKeypair, "password", "TvTabPill384");
+    // saveKeypair(legateKeypair, "legate", "CupTipMouse417");
+    // saveKeypair(treasuryKeypair, "treasury", "PadCribToe265");
+    // saveKeypair(userKeypair, "centurion", "TreeCandyPup946");
+    // saveKeypair(passwordKeypair, "password", "TvTabPill384");
 
-        // build wallet objects
+    // build wallet objects
     const legateWallet = new Wallet(legateKeypair);
     const userWallet = new Wallet(userKeypair)
 
@@ -123,7 +130,7 @@ let words: string[];
     console.log(`Init Centurion tx: ${initCenturionTx}`);
 
     // DEPOSIT SOL TO CENTURION
-    let depositSolTx = await userProgram.methods.depositSol(new BN(1 * LAMPORTS_PER_SOL))
+    let depositSolTx = await userProgram.methods.depositSol(new BN(0.1 * LAMPORTS_PER_SOL))
     .accounts({
         authority: userKeypair.publicKey,
     })
@@ -148,12 +155,12 @@ let words: string[];
     let balance = await userProgram.account.centurion.fetch(centurionPubkey);
     console.log(`Centurion SOL balance: ${(balance.lamportBalance as any) / LAMPORTS_PER_SOL}\n`);
 
-    // GET MINT ADDRESSES
+    // // GET MINT ADDRESSES
     const usdcAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
     const wsolAddress = "So11111111111111111111111111111111111111112";
 
-    // // CREATE USDC ATA
-    let initUsdcAta = await userProgram.methods.createTestudo()
+    // CREATE USDC ATA
+    let initUsdcAta = await userProgram.methods.initTestudo()
         .accountsPartial({
             authority: userKeypair.publicKey,
             mint: new PublicKey(usdcAddress),
@@ -163,40 +170,40 @@ let words: string[];
         .rpc();
     console.log(`Init USDC ATA tx: ${initUsdcAta}`);
 
-    // make API calls... 
-    let quoteResponse = await (await fetch(
-        `https://lite-api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${
-            0.1 * web3.LAMPORTS_PER_SOL
-        }&slippageBps=50&restrictIntermediateTokens=true&platformFeeBps=50&feeAccount=${
-            treasuryKeypair.publicKey
-        }&maxAccounts=10&onlyDirectRoutes=true`  // Add these parameters
-    )).json();
-
-    // GET INSTRUCTIONS
-    const instructionsResponse = await (await fetch(
-        "https://quote-api.jup.ag/v6/swap-instructions",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                quoteResponse: quoteResponse,
-                userPublicKey: centurionPubkey,
-                wrapAndUnwrapSol: true,
-                useSharedAccounts: true,
-                useTokenLedger: false,  // This reduces accounts significantly
-            }),
-        }
-    )).json();
-
-    console.log(instructionsResponse);
-
-    const jupiterData = Buffer.from(instructionsResponse.swapInstruction.data, 'base64');
-
     // EXECUTE SWAP
     try{
-        const usdcAtaAddress = await getAssociatedTokenAddress(new PublicKey(usdcAddress), userKeypair.publicKey);
+        // make API calls... 
+        let quoteResponse = await (await fetch(
+            `https://lite-api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${
+                0.1 * web3.LAMPORTS_PER_SOL
+            }&slippageBps=50&restrictIntermediateTokens=true&platformFeeBps=50&feeAccount=${
+                treasuryKeypair.publicKey
+            }&maxAccounts=10&onlyDirectRoutes=true`  // Add these parameters
+        )).json();
+
+        // GET INSTRUCTIONS
+        const instructionsResponse = await (await fetch(
+            "https://quote-api.jup.ag/v6/swap-instructions",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    quoteResponse: quoteResponse,
+                    userPublicKey: centurionPubkey,
+                    wrapAndUnwrapSol: true,
+                    useSharedAccounts: true,
+                    useTokenLedger: false,  // This reduces accounts significantly
+                }),
+            }
+        )).json();
+
+        console.log(instructionsResponse);
+
+        const jupiterData = Buffer.from(instructionsResponse.swapInstruction.data, 'base64');
+ 
+        const usdcAtaAddress = await getAssociatedTokenAddressSync(new PublicKey(usdcAddress), userKeypair.publicKey);
         const usdcData = {
             tokenMint: new PublicKey(usdcAddress),
             testudoPubkey: usdcAtaAddress,
@@ -228,19 +235,72 @@ let words: string[];
         console.log(`Simulation result: ${simulateSwapTx}`);
 
     } catch (error) {
+        console.log("--- SWAP FAILED ---");
         console.log(`Error: ${error}`);
     }
-    
-    // CLOSE CENTURION ACCOUNT
-    const closeCenturionTx = await userProgram.methods.closeCenturion()
-        .accounts({
-            authority: userKeypair.publicKey,
-            validSignerOfPassword: passwordKeypair.publicKey,
-        })
-        .signers([userKeypair, passwordKeypair])
-        .rpc();
 
-    console.log(`\nWithdraw SOL from Centurion to test user tx: ${closeCenturionTx}`);
+    try {
+        // Now delete the Testudo
+        const deleteTestudoTx = await userProgram.methods
+            .closeTestudo()
+            .accounts({
+                authority: userKeypair.publicKey,
+                validSignerOfPassword: passwordKeypair.publicKey,
+                mint: new PublicKey(usdcAddress),
+                tokenProgram: TOKEN_PROGRAM_ID,
+                treasury: treasuryKeypair.publicKey,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            })
+            .signers([userKeypair, passwordKeypair])
+            .rpc();
+
+            var { blockhash, lastValidBlockHeight } = await userProvider.connection.getLatestBlockhash();
+            await userProvider.connection.confirmTransaction({
+                signature: deleteTestudoTx,
+                blockhash,
+                lastValidBlockHeight,
+            }, "finalized");
+
+        console.log(`Delete Testudo tx: ${deleteTestudoTx}`);
+
+        // CLOSE CENTURION ACCOUNT
+        const closeCenturionTx = await userProgram.methods.closeCenturion()
+            .accounts({
+                authority: userKeypair.publicKey,
+                validSignerOfPassword: passwordKeypair.publicKey,
+                treasury: treasuryKeypair.publicKey,
+            })
+            .signers([userKeypair, passwordKeypair])
+                .rpc();
+            
+        var { blockhash, lastValidBlockHeight } = await userProvider.connection.getLatestBlockhash();
+            await userProvider.connection.confirmTransaction({
+                signature: closeCenturionTx,
+                blockhash,
+                lastValidBlockHeight,
+            }, "finalized");
+
+        console.log(`\nClosing Centurion and withdraw SOL from Centurion to test user tx: ${closeCenturionTx}`);
+    } catch (error) {
+        const withdrawSolTx = await userProgram.methods.withdrawSol(new BN(0.1 * LAMPORTS_PER_SOL))
+            .accounts({
+                authority: userKeypair.publicKey,
+                validSignerOfPassword: passwordKeypair.publicKey,
+                treasury: treasuryKeypair.publicKey,
+            })
+            .signers([userKeypair, passwordKeypair])
+            .rpc();
+
+            var { blockhash, lastValidBlockHeight } = await userProvider.connection.getLatestBlockhash();
+            await userProvider.connection.confirmTransaction({
+                signature: withdrawSolTx,
+                blockhash,
+                lastValidBlockHeight,
+            }, "finalized");
+
+        console.log(`Failed to close Centurion and withdraw SOL from Centurion to test user tx: ${withdrawSolTx}`);
+        console.log(error);
+    }
 
     // CLOSE LEGATE ACCOUNT 
     const closeLegateTx = await userProgram.methods.closeLegate()
@@ -255,11 +315,6 @@ let words: string[];
     //CONFIRM TRANSACTIONS
     var { blockhash, lastValidBlockHeight } = await userProvider.connection.getLatestBlockhash();
     await userProvider.connection.confirmTransaction({
-        signature: closeCenturionTx,
-        blockhash,
-        lastValidBlockHeight,
-    }, "finalized");
-    await userProvider.connection.confirmTransaction({
         signature: closeLegateTx,
         blockhash,
         lastValidBlockHeight,
@@ -267,12 +322,12 @@ let words: string[];
 
     // RETURN FUNDS FROM TEST USER, LEGATE AUTHORITY AND TREASURY
     console.log();
-    console.log(`${await returnSolToMyWallet(userKeypair, testPrimaryWallet, userProvider, "User")}\n`);
-    console.log(`${await returnSolToMyWallet(legateKeypair, testPrimaryWallet, legateProvider, "Legate Authority")}\n`);
-    console.log(`${await returnSolToMyWallet(treasuryKeypair, testPrimaryWallet, legateProvider, "Treasury")}\n`);
+    console.log(`${await returnSolToMyWallet(userKeypair, userProvider, "User")}\n`);
+    console.log(`${await returnSolToMyWallet(legateKeypair, legateProvider, "Legate Authority")}\n`);
+    console.log(`${await returnSolToMyWallet(treasuryKeypair, legateProvider, "Treasury")}\n`);
 
     // GET BALANCES
-    const accountInfo = await userProvider.connection.getAccountInfo(testPrimaryWallet.publicKey);
+    const accountInfo = await userProvider.connection.getAccountInfo(new PublicKey("HWzE9NoAKkghMEKYhbj8vQefbeUkTpUtPiA4kmmnsye2"));
     console.log(`Test primary wallet balance: ${(accountInfo?.lamports ?? 0) / LAMPORTS_PER_SOL}\n`);
 })();
 

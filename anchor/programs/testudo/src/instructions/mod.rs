@@ -6,8 +6,8 @@ pub use legate_admin::{
 
 pub mod account_management;
 pub use account_management::{
-    close_centurion::*, close_legate::*, create_testudo::*, delete_testudo::*, init_centurion::*,
-    init_legate::*,
+    close_centurion::*, close_legate::*, close_testudo::*, init_centurion::*, init_legate::*,
+    init_testudo::*,
 };
 
 pub mod deposit;

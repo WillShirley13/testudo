@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/testudo.json`.
  */
 export type Testudo = {
-  "address": "EEDx38FPqWhtj5qDftss355r7tkdD9bWgJFgSfTTi9v6",
+  "address": "BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN",
   "metadata": {
     "name": "testudo",
     "version": "0.1.0",
@@ -191,6 +191,28 @@ export type Testudo = {
           }
         },
         {
+          "name": "legate",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
@@ -245,110 +267,16 @@ export type Testudo = {
       "args": []
     },
     {
-      "name": "createTestudo",
+      "name": "closeTestudo",
       "discriminator": [
-        185,
-        80,
-        13,
-        69,
-        80,
-        88,
-        212,
-        32
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "centurion"
-          ]
-        },
-        {
-          "name": "legate",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "centurion",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  117,
-                  114,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
-          "name": "mint"
-        },
-        {
-          "name": "tokenProgram"
-        },
-        {
-          "name": "testudo",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "centurion"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "deleteTestudo",
-      "discriminator": [
-        220,
-        125,
-        185,
-        47,
-        248,
-        252,
-        238,
-        110
+        117,
+        168,
+        179,
+        210,
+        192,
+        53,
+        160,
+        146
       ],
       "accounts": [
         {
@@ -545,6 +473,14 @@ export type Testudo = {
         },
         {
           "name": "tokenProgram"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
@@ -857,6 +793,100 @@ export type Testudo = {
           "type": "pubkey"
         }
       ]
+    },
+    {
+      "name": "initTestudo",
+      "discriminator": [
+        4,
+        226,
+        177,
+        42,
+        77,
+        155,
+        94,
+        135
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "centurion"
+          ]
+        },
+        {
+          "name": "legate",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "centurion",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  117,
+                  114,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "testudo",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "centurion"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "swap",

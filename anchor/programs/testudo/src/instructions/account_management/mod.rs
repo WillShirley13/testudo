@@ -2,9 +2,9 @@ pub mod init_legate;
 
 pub mod init_centurion;
 
-pub mod create_testudo;
+pub mod init_testudo;
 
-pub mod delete_testudo;
+pub mod close_testudo;
 
 pub mod close_centurion;
 

@@ -87,11 +87,9 @@ export function DeleteTestudoModal({
             const tokenProgram = tokenMintInfo?.owner as PublicKey;
             const [centurionPDA] = findCenturionPDA(publicKey, testudoProgram.programId);
 
-            
-            
             // Call deleteTestudo instruction with required accounts
             const tx = await testudoProgram.methods
-                .deleteTestudo()
+                .closeTestudo()
                 .accountsPartial({
                     authority: publicKey,
                     validSignerOfPassword: passwordKeypair.publicKey,

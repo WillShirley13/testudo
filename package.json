@@ -19,7 +19,7 @@
         "@coral-xyz/anchor": "0.30.1",
         "@phc/argon2": "^1.0.9",
         "@solana/kit": "^2.1.0",
-        "@solana/spl-token": "^0.1.8",
+        "@solana/spl-token": "^0.4.10",
         "@solana/wallet-adapter-base": "^0.9.5",
         "@solana/wallet-adapter-react": "^0.15.5",
         "@solana/wallet-adapter-react-ui": "^0.9.7",
@@ -29,6 +29,7 @@
         "@tanstack/react-query": "^5.66.9",
         "@tanstack/react-query-next-experimental": "^5.66.9",
         "@vercel/analytics": "^1.5.0",
+        "argon2": "^0.43.0",
         "argon2-browser": "^1.18.0",
         "argon2-wasm-esm": "^1.0.3",
         "bip39": "^3.1.0",
@@ -44,6 +45,7 @@
         "tweetnacl": "^1.0.3"
     },
     "devDependencies": {
+        "@types/argon2": "^0.14.1",
         "@types/argon2-browser": "^1.18.4",
         "@types/bip39": "^2.4.2",
         "@types/bn.js": "^5.1.6",
