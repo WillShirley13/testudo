@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import { Keypair } from '@solana/web3.js';
 import * as bip39 from 'bip39';
 import * as nacl from 'tweetnacl';
@@ -73,10 +72,11 @@ export class SecureKeypairGenerator {
         const words: string[] = [];
         const usedIndices = new Set<number>();
         
-        // Use crypto.randomBytes for better randomness than Math.random()
+        // Use Web Crypto API for better randomness than Math.random()
         while (words.length < length) {
             // Generate 2 bytes (16 bits) of randomness for each word index
-            const randomBuffer = crypto.randomBytes(2);
+            const randomBuffer = new Uint8Array(2);
+            crypto.getRandomValues(randomBuffer);
             // Convert to number between 0-2047
             const randomIndex = (randomBuffer[0] << 8 | randomBuffer[1]) % this.wordlist.length;
             
