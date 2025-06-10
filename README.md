@@ -2,13 +2,15 @@
 
 Testudo is a secure wallet system on Solana that implements a dual-signature security model. This repository contains both the on-chain program and the frontend application.
 
+Devnet program id: BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN
+
 ## Security Model
 
 Each user owns a "Centurion" account that acts as their main wallet container. A Centurion can hold multiple token accounts (called "Testudos") for different SPL tokens.
 
 The key security innovation is a dual-signature system: all fund withdrawals require:
 1. The user's wallet signature
-2. A signature from a special keypair derived from a memorable 6-word mnemonic phrase
+2. A signature from a special keypair derived from a memorable mnemonic phrase
 
 This creates an on-chain 2FA experience, where the public key of this password-derived keypair is stored in the Centurion account for verification during transactions.
 
