@@ -44,3 +44,6 @@ tmp
 
 # test-ledger
 **/test-ledger/
+
+# keypair-functions_scripts.ts
+**/keypair-functions_scripts.ts

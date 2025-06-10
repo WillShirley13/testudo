@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { charisSIL } from "@/app/fonts";
 import { TestudoData } from "@/app/types/testudo";
-import { SecureKeypairGenerator } from "@/scripts/keypair-functions_scripts";
+import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
 import { formatBalance, findCenturionPDA, findLegatePDA } from "@/app/utils/testudo-utils";
 import {
 	PasswordPhraseInput,
@@ -110,6 +110,7 @@ export function WithdrawModal({
 	const [amount, setAmount] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [solBalance, setSolBalance] = useState<number>(0);
+	const [tokenBalance, setTokenBalance] = useState<number>(0);
 	const [feePercentage, setFeePercentage] = useState<number>(0);
 	const [feeAmount, setFeeAmount] = useState<string>("0");
 
@@ -328,7 +329,8 @@ export function WithdrawModal({
 				maxAmount = Number(centurionAccount.lamportBalance) / Math.pow(10, tokenDecimals);
 			} else {
 				// For SPL token testudo is the Testudo account
-				maxAmount = Number(testudo.testudoTokenCount) / Math.pow(10, tokenDecimals);
+				const tokenCount = await provider.connection.getTokenAccountBalance(testudo.testudoPubkey);
+				maxAmount = Number(tokenCount.value.amount) / Math.pow(10, tokenDecimals);
 			}
 			
 			if (withdrawAmount > maxAmount) {
@@ -377,6 +379,7 @@ export function WithdrawModal({
 			setAmount("");
 			setError(null);
 			setSolBalance(0);
+			setTokenBalance(0);
 		}
 	}, [isOpen]);
 
@@ -397,6 +400,23 @@ export function WithdrawModal({
 
 		fetchSolBalance();
 	}, [testudo, publicKey, isOpen, testudoProgram]);
+
+	// Fetch token balance when modal opens and token is not SOL
+	useEffect(() => {
+		const fetchTokenBalance = async () => {
+			if (testudo !== "SOL" && isOpen) {
+				try {
+					const tokenCount = await provider.connection.getTokenAccountBalance(testudo.testudoPubkey);
+					setTokenBalance(Number(tokenCount.value.amount));
+				} catch (error) {
+					console.error("Error fetching token balance:", error);
+					setTokenBalance(0);
+				}
+			}
+		};
+
+		fetchTokenBalance();
+	}, [testudo, isOpen, provider]);
 
 	if (!isOpen) return null;
 
@@ -436,7 +456,7 @@ export function WithdrawModal({
 							<p className="text-xs text-gray-500 mt-0.5">
 								Available:{" "}
 								{formatBalance(
-									testudo === "SOL" ? solBalance : Number(testudo.testudoTokenCount),
+									testudo === "SOL" ? solBalance : tokenBalance,
 									tokenDecimals
 								)}{" "}
 								{tokenSymbol}
