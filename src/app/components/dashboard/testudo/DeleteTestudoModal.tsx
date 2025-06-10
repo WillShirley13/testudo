@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { charisSIL } from "@/app/fonts";
 import { TestudoData } from "@/app/types/testudo";
-import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
+import { SecureKeypairGenerator } from "@/app/utils/keypair-functions_scripts";
 import { findCenturionPDA } from "@/app/utils/testudo-utils";
 import {
     PasswordPhraseInput,
