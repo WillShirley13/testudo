@@ -12,16 +12,17 @@ import { Keypair, PublicKey, clusterApiUrl, Connection } from "@solana/web3.js";
 import { Program } from "@coral-xyz/anchor";
 import { Testudo } from "../../anchor/target/types/testudo";
 import idl from "../../anchor/target/idl/testudo.json";
-import adminKeypairJson from "./devnet_keys/admin-keypair.json";
-import treasuryKeypairJson from "./devnet_keys/treasury-keypair.json";
-import admin2KeypairJson from "./devnet_keys/admin-keypair2.json";
+import { admin } from "./devnet_keys/admin-keypair.json";
+import { treasury } from "./devnet_keys/treasury-keypair.json";
+import { admin2 } from "./devnet_keys/admin-keypair2.json";
+
 
 
 async function main() {
 	// 2. Load keypairs
-	const adminKeypair = Keypair.fromSecretKey(Uint8Array.from(adminKeypairJson.admin));
-	const treasuryKeypair = Keypair.fromSecretKey(Uint8Array.from(treasuryKeypairJson.treasury));
-	const adminKeypair2 = Keypair.fromSecretKey(Uint8Array.from(admin2KeypairJson.admin2));
+	const adminKeypair = Keypair.fromSecretKey(Uint8Array.from(admin));
+	const treasuryKeypair = Keypair.fromSecretKey(Uint8Array.from(treasury));
+	const adminKeypair2 = Keypair.fromSecretKey(Uint8Array.from(admin2));
 
 	// 3. Set up connection and provider
 	const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
