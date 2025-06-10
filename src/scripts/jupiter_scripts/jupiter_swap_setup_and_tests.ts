@@ -243,7 +243,7 @@ console.log(`Centurion keypair: ${userKeypair.publicKey}`);
         // Now delete the Testudo
         const deleteTestudoTx = await userProgram.methods
             .closeTestudo()
-            .accounts({
+            .accountsPartial({
                 authority: userKeypair.publicKey,
                 validSignerOfPassword: passwordKeypair.publicKey,
                 mint: new PublicKey(usdcAddress),
@@ -265,7 +265,7 @@ console.log(`Centurion keypair: ${userKeypair.publicKey}`);
 
         // CLOSE CENTURION ACCOUNT
         const closeCenturionTx = await userProgram.methods.closeCenturion()
-            .accounts({
+            .accountsPartial({
                 authority: userKeypair.publicKey,
                 validSignerOfPassword: passwordKeypair.publicKey,
                 treasury: treasuryKeypair.publicKey,
@@ -283,7 +283,7 @@ console.log(`Centurion keypair: ${userKeypair.publicKey}`);
         console.log(`\nClosing Centurion and withdraw SOL from Centurion to test user tx: ${closeCenturionTx}`);
     } catch (error) {
         const withdrawSolTx = await userProgram.methods.withdrawSol(new BN(0.1 * LAMPORTS_PER_SOL))
-            .accounts({
+            .accountsPartial({
                 authority: userKeypair.publicKey,
                 validSignerOfPassword: passwordKeypair.publicKey,
                 treasury: treasuryKeypair.publicKey,
