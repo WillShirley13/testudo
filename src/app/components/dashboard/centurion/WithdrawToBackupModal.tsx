@@ -146,7 +146,7 @@ export function WithdrawToBackupModal({
 				
 				const tokenSymbol = tokenInfo.get(tokenMint.toString())?.tokenSymbol || 'Token';
 				const tokenDecimals = tokenInfo.get(tokenMint.toString())?.tokenDecimals || 9;
-				const amount = formatBalance(testudo.testudoTokenCount, tokenDecimals);
+				const amount = formatBalance(tokenCount.value.amount, tokenDecimals);
 				
 				setWithdrawalProgress(`Successfully withdrew ${amount} ${tokenSymbol} (${i+1}/${totalTokens})`);
 				successCount++;
@@ -289,7 +289,10 @@ export function WithdrawToBackupModal({
 	const hasBackupOwner = !!centurionData?.backupOwner;
 
 	// Check if there are any tokens with balance
-	const hasTokensWithBalance = centurionData?.testudos?.some(t => t.testudoTokenCount > 0) || (centurionData?.lamportBalance ?? 0) > 0;
+	const hasTokensWithBalance = centurionData?.testudos?.some(async t => {
+		const tokenCount = await provider.connection.getTokenAccountBalance(t.testudoPubkey);
+		return tokenCount.value.amount !== "0";
+	}) || (centurionData?.lamportBalance ?? 0) > 0;
 
 	return (
 		<div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-3">
