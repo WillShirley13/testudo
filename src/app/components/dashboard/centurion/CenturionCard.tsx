@@ -6,7 +6,6 @@ import { charisSIL } from "@/app/fonts";
 import {
 	formatTimestamp,
 	formatBalance,
-	shortenAddress,
     findCenturionPDA
 } from "@/app/utils/testudo-utils";
 import { motion } from "framer-motion";

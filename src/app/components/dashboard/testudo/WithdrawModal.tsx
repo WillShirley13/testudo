@@ -9,7 +9,6 @@ import {
 	PasswordPhraseInput,
 	validatePasswordWords,
 	preparePasswordWords,
-	validateNumberPin,
 } from "@/app/components/common/PasswordPhraseInput";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
 import { useWallet } from "@solana/wallet-adapter-react";

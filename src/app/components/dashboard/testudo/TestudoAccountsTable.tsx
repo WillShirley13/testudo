@@ -1,15 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import { charisSIL } from "@/app/fonts";
 import { formatBalance, shortenAddress, findCenturionPDA, findLegatePDA } from "@/app/utils/testudo-utils";
 import { motion } from "framer-motion";
 import { TestudoData, TokenData, CenturionData, LegateData, TokenWhitelistData } from "@/app/types/testudo";
 import { PublicKey } from "@solana/web3.js";
 import { useTestudoProgram, useAnchorProvider } from "@/app/components/solana/solana-provider";
-import { Wallet } from "@coral-xyz/anchor";
-import Link from "next/link";
 import { CreateTestudoModal } from "./CreateTestudoModal";
 import { DepositModal } from "./DepositModal";
 import { WithdrawModal } from "./WithdrawModal";
