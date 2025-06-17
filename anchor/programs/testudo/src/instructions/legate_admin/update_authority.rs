@@ -6,10 +6,14 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UpdateAuthority<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(mut)]
+    // NEW AUTHORITY
     pub new_authority: Signer<'info>,
+
+    // LEGATE
     #[account(
         mut,
         seeds = [b"legate".as_ref()],

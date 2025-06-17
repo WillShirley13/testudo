@@ -5,8 +5,11 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct CloseLegate<'info> {
+    // SIGNER
     #[account(mut)]
     pub authority: Signer<'info>,
+
+    // LEGATE
     #[account(
         mut,
         close = authority,
@@ -16,6 +19,8 @@ pub struct CloseLegate<'info> {
         has_one = authority @InvalidAuthority
     )]
     pub legate: Account<'info, Legate>,
+
+    // PROGRAMS
     pub system_program: Program<'info, System>,
 }
 

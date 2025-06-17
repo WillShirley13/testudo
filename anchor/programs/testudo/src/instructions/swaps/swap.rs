@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
 use crate::custom_accounts::{
     centurion::{Centurion, TestudoData},
     legate::Legate,
 };
 use crate::errors::ErrorCode::{
-    CenturionNotInitialized, InvalidAuthority, InvalidPasswordSignature, InvalidTreasuryAccount,
-    LegateNotInitialized,
+    CenturionNotInitialized, InvalidAuthority, InvalidPasswordSignature, InvalidRemainingAccounts,
+    InvalidTokenMint, InvalidTreasuryAccount, LegateNotInitialized,
 };
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::instruction::Instruction;
@@ -14,8 +16,16 @@ use anchor_spl::{
     token_interface::TokenInterface,
 };
 
+#[derive(Clone, AnchorSerialize, AnchorDeserialize)]
+pub struct JupiterInstructionWithIdxs {
+    pub program_id: Pubkey,
+    pub accounts_idxs: Vec<u8>,
+    pub data: Vec<u8>,
+}
+
 #[derive(Accounts)]
 pub struct Swap<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
@@ -30,7 +40,10 @@ pub struct Swap<'info> {
         constraint = centurion.is_initialized @CenturionNotInitialized,
         has_one = authority @InvalidAuthority,
     )]
+    // CENTURION
     pub centurion: Account<'info, Centurion>,
+
+    // SOURCE TOKEN ACCOUNT
     #[account(
         init_if_needed,
         payer = authority,
@@ -41,6 +54,8 @@ pub struct Swap<'info> {
         bump
     )]
     pub source_testudo: Account<'info, TokenAccount>,
+
+    // DESTINATION TOKEN ACCOUNT
     #[account(
         init_if_needed,
         payer = authority,
@@ -51,8 +66,27 @@ pub struct Swap<'info> {
         bump
     )]
     pub destination_testudo: Account<'info, TokenAccount>,
+
+    // MINTS
     pub source_mint: Account<'info, Mint>,
+    #[account(
+        constraint = legate.testudo_token_whitelist.iter().any(|t| t.token_mint == destination_mint.key()) @InvalidTokenMint
+    )]
     pub destination_mint: Account<'info, Mint>,
+
+    // TREASURY
+    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
+    pub treasury: UncheckedAccount<'info>,
+
+    // LEGATE
+    #[account(
+        seeds = [b"legate"],
+        bump = legate.bump,
+        constraint = legate.is_initialized @LegateNotInitialized,
+    )]
+    pub legate: Account<'info, Legate>,
+
+    // PROGRAMS
     pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     #[account(
@@ -62,14 +96,6 @@ pub struct Swap<'info> {
     #[account(
         constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
     )]
-    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
-    pub treasury: UncheckedAccount<'info>,
-    #[account(
-        seeds = [b"legate"],
-        bump = legate.bump,
-        constraint = legate.is_initialized @LegateNotInitialized,
-    )]
-    pub legate: Account<'info, Legate>,
     /// CHECK: Jupiter program
     #[account(address = pubkey!("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"))]
     pub jupiter_program: UncheckedAccount<'info>,
@@ -77,7 +103,9 @@ pub struct Swap<'info> {
 
 pub fn process_swap(
     ctx: Context<Swap>,
-    jupiter_data: Vec<u8>,
+    jupiter_swap: JupiterInstructionWithIdxs,
+    jupiter_setup: Vec<JupiterInstructionWithIdxs>, // This involves SOL -> WSOL version and other accounts setup
+    jupiter_cleanup: JupiterInstructionWithIdxs,    // Idxs to clean up accounts etc post swap
     testudo_data: Vec<TestudoData>,
 ) -> Result<()> {
     msg!(
@@ -104,6 +132,44 @@ pub fn process_swap(
         }
     }
 
+    let remaining_accounts = ctx.remaining_accounts.to_vec();
+    let signer_seeds: &[&[&[u8]]] = &[&[
+        b"centurion",
+        ctx.accounts.authority.key.as_ref(),
+        &[ctx.bumps.centurion],
+    ]];
+
+    // SETUP INSTRUCTIONS
+    for setup_instruction in jupiter_setup {
+        let setup_instruction_accounts: Vec<AccountInfo> = setup_instruction
+            .accounts_idxs
+            .iter()
+            .map(|idx| {
+                remaining_accounts
+                    .get(*idx as usize)
+                    .ok_or(InvalidRemainingAccounts)
+                    .unwrap()
+                    .clone()
+            })
+            .collect();
+
+        let jupiter_setup_instruction = Instruction::new_with_bytes(
+            setup_instruction.program_id,
+            &setup_instruction.data,
+            setup_instruction_accounts
+                .clone()
+                .iter_mut()
+                .flat_map(|acc| acc.to_account_metas(Some(acc.is_signer)))
+                .collect(),
+        );
+
+        anchor_lang::solana_program::program::invoke_signed(
+            &jupiter_setup_instruction,
+            setup_instruction_accounts.as_slice(),
+            signer_seeds,
+        )?;
+    }
+
     // Capture balances before swap
     let source_balance_before = ctx.accounts.source_testudo.amount;
     let dest_balance_before = ctx.accounts.destination_testudo.amount;
@@ -116,34 +182,63 @@ pub fn process_swap(
         ctx.accounts.destination_mint.key()
     );
 
-    let remaining_accounts = ctx.remaining_accounts.to_vec();
-
-    let signer_seeds: &[&[&[u8]]] = &[&[
-        b"centurion",
-        ctx.accounts.authority.key.as_ref(),
-        &[ctx.bumps.centurion],
-    ]];
+    // SWAP INSTRUCTIONS
+    let swap_accounts: Vec<AccountInfo> = jupiter_swap
+        .accounts_idxs
+        .iter()
+        .map(|idx| {
+            remaining_accounts
+                .get(*idx as usize)
+                .ok_or(InvalidRemainingAccounts)
+                .unwrap()
+                .clone()
+        })
+        .collect();
 
     // Build the Jupiter instruction - jupiter_data param contains all data required for that swap
     // remaining_accounts contains all the accounts required for the swap
-    let jupiter_instruction = Instruction::new_with_bytes(
+    let swap_instruction = Instruction::new_with_bytes(
         ctx.accounts.jupiter_program.key(),
-        &jupiter_data,
-        remaining_accounts
+        &jupiter_swap.data,
+        swap_accounts
             .clone()
             .iter_mut()
             .flat_map(|acc| acc.to_account_metas(Some(acc.is_signer)))
             .collect(),
     );
 
-    msg!(
-        "Executing Jupiter swap with {} remaining accounts",
-        remaining_accounts.len()
+    anchor_lang::solana_program::program::invoke_signed(
+        &swap_instruction,
+        swap_accounts.as_slice(),
+        signer_seeds,
+    )?;
+
+    // CLEANUP INSTRUCTIONS
+    let cleanup_accounts: Vec<AccountInfo> = jupiter_cleanup
+        .accounts_idxs
+        .iter()
+        .map(|idx| {
+            remaining_accounts
+                .get(*idx as usize)
+                .ok_or(InvalidRemainingAccounts)
+                .unwrap()
+                .clone()
+        })
+        .collect();
+
+    let cleanup_instruction = Instruction::new_with_bytes(
+        jupiter_cleanup.program_id,
+        &jupiter_cleanup.data,
+        cleanup_accounts
+            .clone()
+            .iter_mut()
+            .flat_map(|acc| acc.to_account_metas(Some(acc.is_signer)))
+            .collect(),
     );
 
     anchor_lang::solana_program::program::invoke_signed(
-        &jupiter_instruction,
-        &remaining_accounts,
+        &cleanup_instruction,
+        cleanup_accounts.as_slice(),
         signer_seeds,
     )?;
 
@@ -154,18 +249,6 @@ pub fn process_swap(
     // Reload accounts to get updated balances
     ctx.accounts.source_testudo.reload()?;
     ctx.accounts.destination_testudo.reload()?;
-
-    // Calculate actual amounts swapped
-    let source_amount_swapped = source_balance_before - ctx.accounts.source_testudo.amount;
-    let dest_amount_received = ctx.accounts.destination_testudo.amount - dest_balance_before;
-
-    msg!(
-        "Swap successful. Sold {} source_mint ({}) for {} destination_mint ({})",
-        source_amount_swapped,
-        ctx.accounts.source_mint.key(),
-        dest_amount_received,
-        ctx.accounts.destination_mint.key()
-    );
 
     msg!(
         "Post-swap balances - Source: {} ({}), Destination: {} ({})",

@@ -1,5 +1,5 @@
 {
-  "address": "BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN",
+  "address": "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK",
   "metadata": {
     "name": "testudo",
     "version": "0.1.0",
@@ -108,10 +108,10 @@
           }
         },
         {
-          "name": "token_program"
+          "name": "mint"
         },
         {
-          "name": "mint"
+          "name": "token_program"
         },
         {
           "name": "associated_token_program",
@@ -282,6 +282,11 @@
           ]
         },
         {
+          "name": "valid_signer_of_password",
+          "writable": true,
+          "signer": true
+        },
+        {
           "name": "authority_ata",
           "writable": true,
           "pda": {
@@ -337,10 +342,6 @@
               ]
             }
           }
-        },
-        {
-          "name": "valid_signer_of_password",
-          "signer": true
         },
         {
           "name": "centurion",
@@ -854,12 +855,6 @@
           }
         },
         {
-          "name": "mint"
-        },
-        {
-          "name": "token_program"
-        },
-        {
           "name": "testudo",
           "writable": true,
           "pda": {
@@ -876,8 +871,14 @@
           }
         },
         {
+          "name": "token_program"
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "mint"
         }
       ],
       "args": []
@@ -972,17 +973,6 @@
           "name": "destination_mint"
         },
         {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "token_program"
-        },
-        {
           "name": "treasury"
         },
         {
@@ -1004,13 +994,46 @@
           }
         },
         {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "token_program"
+        },
+        {
           "name": "jupiter_program"
         }
       ],
       "args": [
         {
-          "name": "jupiter_data",
-          "type": "bytes"
+          "name": "jupiter_swap",
+          "type": {
+            "defined": {
+              "name": "JupiterInstructionWithIdxs"
+            }
+          }
+        },
+        {
+          "name": "jupiter_setup",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "JupiterInstructionWithIdxs"
+              }
+            }
+          }
+        },
+        {
+          "name": "jupiter_cleanup",
+          "type": {
+            "defined": {
+              "name": "JupiterInstructionWithIdxs"
+            }
+          }
         },
         {
           "name": "testudo_data",
@@ -1518,6 +1541,10 @@
           ]
         },
         {
+          "name": "valid_signer_of_password",
+          "signer": true
+        },
+        {
           "name": "authority_ata",
           "writable": true,
           "pda": {
@@ -1573,10 +1600,6 @@
               ]
             }
           }
-        },
-        {
-          "name": "valid_signer_of_password",
-          "signer": true
         },
         {
           "name": "centurion",
@@ -1849,19 +1872,8 @@
           }
         },
         {
-          "name": "token_program"
-        },
-        {
           "name": "mint",
           "writable": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "legate",
@@ -1940,6 +1952,17 @@
               ]
             }
           }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": []
@@ -2078,6 +2101,11 @@
       "code": 6020,
       "name": "CenturionNotEmptyOfSplTokens",
       "msg": "Centurion must be empty of spl tokens before closing (no testudos remaining)"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidRemainingAccounts",
+      "msg": "Invalid remaining accounts given"
     }
   ],
   "types": [
@@ -2129,6 +2157,26 @@
                 }
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "JupiterInstructionWithIdxs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "program_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "accounts_idxs",
+            "type": "bytes"
+          },
+          {
+            "name": "data",
+            "type": "bytes"
           }
         ]
       }

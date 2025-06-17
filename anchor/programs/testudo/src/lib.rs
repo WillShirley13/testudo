@@ -5,7 +5,7 @@ mod custom_accounts;
 mod errors;
 mod instructions;
 
-declare_id!("BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN");
+declare_id!("64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK");
 
 #[program]
 pub mod testudo {
@@ -105,9 +105,17 @@ pub mod testudo {
 
     pub fn swap(
         ctx: Context<Swap>,
-        jupiter_data: Vec<u8>,
+        jupiter_swap: instructions::swaps::swap::JupiterInstructionWithIdxs,
+        jupiter_setup: Vec<instructions::swaps::swap::JupiterInstructionWithIdxs>, // This involves SOL -> WSOL version and other accounts setup
+        jupiter_cleanup: instructions::swaps::swap::JupiterInstructionWithIdxs, // Idxs to clean up accounts etc post swap
         testudo_data: Vec<custom_accounts::centurion::TestudoData>,
     ) -> Result<()> {
-        process_swap(ctx, jupiter_data, testudo_data)
+        instructions::process_swap(
+            ctx,
+            jupiter_swap,
+            jupiter_setup,
+            jupiter_cleanup,
+            testudo_data,
+        )
     }
 }

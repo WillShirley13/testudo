@@ -11,8 +11,11 @@ use anchor_lang::prelude::*;
 #[derive(Accounts)]
 #[instruction(new_max_whitelisted_mints: u16)]
 pub struct UpdateMaxWhitelistedMints<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
+
+    // LEGATE
     #[account(
         mut,
         seeds = [b"legate".as_ref()],
@@ -24,6 +27,8 @@ pub struct UpdateMaxWhitelistedMints<'info> {
         realloc::zero = false,
     )]
     pub legate: Account<'info, Legate>,
+
+    // PROGRAMS
     pub system_program: Program<'info, System>,
 }
 

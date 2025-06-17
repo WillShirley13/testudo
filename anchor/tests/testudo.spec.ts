@@ -13,6 +13,7 @@ import {
 	getAssociatedTokenAddressSync,
     getAssociatedTokenAddress,
     ASSOCIATED_TOKEN_PROGRAM_ID,
+    createAssociatedTokenAccount,
 } from "@solana/spl-token";
 import { SecureKeypairGenerator } from "./keypair_functions";
 
@@ -1448,7 +1449,6 @@ describe("Testudo Tests", () => {
 					mint: deletionMintPubkey,
 					tokenProgram: tokenProgram,
 					treasury: legateTreasury.publicKey,
-                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
 				})
 				.signers([testUser, passwordKeypair])
 				.rpc();
@@ -2180,111 +2180,156 @@ describe("Testudo Tests", () => {
 				5 * web3.LAMPORTS_PER_SOL
 			);
 
-			let response = await fetch(
-				`https://lite-api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${
-					1 * web3.LAMPORTS_PER_SOL
-				}&slippageBps=50&restrictIntermediateTokens=true&platformFeeBps=50&feeAccount=${
-					legateTreasury.publicKey
-				}&maxAccounts=10&onlyDirectRoutes=true`  // Add these parameters
-			);
-			let quote = await response.json();
-			console.log(quote);
-			console.log(
-				`Quote to sell ${quote["inAmount"]} SOL for ${quote.outAmount} USDC obtained`
-			);
+            // GET MINT ADDRESSES
+            const usdcAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+            const wsolAddress = "So11111111111111111111111111111111111111112";
 
-			const instructionsResponse = await fetch(
-				"https://quote-api.jup.ag/v6/swap-instructions",
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						quoteResponse: quote,
-						userPublicKey: centurionPDA, // Valid demo wallet
-						wrapAndUnwrapSol: true,
-						useSharedAccounts: true,
-                        useTokenLedger: false,  // This reduces accounts significantly
-					}),
-				}
-			);
+            // make API calls...
+            let quoteResponse = await (
+                await fetch(
+                    `https://lite-api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${
+                        0.05 * web3.LAMPORTS_PER_SOL
+                    }&slippageBps=50&restrictIntermediateTokens=true&platformFeeBps=50&feeAccount=${
+                        legateTreasury.publicKey
+                    }&maxAccounts=10&onlyDirectRoutes=true` // Add these parameters
+                )
+            ).json();
 
-			let instructions = await instructionsResponse.json();
+            // GET INSTRUCTIONS
+            const instructionsResponse = await (
+                await fetch("https://quote-api.jup.ag/v6/swap-instructions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        quoteResponse: quoteResponse,
+                        userPublicKey: centurionPDA,
+                        wrapAndUnwrapSol: true,
+                        useSharedAccounts: true,
+                        useTokenLedger: false, // This reduces accounts significantly
+                    }),
+                })
+            ).json();
 
-            console.log(instructions);
+            console.log(instructionsResponse);
 
-			if (instructions.error) {
-				throw new Error(
-					"Failed to get swap instructions: " + instructions.error
-				);
-			}
-
-			// Convert the base64 data to Buffer
-			const jupiterData = Buffer.from(instructions.swapInstruction.data, 'base64');
-
-            // Get testudo data
-            let usdcAddress = new PublicKey(
-                "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-            );
-            let usdcTestudo = await getAssociatedTokenAddress(
-                usdcAddress,
-                centurionPDA,
-                true
-            );
-            const testudoData = {
-                tokenMint: usdcAddress,
-                testudoPubkey: usdcTestudo
+            interface JupiterInstruction {
+                programId: string;
+                accounts: any[];
+                data: string;
             }
-			let tx = await program.methods
-				.swap(jupiterData, [testudoData]) // Wrap in array
-				.accounts({
-					authority: testUser.publicKey,
-					validSignerOfPassword: passwordKeypair.publicKey,
-					sourceMint: new PublicKey(
-						"So11111111111111111111111111111111111111112"
-					),
-					destinationMint: new PublicKey(
-						"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-					),
-					jupiterProgram: new PublicKey(
-						instructions.swapInstruction.programId
-					),
-					tokenProgram: TOKEN_PROGRAM_ID,
-					treasury: legateTreasury.publicKey
-				})
-				.remainingAccounts(
-					instructions.swapInstruction.accounts.map(
-						(account: any) => ({
-							pubkey: new PublicKey(account.pubkey),
-							// Set isSigner to false for the Centurion PDA since it will be signed via invoke_signed
-							isSigner: account.pubkey === centurionPDA.toBase58() ? false : account.isSigner,
-							isWritable: account.isWritable,
-						})
-					)
-				)
-				.signers([testUser, passwordKeypair])
-				.rpc();
 
-			console.log(`swap tx: ${tx}`);
+            interface JupiterInstructionWithIdxs {
+                programId: PublicKey;
+                accountIdxs: number[];
+                data: Buffer<ArrayBuffer>;
+            }
 
-			const [centurionUSDCTokenAcc] = PublicKey.findProgramAddressSync(
-				[
-					centurionPDA.toBuffer(),
-					new PublicKey(
-						"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-					).toBuffer(),
-				],
-				program.programId
-			);
-			console.log(
-				`USDC acc (post swap): ${centurionUSDCTokenAcc} with balance of ${await connection.getTokenAccountBalance(
-					centurionUSDCTokenAcc
-				)}`
-			);
-		});
+            // SETUP INSTRUCTIONS
+            let setupInstructions: JupiterInstruction[] =
+                instructionsResponse.setupInstructions;
+            // SWAP INSTRUCTION
+            let swapInstruction: JupiterInstruction =
+                instructionsResponse.swapInstruction;
+            // CLEAN-UP INSTRUCTIONS
+            let cleanupInstruction: JupiterInstruction =
+                instructionsResponse.cleanupInstruction;
 
-        		it("Successfully close Centurion account with fee transfer", async () => {
+            // REMAINING ACCOUNTS
+            const remainingAccounts = [
+                ...setupInstructions.flatMap(ix => ix.accounts),
+                ...swapInstruction.accounts,
+                ...cleanupInstruction.accounts
+            ];
+            
+            const usdcAtaAddress = await getAssociatedTokenAddressSync(
+                new PublicKey(usdcAddress),
+                testUser.publicKey
+            );
+            const usdcData = {
+                tokenMint: new PublicKey(usdcAddress),
+                testudoPubkey: usdcAtaAddress,
+            };
+            const swapTx = await program.methods
+                .swap(
+                    {
+                        programId: new PublicKey(swapInstruction.programId),
+                        accountsIdxs: Buffer.from(
+                            swapInstruction.accounts.map((acc) => {
+                                return remainingAccounts.findIndex(ra => ra.pubkey === acc.pubkey);
+                            })
+                        ),
+                        data: Buffer.from(swapInstruction.data, "base64"),
+                    },
+                    setupInstructions.map((ix: JupiterInstruction) => {
+                        const accountIdxs = ix.accounts.map((acc) => {
+                            return remainingAccounts.findIndex(ra => ra.pubkey === acc.pubkey);
+                        });
+                        return {
+                            programId: new PublicKey(ix.programId),
+                            accountsIdxs: Buffer.from(accountIdxs),
+                            data: Buffer.from(ix.data, "base64"),
+                        };
+                    }),
+                    {
+                        programId: new PublicKey(cleanupInstruction.programId),
+                        accountsIdxs: Buffer.from(
+                            cleanupInstruction.accounts.map((acc) => {
+                                return remainingAccounts.findIndex(ra => ra.pubkey === acc.pubkey);
+                            })
+                        ),
+                        data: Buffer.from(cleanupInstruction.data, "base64"),
+                    },
+                    [usdcData]
+                )
+                .accountsPartial({
+                    authority: testUser.publicKey,
+                    validSignerOfPassword: passwordKeypair.publicKey,
+                    sourceMint: new PublicKey(wsolAddress),
+                    destinationMint: new PublicKey(usdcAddress),
+                    jupiterProgram: new PublicKey(
+                        instructionsResponse.swapInstruction.programId
+                    ),
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    treasury: legateTreasury.publicKey,
+                })
+                .remainingAccounts(remainingAccounts)
+                .transaction();
+
+            swapTx.recentBlockhash = (
+                await connection.getLatestBlockhash()
+            ).blockhash;
+            swapTx.feePayer = testUser.publicKey;
+            swapTx.partialSign(testUser, passwordKeypair);
+
+            const simulateSwapTx =
+                await connection.simulateTransaction(swapTx);
+
+            console.log(
+                "Simulation result:\n",
+                JSON.stringify(simulateSwapTx, null, 2)
+            );
+
+                console.log(`swap tx: ${swapTx.serialize()}`);
+
+                const [centurionUSDCTokenAcc] = PublicKey.findProgramAddressSync(
+                    [
+                        centurionPDA.toBuffer(),
+                        new PublicKey(
+                            "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                        ).toBuffer(),
+                    ],
+                    program.programId
+                );
+                console.log(
+                    `USDC acc (post swap): ${centurionUSDCTokenAcc} with balance of ${await connection.getTokenAccountBalance(
+                        centurionUSDCTokenAcc
+                    )}`
+                );
+            });
+
+        it("Successfully close Centurion account with fee transfer", async () => {
 			console.log(
 				"\n==== TEST: Close Centurion Account - Successfully Close Account and Transfer Fee to Treasury ===="
 			);
@@ -2547,9 +2592,169 @@ describe("Testudo Tests", () => {
 			}
 		});
 
+		it("Close Testudo should create user ATA if it doesn't exist", async () => {
+			console.log(
+				"\n==== TEST: Close Testudo Creates User ATA - Verify ATA Creation When User Doesn't Have One ===="
+			);
+
+			// Create a new user for this test to ensure clean state
+			const testUserNoAta = anchor.web3.Keypair.generate();
+			
+			// Airdrop SOL to the test user
+			let airdropTx = await connection.requestAirdrop(
+				testUserNoAta.publicKey,
+				web3.LAMPORTS_PER_SOL * 5
+			);
+			await connection.confirmTransaction(airdropTx);
+
+			// Generate password keypair for this test user
+			let testPhrase = keyManager.generateRandomPhrase(4);
+			let { keypair: testPasswordKeypair } = keyManager.deriveKeypairFromWords(testPhrase);
+			let { keypair: testBackupOwnerKeypair } = keyManager.deriveKeypairFromWords(testPhrase);
+
+			console.log(`Test user: ${testUserNoAta.publicKey.toBase58()}`);
+			console.log(`Test password phrase: ${testPhrase}`);
+
+			// Initialize Centurion account for the test user
+			let initCenturionTx = await program.methods
+				.initCenturion(
+					testPasswordKeypair.publicKey,
+					testBackupOwnerKeypair.publicKey
+				)
+				.accountsPartial({
+					authority: testUserNoAta.publicKey,
+				})
+				.signers([testUserNoAta])
+				.rpc();
+
+			await connection.confirmTransaction(initCenturionTx);
+			console.log(`Initialized Centurion: ${initCenturionTx}`);
+
+			// Create a new mint for this test
+			let testMintPubkey = await createMint(
+				connection,
+				testUserNoAta,
+				testUserNoAta.publicKey,
+				null,
+				8
+			);
+			console.log(`Created test mint: ${testMintPubkey.toBase58()}`);
+
+			// Add this mint to the whitelist
+			const addMintTx = await program.methods
+				.addMintToTestudoTokenWhitelist({
+					tokenMint: testMintPubkey,
+					tokenName: "NoATATest",
+					tokenSymbol: "NAT",
+					tokenDecimals: 8,
+				})
+				.accountsPartial({
+					authority: legateAuthority.publicKey,
+					treasury: legateTreasury.publicKey,
+					tokenProgram: TOKEN_PROGRAM_ID,
+					mint: testMintPubkey,
+				})
+				.signers([legateAuthority])
+				.rpc();
+
+			await connection.confirmTransaction({
+                signature: addMintTx,
+                blockhash: (await connection.getLatestBlockhash()).blockhash,
+                lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
+            }, "finalized");
+
+			console.log(`Added test mint to whitelist: ${addMintTx}`);
+
+			// Create Testudo for this mint
+			let tokenProgram = TOKEN_PROGRAM_ID;
+
+			// Calculate PDAs
+			let [testCenturionPDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("centurion"), testUserNoAta.publicKey.toBuffer()],
+				program.programId
+			);
+
+			let testudoATA = getAssociatedTokenAddressSync(
+				testMintPubkey,
+				testCenturionPDA,
+				true,
+				TOKEN_PROGRAM_ID,
+				ASSOCIATED_TOKEN_PROGRAM_ID
+			);
+
+			let createTestudoTx = await program.methods
+				.initTestudo()
+				.accountsPartial({
+					authority: testUserNoAta.publicKey,
+					mint: testMintPubkey,
+					tokenProgram: tokenProgram,
+				})
+				.signers([testUserNoAta])
+				.rpc();
+
+			await connection.confirmTransaction(createTestudoTx);
+			console.log(`Created Testudo account: ${createTestudoTx}`);
+
+			// Get legate information for treasury
+			let [legatePDA] = PublicKey.findProgramAddressSync(
+				[Buffer.from("legate")],
+				program.programId
+			);
+			let legate = await program.account.legate.fetch(legatePDA);
+
+
+			// Now close the Testudo - this should create the user's ATA
+			const closeTestudoTx = await program.methods
+				.closeTestudo()
+				.accounts({
+					authority: testUserNoAta.publicKey,
+					validSignerOfPassword: testPasswordKeypair.publicKey,
+					mint: testMintPubkey,
+					tokenProgram: tokenProgram,
+					treasury: legateTreasury.publicKey,
+				})
+				.signers([testUserNoAta, testPasswordKeypair])
+				.rpc();
+
+            const userATA = getAssociatedTokenAddressSync(
+                testMintPubkey,
+                testUserNoAta.publicKey,
+                true,
+                TOKEN_PROGRAM_ID,
+                ASSOCIATED_TOKEN_PROGRAM_ID
+            );
+
+            const userATAInfo = await connection.getAccountInfo(userATA);
+            console.log(`User ATA exists: ${userATAInfo !== null}`);
+            expect(userATAInfo, "User ATA should exist").to.not.be.null;
+
+			await connection.confirmTransaction(closeTestudoTx);
+			console.log(`Closed Testudo: ${closeTestudoTx}`);
+
+			// Verify the testudo account is closed
+			const testudoAccountInfo = await connection.getAccountInfo(testudoATA);
+			console.log(`Testudo account exists after close: ${testudoAccountInfo !== null}`);
+			expect(testudoAccountInfo, "Testudo account should be closed").to.be.null;
+
+			// Verify testudo was removed from Centurion
+			let centurionAfter = await program.account.centurion.fetch(testCenturionPDA);
+			const hasMintInTestudos = centurionAfter.testudos.some(
+				(t) => t.tokenMint.toBase58() === testMintPubkey.toBase58()
+			);
+			expect(hasMintInTestudos, "Testudo should be removed from Centurion").to.be.false;
+
+			console.log("✅ Test passed: closeTestudo successfully created user ATA and transferred tokens");
+		});
+
 		it("Test simulating instructions", async () => {
 
-            await connection.requestAirdrop(testUser.publicKey, 5 * web3.LAMPORTS_PER_SOL);
+            let airdropTx = await connection.requestAirdrop(testUser.publicKey, 5 * web3.LAMPORTS_PER_SOL);
+
+            await connection.confirmTransaction({
+                signature: airdropTx,
+                blockhash: (await connection.getLatestBlockhash()).blockhash,
+                lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
+            }, "finalized");
 
             try {
                 // First try to build the instruction

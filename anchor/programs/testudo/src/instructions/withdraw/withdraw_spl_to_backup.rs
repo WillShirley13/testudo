@@ -15,6 +15,7 @@ use anchor_spl::token_interface::{
 
 #[derive(Accounts)]
 pub struct WithdrawToBackup<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
@@ -22,6 +23,8 @@ pub struct WithdrawToBackup<'info> {
         constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
     )]
     pub valid_signer_of_password: Signer<'info>,
+
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion", authority.key.as_ref()],
@@ -30,6 +33,8 @@ pub struct WithdrawToBackup<'info> {
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,
+
+    // TESTUDO TOKEN ACCOUNT
     #[account(
         mut,
         // Ensure the ATA is for the correct token mint
@@ -40,9 +45,9 @@ pub struct WithdrawToBackup<'info> {
         bump,
         constraint = testudo.owner == centurion.key() @InvalidATA
     )]
-    // Centurion ATA
     pub testudo: InterfaceAccount<'info, TokenAccount>,
-    // The backup account to which all tokens will be withdrawn to
+
+    // BACKUP ACCOUNT
     #[account(
         //  ensure backup account provided matches account saved in Centurion
         mut,
@@ -50,6 +55,8 @@ pub struct WithdrawToBackup<'info> {
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub backup_account: UncheckedAccount<'info>,
+
+    // BACKUP ATA
     #[account(
         init_if_needed,
         payer = authority,
@@ -59,41 +66,50 @@ pub struct WithdrawToBackup<'info> {
         constraint = backup_ata.owner == backup_account.key() @InvalidATA
     )]
     pub backup_ata: InterfaceAccount<'info, TokenAccount>,
-    // Ensure valid token program is passed
-    #[account(
-        constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
-    )]
-    pub token_program: Interface<'info, TokenInterface>,
+
+    // MINT
     #[account(
         mut,
         //ensure centurion has an ATA for mint passed
         constraint = centurion.testudos.iter().any(|t| t.token_mint == mint.key())
     )]
     pub mint: InterfaceAccount<'info, Mint>,
+
+    // LEGATE
+    #[account(
+            seeds = [b"legate"],
+            bump = legate.bump,
+            constraint = legate.is_initialized @LegateNotInitialized,
+        )]
+    pub legate: Account<'info, Legate>,
+
+    // TREASURY
+    #[account(
+            constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
+        )]
+    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
+    pub treasury: UncheckedAccount<'info>,
+
+    // TREASURY ATA
+    #[account(
+            mut,
+            associated_token::mint = mint,
+            associated_token::authority = treasury,
+            associated_token::token_program = token_program,
+        )]
+    pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
+
+    // PROGRAMS
+    // Ensure valid token program is passed
+    #[account(
+        constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
+    )]
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
-    // Ensure valid associated token program is passed
     #[account(
         constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
     )]
     pub associated_token_program: Program<'info, AssociatedToken>,
-    #[account(
-        seeds = [b"legate"],
-        bump = legate.bump,
-        constraint = legate.is_initialized @LegateNotInitialized,
-    )]
-    pub legate: Account<'info, Legate>,
-    #[account(
-        constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
-    )]
-    /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
-    pub treasury: UncheckedAccount<'info>,
-    #[account(
-        mut,
-        associated_token::mint = mint,
-        associated_token::authority = treasury,
-        associated_token::token_program = token_program,
-    )]
-    pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
 }
 
 pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> {

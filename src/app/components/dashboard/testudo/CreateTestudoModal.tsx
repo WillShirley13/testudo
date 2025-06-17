@@ -8,6 +8,7 @@ import { TokenWhitelistData, TokenData } from "@/app/types/testudo";
 import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "react-hot-toast";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 
 // Define a default SOL token to ensure it's always available
@@ -104,20 +105,20 @@ export function CreateTestudoModal({
 			const isRegularToken = tokenProgramId.equals(new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"));
 
 			if (!isToken2022 && !isRegularToken) {
-				throw new Error("Mint is not owned by a recognized token program");
+			throw new Error("Mint is not owned by a recognized token program");
 			}
 
 			console.log(`Initializing Testudo with ${isToken2022 ? "Token 2022" : "Token"} Program`);
 
 			// Create Testudo account with the correct token program
-                // Note: Linter errors related to the .accounts() method are expected and should be ignored
-                // according to the project's custom rules.
+            // Note: Linter errors related to the .accounts() method are expected and should be ignored
+            // according to the project's custom rules.
 			const tx = await testudoProgram.methods
 				.initTestudo()
 				.accountsPartial({
 					authority: publicKey,
 					mint: mintPubkey,
-					tokenProgram: tokenProgramId,
+					tokenProgram: TOKEN_PROGRAM_ID,
 				})
 				.signers([])
 				.rpc();

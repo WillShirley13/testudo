@@ -44,4 +44,6 @@ pub enum ErrorCode {
     InvalidTreasuryAccount,
     #[msg("Centurion must be empty of spl tokens before closing (no testudos remaining)")]
     CenturionNotEmptyOfSplTokens,
+    #[msg("Invalid remaining accounts given")]
+    InvalidRemainingAccounts,
 }

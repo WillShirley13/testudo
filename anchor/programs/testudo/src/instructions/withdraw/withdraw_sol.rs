@@ -9,6 +9,7 @@ use anchor_lang::prelude::*;
 // Withdraw native SOL from a Centurion account
 #[derive(Accounts)]
 pub struct WithdrawSol<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
@@ -16,6 +17,8 @@ pub struct WithdrawSol<'info> {
         constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
     )]
     pub valid_signer_of_password: Signer<'info>,
+
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
@@ -24,18 +27,24 @@ pub struct WithdrawSol<'info> {
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,
+
+    // LEGATE
     #[account(
         seeds = [b"legate"],
         bump = legate.bump,
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
+
+    // TREASURY
     #[account(
         mut,
         constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub treasury: UncheckedAccount<'info>,
+
+    // PROGRAMS
     pub system_program: Program<'info, System>,
 }
 

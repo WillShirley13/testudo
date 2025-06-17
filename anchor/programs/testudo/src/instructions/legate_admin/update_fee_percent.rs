@@ -8,8 +8,11 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UpdateFeePercent<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
+
+    // LEGATE
     #[account(
         mut,
         seeds = [b"legate".as_ref()],

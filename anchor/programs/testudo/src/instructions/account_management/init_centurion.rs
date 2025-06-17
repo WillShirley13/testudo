@@ -6,8 +6,11 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct InitCenturion<'info> {
+    // SIGNER
     #[account(mut)]
     pub authority: Signer<'info>,
+
+    // CENTURION
     #[account(
         init,
         payer = authority,
@@ -17,6 +20,8 @@ pub struct InitCenturion<'info> {
         constraint = !centurion.is_initialized @AccountAlreadyInitialized
     )]
     pub centurion: Account<'info, Centurion>,
+
+    // PROGRAMS
     pub system_program: Program<'info, System>,
 }
 

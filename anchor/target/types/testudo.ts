@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/testudo.json`.
  */
 export type Testudo = {
-  "address": "BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN",
+  "address": "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK",
   "metadata": {
     "name": "testudo",
     "version": "0.1.0",
@@ -114,10 +114,10 @@ export type Testudo = {
           }
         },
         {
-          "name": "tokenProgram"
+          "name": "mint"
         },
         {
-          "name": "mint"
+          "name": "tokenProgram"
         },
         {
           "name": "associatedTokenProgram",
@@ -288,6 +288,11 @@ export type Testudo = {
           ]
         },
         {
+          "name": "validSignerOfPassword",
+          "writable": true,
+          "signer": true
+        },
+        {
           "name": "authorityAta",
           "writable": true,
           "pda": {
@@ -343,10 +348,6 @@ export type Testudo = {
               ]
             }
           }
-        },
-        {
-          "name": "validSignerOfPassword",
-          "signer": true
         },
         {
           "name": "centurion",
@@ -860,12 +861,6 @@ export type Testudo = {
           }
         },
         {
-          "name": "mint"
-        },
-        {
-          "name": "tokenProgram"
-        },
-        {
           "name": "testudo",
           "writable": true,
           "pda": {
@@ -882,8 +877,14 @@ export type Testudo = {
           }
         },
         {
+          "name": "tokenProgram"
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "mint"
         }
       ],
       "args": []
@@ -978,17 +979,6 @@ export type Testudo = {
           "name": "destinationMint"
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "tokenProgram"
-        },
-        {
           "name": "treasury"
         },
         {
@@ -1010,13 +1000,46 @@ export type Testudo = {
           }
         },
         {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
           "name": "jupiterProgram"
         }
       ],
       "args": [
         {
-          "name": "jupiterData",
-          "type": "bytes"
+          "name": "jupiterSwap",
+          "type": {
+            "defined": {
+              "name": "jupiterInstructionWithIdxs"
+            }
+          }
+        },
+        {
+          "name": "jupiterSetup",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "jupiterInstructionWithIdxs"
+              }
+            }
+          }
+        },
+        {
+          "name": "jupiterCleanup",
+          "type": {
+            "defined": {
+              "name": "jupiterInstructionWithIdxs"
+            }
+          }
         },
         {
           "name": "testudoData",
@@ -1524,6 +1547,10 @@ export type Testudo = {
           ]
         },
         {
+          "name": "validSignerOfPassword",
+          "signer": true
+        },
+        {
           "name": "authorityAta",
           "writable": true,
           "pda": {
@@ -1579,10 +1606,6 @@ export type Testudo = {
               ]
             }
           }
-        },
-        {
-          "name": "validSignerOfPassword",
-          "signer": true
         },
         {
           "name": "centurion",
@@ -1855,19 +1878,8 @@ export type Testudo = {
           }
         },
         {
-          "name": "tokenProgram"
-        },
-        {
           "name": "mint",
           "writable": true
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "legate",
@@ -1946,6 +1958,17 @@ export type Testudo = {
               ]
             }
           }
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": []
@@ -2084,6 +2107,11 @@ export type Testudo = {
       "code": 6020,
       "name": "centurionNotEmptyOfSplTokens",
       "msg": "Centurion must be empty of spl tokens before closing (no testudos remaining)"
+    },
+    {
+      "code": 6021,
+      "name": "invalidRemainingAccounts",
+      "msg": "Invalid remaining accounts given"
     }
   ],
   "types": [
@@ -2135,6 +2163,26 @@ export type Testudo = {
                 }
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "jupiterInstructionWithIdxs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "programId",
+            "type": "pubkey"
+          },
+          {
+            "name": "accountsIdxs",
+            "type": "bytes"
+          },
+          {
+            "name": "data",
+            "type": "bytes"
           }
         ]
       }

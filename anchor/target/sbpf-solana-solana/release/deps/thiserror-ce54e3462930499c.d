@@ -1,0 +1,10 @@
+/home/will-shirley/Solana/Projects/testudo/anchor/target/sbpf-solana-solana/release/deps/libthiserror-ce54e3462930499c.rmeta: /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/lib.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/aserror.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/display.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/provide.rs
+
+/home/will-shirley/Solana/Projects/testudo/anchor/target/sbpf-solana-solana/release/deps/libthiserror-ce54e3462930499c.rlib: /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/lib.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/aserror.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/display.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/provide.rs
+
+/home/will-shirley/Solana/Projects/testudo/anchor/target/sbpf-solana-solana/release/deps/thiserror-ce54e3462930499c.d: /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/lib.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/aserror.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/display.rs /home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/provide.rs
+
+/home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/lib.rs:
+/home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/aserror.rs:
+/home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/display.rs:
+/home/will-shirley/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thiserror-1.0.69/src/provide.rs:

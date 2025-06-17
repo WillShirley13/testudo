@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { charisSIL } from "@/app/fonts";
 import { TestudoData } from "@/app/types/testudo";
 import { SecureKeypairGenerator } from "@/app/utils/keypair-functions";
-import { findCenturionPDA } from "@/app/utils/testudo-utils";
+import { findCenturionPDA, findLegatePDA } from "@/app/utils/testudo-utils";
 import {
     PasswordPhraseInput,
     validatePasswordWords,
@@ -16,6 +16,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { toast } from "react-hot-toast";
+import { ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 // Hook for using the delete modal
 export function useDeleteModal() {
@@ -71,7 +72,7 @@ export function DeleteTestudoModal({
     const wallet = useWallet();
     const { publicKey } = wallet;
     const testudoProgram = useTestudoProgram();
-    const [passwordWords, setPasswordWords] = useState<string[]>(Array(6).fill(""));
+    const [passwordWords, setPasswordWords] = useState<string[]>(Array(12).fill(""));
     const [numberPin, setNumberPin] = useState("");
     const [error, setError] = useState<string | null>(null);
 
@@ -81,6 +82,10 @@ export function DeleteTestudoModal({
 
         try {
             setIsDeleting(true);
+
+            const [legatePDA] = findLegatePDA(testudoProgram.programId);
+            const legateAccount = await testudoProgram.account.legate.fetch(legatePDA);
+            const treasury = legateAccount.treasuryAcc;
             
             const tokenMint = new PublicKey(testudo.tokenMint);
             const tokenMintInfo = await testudoProgram.provider.connection.getAccountInfo(tokenMint);
@@ -95,6 +100,8 @@ export function DeleteTestudoModal({
                     validSignerOfPassword: passwordKeypair.publicKey,
                     mint: tokenMint,
                     tokenProgram: tokenProgram,
+                    treasury: treasury,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
                 })
                 .signers([passwordKeypair])
                 .rpc();
@@ -110,7 +117,7 @@ export function DeleteTestudoModal({
             toast.success(`Successfully deleted ${tokenSymbol} Testudo account`);
             
             // Clear form and close modal
-            setPasswordWords(Array(6).fill(""));
+            setPasswordWords(Array(12).fill(""));
             setNumberPin("");
             onClose();
         } catch (error) {
@@ -208,7 +215,7 @@ export function DeleteTestudoModal({
                                 onChange={setPasswordWords}
                                 numberPin={numberPin}
                                 onNumberPinChange={setNumberPin}
-                                maxWords={6}
+                                maxWords={12}
                             />
                             {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
                         </div>

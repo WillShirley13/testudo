@@ -9,6 +9,7 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct CloseCenturion<'info> {
+    // SIGNERS
     #[account(mut)]
     authority: Signer<'info>,
     #[account(
@@ -16,6 +17,8 @@ pub struct CloseCenturion<'info> {
         constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
     )]
     pub valid_signer_of_password: Signer<'info>,
+
+    // CENTURION
     #[account(
         mut,
         close = authority,
@@ -26,18 +29,24 @@ pub struct CloseCenturion<'info> {
         constraint = centurion.testudos.is_empty() @CenturionNotEmptyOfSplTokens
     )]
     centurion: Account<'info, Centurion>,
+
+    // LEGATE
     #[account(
         seeds = [b"legate"],
         bump = legate.bump,
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
+
+    // TREASURY
     #[account(
         mut,
         constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub treasury: UncheckedAccount<'info>,
+
+    // PROGRAMS
     system_program: Program<'info, System>,
 }
 

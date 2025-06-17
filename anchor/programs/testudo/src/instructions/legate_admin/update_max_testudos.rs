@@ -11,8 +11,11 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UpdateMaxTestudos<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
+
+    // LEGATE
     #[account(
         mut,
         seeds = [b"legate".as_ref()],

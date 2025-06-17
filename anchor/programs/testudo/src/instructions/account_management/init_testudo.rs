@@ -11,9 +11,11 @@ use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 #[derive(Accounts)]
 pub struct InitTestudo<'info> {
+    // SIGNER
     #[account(mut)]
     pub authority: Signer<'info>,
-    // Get legate PDA
+
+    // LEGATE
     #[account(
         seeds = [b"legate"],
         bump,
@@ -21,7 +23,7 @@ pub struct InitTestudo<'info> {
     )]
     pub legate: Account<'info, Legate>,
 
-    // Get user Centurion PDA
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion", authority.key.as_ref()],
@@ -31,17 +33,7 @@ pub struct InitTestudo<'info> {
     )]
     pub centurion: Account<'info, Centurion>,
 
-    // Mint for token the testudo will hold. Must be in legate's whitelist
-    #[account(constraint = legate.testudo_token_whitelist.iter().any(|t| t.token_mint == mint.key()) @UnsupportedTokenMint)]
-    pub mint: InterfaceAccount<'info, Mint>,
-
-    // token program + verifying token program passed
-    #[account(
-        constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
-    )]
-    pub token_program: Interface<'info, TokenInterface>,
-
-    // Init the ATA (testudo) attached to the Centurion PDA
+    // TOKEN ACCOUNT
     #[account(
         init,
         payer = authority,
@@ -52,11 +44,20 @@ pub struct InitTestudo<'info> {
         bump
     )]
     pub testudo: InterfaceAccount<'info, TokenAccount>,
-    // Ensure valid system program is passed
+
+    // PROGRAMS
     #[account(
         constraint = system_program.key() == anchor_lang::system_program::ID,
     )]
+    #[account(
+        constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
+    )]
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
+
+    // MINT
+    #[account(constraint = legate.testudo_token_whitelist.iter().any(|t| t.token_mint == mint.key()) @UnsupportedTokenMint)]
+    pub mint: InterfaceAccount<'info, Mint>,
 }
 
 pub fn process_init_testudo(ctx: Context<InitTestudo>) -> Result<()> {

@@ -13,8 +13,16 @@ use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface, TransferCh
 
 #[derive(Accounts)]
 pub struct WithdrawSplToken<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
+    #[account(
+        // Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
+        constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
+    )]
+    pub valid_signer_of_password: Signer<'info>,
+
+    // AUTHORITY ATA
     #[account(
         mut,
         associated_token::mint = mint,
@@ -22,11 +30,8 @@ pub struct WithdrawSplToken<'info> {
         associated_token::token_program = token_program
     )]
     pub authority_ata: InterfaceAccount<'info, TokenAccount>,
-    #[account(
-        // Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
-        constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
-    )]
-    pub valid_signer_of_password: Signer<'info>,
+
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
@@ -35,6 +40,8 @@ pub struct WithdrawSplToken<'info> {
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,
+
+    // TESTUDO TOKEN ACCOUNT
     #[account(
         mut,
         token::mint = mint,
@@ -47,20 +54,27 @@ pub struct WithdrawSplToken<'info> {
         // Ensure the ATA is for the correct Centurion (User)
         constraint = testudo.owner == centurion.key() @InvalidATA,
     )]
-    // Centurion ATA
     pub testudo: InterfaceAccount<'info, TokenAccount>,
+
+    // MINT
     pub mint: InterfaceAccount<'info, Mint>,
+
+    // LEGATE
     #[account(
         seeds = [b"legate"],
         bump = legate.bump,
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
+
+    // TREASURY
     #[account(
         constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub treasury: UncheckedAccount<'info>,
+
+    // TREASURY ATA
     #[account(
         mut,
         associated_token::mint = mint,
@@ -68,12 +82,12 @@ pub struct WithdrawSplToken<'info> {
         associated_token::token_program = token_program,
     )]
     pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
-    // Ensure valid token program is passed
+
+    // PROGRAMS
     #[account(
         constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
     )]
     pub token_program: Interface<'info, TokenInterface>,
-    // Ensure valid system program is passed
     #[account(
         constraint = system_program.key() == anchor_lang::system_program::ID,
     )]

@@ -10,8 +10,11 @@ use anchor_lang::system_program;
 
 #[derive(Accounts)]
 pub struct DepositSol<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
+
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
@@ -20,6 +23,8 @@ pub struct DepositSol<'info> {
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,
+
+    // PROGRAMS
     pub system_program: Program<'info, System>,
 }
 

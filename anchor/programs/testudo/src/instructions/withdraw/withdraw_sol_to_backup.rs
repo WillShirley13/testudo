@@ -10,6 +10,7 @@ use anchor_lang::prelude::*;
 // Withdraw native SOL from a Centurion account to the backup account
 #[derive(Accounts)]
 pub struct WithdrawSolToBackup<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
@@ -17,6 +18,8 @@ pub struct WithdrawSolToBackup<'info> {
         constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
     )]
     pub valid_signer_of_password: Signer<'info>,
+
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
@@ -25,7 +28,8 @@ pub struct WithdrawSolToBackup<'info> {
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,
-    // The backup account to which all SOL will be withdrawn to
+
+    // BACKUP ACCOUNT
     #[account(
         mut,
         // Ensure backup account provided matches account saved in Centurion
@@ -33,18 +37,24 @@ pub struct WithdrawSolToBackup<'info> {
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub backup_account: UncheckedAccount<'info>,
+
+    // LEGATE
     #[account(
         seeds = [b"legate"],
         bump = legate.bump,
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
+
+    // TREASURY
     #[account(
         mut,
         constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub treasury: UncheckedAccount<'info>,
+
+    // PROGRAMS
     pub system_program: Program<'info, System>,
 }
 
@@ -52,12 +62,6 @@ pub fn process_withdraw_sol_to_backup(ctx: Context<WithdrawSolToBackup>) -> Resu
     // Get references to accounts
     let centurion_info = ctx.accounts.centurion.to_account_info();
 
-    // Validate the pubkey matches the password's pubkey
-    require_eq!(
-        ctx.accounts.centurion.pubkey_to_password,
-        ctx.accounts.valid_signer_of_password.key(),
-        InvalidPasswordSignature
-    );
     msg!("Password signature is valid");
 
     // Ensure backup account passed matches account held in Centurion

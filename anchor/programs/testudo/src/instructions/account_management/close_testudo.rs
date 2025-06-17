@@ -15,22 +15,27 @@ use anchor_spl::token_interface::{
 
 #[derive(Accounts)]
 pub struct CloseTestudo<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
-        mut,
-        associated_token::mint = mint,
-        associated_token::authority = authority,
-        associated_token::token_program = token_program,
-        constraint = authority_ata.owner == authority.key() @InvalidATA,
-        constraint = authority_ata.mint == mint.key() @InvalidTokenMint,
-    )]
-    pub authority_ata: InterfaceAccount<'info, TokenAccount>,
-    #[account(
         // Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
+        mut,
         constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
     )]
     pub valid_signer_of_password: Signer<'info>,
+
+    // AUTHORITY ATA
+    #[account(
+        init_if_needed,
+        payer = authority,
+        associated_token::mint = mint,
+        associated_token::authority = authority,
+        associated_token::token_program = token_program,
+    )]
+    pub authority_ata: InterfaceAccount<'info, TokenAccount>,
+
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
@@ -39,12 +44,16 @@ pub struct CloseTestudo<'info> {
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,
+
+    // LEGATE
     #[account(
         seeds = [b"legate"],
         bump = legate.bump,
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
+
+    // TESTUDO TOKEN ACCOUNT
     #[account(
         mut,
         token::mint = mint,
@@ -59,12 +68,21 @@ pub struct CloseTestudo<'info> {
     )]
     // Centurion ATA
     pub testudo: InterfaceAccount<'info, TokenAccount>,
+
+    // MINT
+    #[account(
+        constraint = legate.testudo_token_whitelist.iter().any(|m| m.token_mint == mint.key()) @InvalidTokenMint,
+    )]
     pub mint: InterfaceAccount<'info, Mint>,
+
+    // TREASURY
     #[account(
         constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub treasury: UncheckedAccount<'info>,
+
+    // TREASURY ATA
     #[account(
         mut,
         associated_token::mint = mint,
@@ -72,7 +90,8 @@ pub struct CloseTestudo<'info> {
         associated_token::token_program = token_program,
     )]
     pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
-    // Ensure valid token program is passed
+
+    // PROGRAMS
     #[account(
         constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
     )]
@@ -122,7 +141,7 @@ pub fn process_close_testudo(ctx: Context<CloseTestudo>) -> Result<()> {
 
     // Get the testudo account for the token
     let testudo_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.testudo;
-    // Get the depositor's ATA for the token
+    // Get the user's ATA for the token
     let authority_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.authority_ata;
     // Get the treasury ATA for the token
     let treasury_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.treasury_ata;

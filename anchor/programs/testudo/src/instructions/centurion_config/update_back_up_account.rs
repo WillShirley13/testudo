@@ -8,6 +8,7 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UpdateBackUpAccount<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
@@ -15,6 +16,8 @@ pub struct UpdateBackUpAccount<'info> {
         constraint = centurion.pubkey_to_password == valid_signer_of_password.key() @InvalidPasswordSignature
     )]
     pub valid_signer_of_password: Signer<'info>,
+
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion", authority.key.as_ref()],

@@ -1,24 +1,24 @@
 [toolchain]
-anchor_version = "0.31.0"
+anchor_version = "0.31.1"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.devnet]
-testudo = "BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN"
+testudo = "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK"
 
 [programs.localnet]
-testudo = "BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN"
+testudo = "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK"
 
 [programs.mainnet]
-testudo = "BJUZAVsokNjVti3Rq9ExxkWTavkDtutqHsBdarfgpoxN"
+testudo = "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/testudo2.json"
 
 [scripts]

@@ -10,8 +10,11 @@ use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface, TransferCh
 
 #[derive(Accounts)]
 pub struct DepositSplToken<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
+
+    // AUTHORITY ATA
     #[account(
         mut,
         associated_token::mint = mint,
@@ -19,6 +22,8 @@ pub struct DepositSplToken<'info> {
         associated_token::token_program = token_program,
     )]
     pub authority_ata: InterfaceAccount<'info, TokenAccount>,
+
+    // CENTURION
     #[account(
         mut,
         seeds = [b"centurion".as_ref(), authority.key.as_ref()],
@@ -27,6 +32,8 @@ pub struct DepositSplToken<'info> {
         has_one = authority @InvalidAuthority,
     )]
     pub centurion: Account<'info, Centurion>,
+
+    // TESTUDO TOKEN ACCOUNT
     #[account(
         mut,
         token::mint = mint,
@@ -40,8 +47,12 @@ pub struct DepositSplToken<'info> {
         constraint = testudo.owner == centurion.key() @InvalidATA,
     )]
     pub testudo: InterfaceAccount<'info, TokenAccount>,
+
+    // MINT
     #[account(mut)]
     pub mint: InterfaceAccount<'info, Mint>,
+
+    // PROGRAMS
     // Ensure valid token program is passed
     #[account(
         constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID

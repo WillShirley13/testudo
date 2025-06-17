@@ -11,8 +11,11 @@ use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 #[derive(Accounts)]
 #[instruction(mint_to_add: TestudoTokenWhitelist)]
 pub struct AddMintToTestudoTokenWhitelist<'info> {
+    // SIGNERS
     #[account(mut)]
     pub authority: Signer<'info>,
+
+    // LEGATE
     #[account(
         mut,
         seeds = [b"legate".as_ref()],
@@ -21,11 +24,15 @@ pub struct AddMintToTestudoTokenWhitelist<'info> {
         constraint = legate.is_initialized @LegateNotInitialized,
     )]
     pub legate: Account<'info, Legate>,
+
+    // TREASURY
     #[account(
         constraint = legate.treasury_acc == treasury.key() @InvalidTreasuryAccount
     )]
     /// CHECK: Explicit wrapper for AccountInfo type to emphasize that no checks are performed
     pub treasury: UncheckedAccount<'info>,
+
+    // TREASURY ATA
     #[account(
         init_if_needed,
         payer = authority,
@@ -34,14 +41,18 @@ pub struct AddMintToTestudoTokenWhitelist<'info> {
         associated_token::token_program = token_program,
     )]
     pub treasury_ata: InterfaceAccount<'info, TokenAccount>,
-    #[account(
-        constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
-    )]
-    pub token_program: Interface<'info, TokenInterface>,
+
+    // MINT
     #[account(
         constraint = mint.key() == mint_to_add.token_mint
     )]
     pub mint: InterfaceAccount<'info, Mint>,
+
+    // PROGRAMS
+    #[account(
+        constraint = token_program.key() == anchor_spl::token::ID || token_program.key() == anchor_spl::token_2022::ID
+    )]
+    pub token_program: Interface<'info, TokenInterface>,
     #[account(
         constraint = associated_token_program.key() == anchor_spl::associated_token::ID,
     )]
