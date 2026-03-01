@@ -58,7 +58,6 @@ pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) 
         ctx.accounts.valid_signer_of_password.key(),
         InvalidPasswordSignature
     );
-    msg!("Password signature is valid");
 
     // Calculate rent exemption
     let rent = Rent::get()?;
@@ -77,7 +76,6 @@ pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) 
         amount_in_lamports,
         InsufficientFunds
     );
-    msg!("Centurion has enough funds to withdraw");
 
     let withdraw_fee = amount_in_lamports
         .checked_mul(ctx.accounts.legate.percent_for_fees as u64)
@@ -109,6 +107,5 @@ pub fn process_withdraw_sol(ctx: Context<WithdrawSol>, amount_in_lamports: u64) 
     // Update last accessed timestamp
     centurion_data.last_accessed = current_datetime as u64;
 
-    msg!("Withdrawal of {} SOL successful", amount_in_lamports);
     Ok(())
 }

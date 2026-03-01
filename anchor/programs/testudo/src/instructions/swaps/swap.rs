@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use crate::custom_accounts::{
     centurion::{Centurion, TestudoData},
     legate::Legate,
@@ -257,7 +255,5 @@ pub fn process_swap(
         ctx.accounts.destination_testudo.amount,
         ctx.accounts.destination_mint.key()
     );
-
-    msg!("Swap process completed successfully");
     Ok(())
 }

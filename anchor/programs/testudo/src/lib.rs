@@ -5,7 +5,7 @@ mod custom_accounts;
 mod errors;
 mod instructions;
 
-declare_id!("64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK");
+declare_id!("nikxjF5jnkFtoGTdQdQoqBWvoP4nFGbJhMHtVKZMnbL");
 
 #[program]
 pub mod testudo {

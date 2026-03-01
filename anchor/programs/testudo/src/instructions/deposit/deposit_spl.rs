@@ -89,7 +89,6 @@ pub fn process_deposit_spl_token(
         amount_with_decimals,
         InsufficientFunds
     );
-    msg!("Depositor has enough tokens to cover the deposit");
 
     // Get the testudo account for the token
     let testudo_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.testudo;
@@ -116,6 +115,5 @@ pub fn process_deposit_spl_token(
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_datetime as u64;
 
-    msg!("Deposit of {} tokens successful", amount_with_decimals);
     Ok(())
 }

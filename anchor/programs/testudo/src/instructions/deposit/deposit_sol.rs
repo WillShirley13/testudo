@@ -3,7 +3,6 @@ use crate::errors::ErrorCode::{
     ArithmeticOverflow, CenturionNotInitialized, InsufficientFunds, InvalidAuthority,
 };
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::system_program;
 
 // Deposit native SOL into a testudo account (Note: this is simply the Centurion PDA).
@@ -34,8 +33,6 @@ pub fn process_deposit_sol(ctx: Context<DepositSol>, amount_in_lamports: u64) ->
 
     // Ensure the authority has enough funds to deposit
     require_gte!(authority_sol_balance, amount_in_lamports, InsufficientFunds);
-    msg!("Authority has enough funds to deposit");
-
     // Transfer the funds from the authority to the centurion
     let cpi_accounts = system_program::Transfer {
         from: ctx.accounts.authority.to_account_info(),
@@ -57,9 +54,5 @@ pub fn process_deposit_sol(ctx: Context<DepositSol>, amount_in_lamports: u64) ->
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
     centurion_data.last_accessed = current_datetime as u64;
 
-    msg!(
-        "Deposit of {} SOL successful",
-        amount_in_lamports / LAMPORTS_PER_SOL
-    );
     Ok(())
 }

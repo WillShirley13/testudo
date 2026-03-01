@@ -33,7 +33,6 @@ pub fn process_update_treasury(ctx: Context<UpdateTreasury>, new_treasury: Pubke
 
     // update the max testudos
     legate.treasury_acc = new_treasury;
-    msg!("Treasury updated to {}", new_treasury);
 
     // update the last updated timestamp
     legate.last_updated = Clock::get()?.unix_timestamp as u64;

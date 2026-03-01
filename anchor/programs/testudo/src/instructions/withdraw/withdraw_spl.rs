@@ -115,14 +115,6 @@ pub fn process_withdraw_spl_token(
         InvalidTokenMint
     );
 
-    // (double check) Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
-    require_eq!(
-        password_pubkey,
-        ctx.accounts.valid_signer_of_password.key(),
-        InvalidPasswordSignature
-    );
-    msg!("Password signature is valid");
-
     // Get the amount of tokens the depositor has in their ATA
     let testudo_token_holdings: u64 = ctx.accounts.testudo.amount;
 
@@ -132,7 +124,6 @@ pub fn process_withdraw_spl_token(
         amount_in_decimals,
         InsufficientFunds
     );
-    msg!("Depositor has enough tokens to cover the deposit");
 
     let withdraw_fee = amount_in_decimals
         .checked_mul(ctx.accounts.legate.percent_for_fees as u64)
@@ -199,6 +190,5 @@ pub fn process_withdraw_spl_token(
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_datetime as u64;
 
-    msg!("Withdrawal of {} tokens successful", amount_in_decimals);
     Ok(())
 }

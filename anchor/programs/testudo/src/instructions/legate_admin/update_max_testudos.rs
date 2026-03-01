@@ -50,7 +50,6 @@ pub fn process_update_max_testudos(
 
     // update the max testudos
     legate.max_testudos_per_user = new_max_testudos;
-    msg!("Max testudos updated to {}", new_max_testudos);
 
     // update the last updated timestamp
     legate.last_updated = Clock::get()?.unix_timestamp as u64;

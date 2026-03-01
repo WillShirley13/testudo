@@ -2220,12 +2220,6 @@ describe("Testudo Tests", () => {
                 data: string;
             }
 
-            interface JupiterInstructionWithIdxs {
-                programId: PublicKey;
-                accountIdxs: number[];
-                data: Buffer<ArrayBuffer>;
-            }
-
             // SETUP INSTRUCTIONS
             let setupInstructions: JupiterInstruction[] =
                 instructionsResponse.setupInstructions;

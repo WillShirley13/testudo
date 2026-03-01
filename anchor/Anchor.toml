@@ -6,19 +6,19 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-testudo = "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK"
+testudo = "9ZEKRAziZLYpBZ7mLvyPy1HEYxtsu5ZaxYDYyxraXxyy"
 
 [programs.localnet]
 testudo = "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK"
 
 [programs.mainnet]
-testudo = "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK"
+testudo = "nikxjF5jnkFtoGTdQdQoqBWvoP4nFGbJhMHtVKZMnbL"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "https://mainnet.helius-rpc.com/?api-key=1e5305d4-ceac-480b-bbdb-b0ddc2d1704d"
 wallet = "~/.config/solana/testudo2.json"
 
 [scripts]

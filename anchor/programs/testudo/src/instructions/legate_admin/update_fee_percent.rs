@@ -40,7 +40,6 @@ pub fn process_update_fee_percent(
 
     // update the max testudos
     legate.percent_for_fees = new_fee_percent;
-    msg!("Fee percent updated to {}", new_fee_percent);
 
     // update the last updated timestamp
     legate.last_updated = Clock::get()?.unix_timestamp as u64;

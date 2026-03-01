@@ -134,7 +134,6 @@ pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> 
         ctx.accounts.valid_signer_of_password.key(),
         InvalidPasswordSignature
     );
-    msg!("Password signature is valid");
 
     // Ensure backup account passed matches account held in Centurion
     require_eq!(
@@ -205,13 +204,6 @@ pub fn process_withdraw_to_backup(ctx: Context<WithdrawToBackup>) -> Result<()> 
     // Update the last accessed timestamp
     let current_datetime: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_datetime as u64;
-
-    msg!(
-        "Mint ({}) tokens in centurion ({}) have been transferred to backup account ({})",
-        ctx.accounts.mint.key(),
-        centurion_data.key(),
-        ctx.accounts.backup_account.key()
-    );
 
     Ok(())
 }

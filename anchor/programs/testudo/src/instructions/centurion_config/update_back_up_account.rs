@@ -32,14 +32,6 @@ pub fn process_update_back_up_account(
     ctx: Context<UpdateBackUpAccount>,
     backup_account: Pubkey,
 ) -> Result<()> {
-    // (double check) Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
-    require_eq!(
-        ctx.accounts.centurion.pubkey_to_password,
-        ctx.accounts.valid_signer_of_password.key(),
-        InvalidPasswordSignature
-    );
-    msg!("Password signature is valid");
-
     let centurion = &mut ctx.accounts.centurion;
     centurion.backup_owner = Some(backup_account);
     Ok(())

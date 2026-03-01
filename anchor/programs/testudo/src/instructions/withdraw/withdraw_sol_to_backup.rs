@@ -62,8 +62,6 @@ pub fn process_withdraw_sol_to_backup(ctx: Context<WithdrawSolToBackup>) -> Resu
     // Get references to accounts
     let centurion_info = ctx.accounts.centurion.to_account_info();
 
-    msg!("Password signature is valid");
-
     // Ensure backup account passed matches account held in Centurion
     require_eq!(
         ctx.accounts.backup_account.key(),
@@ -124,12 +122,6 @@ pub fn process_withdraw_sol_to_backup(ctx: Context<WithdrawSolToBackup>) -> Resu
     let centurion_data: &mut Account<'_, Centurion> = &mut ctx.accounts.centurion;
     centurion_data.lamport_balance = 0;
     centurion_data.last_accessed = current_datetime as u64;
-
-    msg!(
-        "All SOL in centurion ({}) have been transferred to backup account ({})",
-        centurion_data.key(),
-        ctx.accounts.backup_account.key()
-    );
 
     Ok(())
 }

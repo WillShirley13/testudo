@@ -93,8 +93,6 @@ pub fn process_add_mint_to_testudo_token_whitelist(
         MaxWhitelistedMintsReached
     );
 
-    let mint_key = mint_to_add.token_mint;
     legate.testudo_token_whitelist.push(mint_to_add);
-    msg!("Mint ({}) added to testudo token whitelist", mint_key);
     Ok(())
 }

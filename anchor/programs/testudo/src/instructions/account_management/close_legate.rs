@@ -25,9 +25,5 @@ pub struct CloseLegate<'info> {
 }
 
 pub fn process_close_legate(ctx: Context<CloseLegate>) -> Result<()> {
-    msg!(
-        "Legate account with authority {} has been successfully closed",
-        ctx.accounts.authority.key
-    );
     Ok(())
 }

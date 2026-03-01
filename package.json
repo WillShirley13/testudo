@@ -42,6 +42,7 @@
         "react-dom": "^18",
         "react-hot-toast": "^2.5.2",
         "react-intersection-observer": "^9.16.0",
+        "tsx": "^4.20.3",
         "tweetnacl": "^1.0.3"
     },
     "devDependencies": {

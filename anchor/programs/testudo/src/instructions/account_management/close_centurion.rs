@@ -65,11 +65,5 @@ pub fn process_close_centurion(ctx: Context<CloseCenturion>) -> Result<()> {
     ctx.accounts.treasury.add_lamports(fee)?;
     msg!("Fee of {} lamports transferred to treasury", fee);
 
-    // Transfer fee to treasury
-
-    msg!(
-        "Centurion account with authority {} has been successfully closed",
-        ctx.accounts.authority.key
-    );
     Ok(())
 }

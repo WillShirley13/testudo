@@ -78,8 +78,5 @@ pub fn process_init_testudo(ctx: Context<InitTestudo>) -> Result<()> {
 
     let current_time: i64 = Clock::get()?.unix_timestamp;
     centurion_data.last_accessed = current_time as u64;
-
-    msg!("Centurion data: {:?}", centurion_data.testudos);
-    msg!("Testudo created successfully");
     Ok(())
 }

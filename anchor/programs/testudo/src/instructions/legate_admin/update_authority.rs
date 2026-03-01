@@ -38,7 +38,6 @@ pub fn process_update_authority(ctx: Context<UpdateAuthority>) -> Result<()> {
 
     // update the authority
     legate.authority = ctx.accounts.new_authority.key();
-    msg!("Authority updated to {}", ctx.accounts.new_authority.key());
 
     // update the last updated timestamp
     legate.last_updated = Clock::get()?.unix_timestamp as u64;

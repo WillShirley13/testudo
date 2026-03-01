@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/testudo.json`.
  */
 export type Testudo = {
-  "address": "64FiLxaZ3WubhjxdtoQM4CmpXpkbptG8eCok15QJr3bK",
+  "address": "nikxjF5jnkFtoGTdQdQoqBWvoP4nFGbJhMHtVKZMnbL",
   "metadata": {
     "name": "testudo",
     "version": "0.1.0",

@@ -297,131 +297,100 @@ console.log(`Centurion keypair: ${userKeypair.publicKey}`);
 		console.log(instructionsResponse);
 
 		interface JupiterInstruction {
-			programId: string;
-			accounts: any[];
-			data: string;
-		}
+            programId: string;
+            accounts: any[];
+            data: string;
+        }
 
-		interface JupiterInstructionWithIdxs {
-			programId: PublicKey;
-			accountIdxs: number[];
-			data: Buffer<ArrayBuffer>;
-		}
+        // SETUP INSTRUCTIONS
+        let setupInstructions: JupiterInstruction[] =
+            instructionsResponse.setupInstructions;
+        // SWAP INSTRUCTION
+        let swapInstruction: JupiterInstruction =
+            instructionsResponse.swapInstruction;
+        // CLEAN-UP INSTRUCTIONS
+        let cleanupInstruction: JupiterInstruction =
+            instructionsResponse.cleanupInstruction;
 
-		// SETUP INSTRUCTIONS
-		let setupInstructions: JupiterInstruction[] =
-			instructionsResponse.setupInstructions;
-		// SWAP INSTRUCTION
-		let swapInstruction: JupiterInstruction =
-			instructionsResponse.swapInstruction;
-		// CLEAN-UP INSTRUCTIONS
-		let cleanupInstructions: JupiterInstruction =
-			instructionsResponse.cleanupInstructions;
+        // Convert Jupiter accounts to proper AccountMeta format
+        const convertToAccountMeta = (accounts: any[]) => {
+            return accounts.map(acc => ({
+                pubkey: new PublicKey(acc.pubkey),
+                isSigner: acc.isSigner || false,
+                isWritable: acc.isWritable || false
+            }));
+        };
 
-		// REMAINING ACCOUNTS
-		const remainingAccounts = [
-			...setupInstructions.flatMap(ix => ix.accounts),
-			...swapInstruction.accounts,
-			...cleanupInstructions.accounts
-		];
+        // REMAINING ACCOUNTS
+        const remainingAccounts = [
+            ...setupInstructions.flatMap(ix => convertToAccountMeta(ix.accounts)),
+            ...convertToAccountMeta(swapInstruction.accounts),
+            ...convertToAccountMeta(cleanupInstruction.accounts)
+        ];
+        
+        const usdcAtaAddress = await getAssociatedTokenAddressSync(
+            new PublicKey(usdcAddress),
+            centurionPubkey,
+            true,
+        );
+        const usdcData = {
+            tokenMint: new PublicKey(usdcAddress),
+            testudoPubkey: usdcAtaAddress,
+        };
+        const swapTx = await userProgram.methods
+            .swap(
+                {
+                    programId: new PublicKey(swapInstruction.programId),
+                    accountsIdxs: Buffer.from(
+                        swapInstruction.accounts.map((acc) => {
+                            return remainingAccounts.findIndex(ra => ra.pubkey.equals(new PublicKey(acc.pubkey)));
+                        })
+                    ),
+                    data: Buffer.from(swapInstruction.data, "base64"),
+                },
+                setupInstructions.map((ix: JupiterInstruction) => {
+                    const accountIdxs = ix.accounts.map((acc) => {
+                        return remainingAccounts.findIndex(ra => ra.pubkey.equals(new PublicKey(acc.pubkey)));
+                    });
+                    return {
+                        programId: new PublicKey(ix.programId),
+                        accountsIdxs: Buffer.from(accountIdxs),
+                        data: Buffer.from(ix.data, "base64"),
+                    };
+                }),
+                {
+                    programId: new PublicKey(cleanupInstruction.programId),
+                    accountsIdxs: Buffer.from(
+                        cleanupInstruction.accounts.map((acc) => {
+                            return remainingAccounts.findIndex(ra => ra.pubkey.equals(new PublicKey(acc.pubkey)));
+                        })
+                    ),
+                    data: Buffer.from(cleanupInstruction.data, "base64"),
+                },
+                [usdcData]
+            )
+            .accountsPartial({
+                authority: userKeypair.publicKey,
+                validSignerOfPassword: passwordKeypair.publicKey,
+                sourceMint: new PublicKey(wsolAddress),
+                destinationMint: new PublicKey(usdcAddress),
+                jupiterProgram: new PublicKey(
+                    instructionsResponse.swapInstruction.programId
+                ),
+                tokenProgram: TOKEN_PROGRAM_ID,
+                treasury: treasuryKeypair.publicKey,
+            })
+            .remainingAccounts(remainingAccounts)
+            .transaction();
 
-		// Refactor instructions so the accounts indexes within the remainingAccounts array are held inplace
-		// of the actual accounts
-		const setupInstructionsWithIdxs: JupiterInstructionWithIdxs[] =
-			setupInstructions.map((ix: JupiterInstruction) => {
-				const accountIdxs = ix.accounts.map((acc) => {
-					return remainingAccounts.findIndex(acc);
-				});
-				return {
-					programId: new PublicKey(ix.programId),
-					accountIdxs: accountIdxs,
-					data: Buffer.from(ix.data, "base64"),
-				};
-			});
+        swapTx.recentBlockhash = (
+            await userProvider.connection.getLatestBlockhash()
+        ).blockhash;
+        swapTx.feePayer = userKeypair.publicKey;
+        swapTx.partialSign(userKeypair, passwordKeypair);
 
-		const swapInstructionWithIdxs: JupiterInstructionWithIdxs = {
-			programId: new PublicKey(swapInstruction.programId),
-			accountIdxs: swapInstruction.accounts.map((acc) => {
-				return remainingAccounts.findIndex(acc);
-			}),
-			data: Buffer.from(swapInstruction.data, "base64"),
-		};
-
-		const cleanupInstructionWithIdxs: JupiterInstructionWithIdxs = {
-			programId: new PublicKey(cleanupInstructions.programId),
-			accountIdxs: cleanupInstructions.accounts.map((acc) => {
-				return remainingAccounts.findIndex(acc);
-			}),
-			data: Buffer.from(cleanupInstructions.data, "base64"),
-		};
-
-		const usdcAtaAddress = await getAssociatedTokenAddressSync(
-			new PublicKey(usdcAddress),
-			userKeypair.publicKey
-		);
-		const usdcData = {
-			tokenMint: new PublicKey(usdcAddress),
-			testudoPubkey: usdcAtaAddress,
-		};
-		const swapTx = await userProgram.methods
-			.swap(
-				{
-					programId: new PublicKey(swapInstruction.programId),
-					accountsIdxs: Buffer.from(
-						swapInstruction.accounts.map((acc) => {
-							return remainingAccounts.findIndex(ra => ra === acc);
-						})
-					),
-					data: Buffer.from(swapInstruction.data, "base64"),
-				},
-				setupInstructions.map((ix: JupiterInstruction) => {
-					const accountIdxs = ix.accounts.map((acc) => {
-						return remainingAccounts.findIndex(ra => ra === acc);
-					});
-					return {
-						programId: new PublicKey(ix.programId),
-						accountsIdxs: Buffer.from(accountIdxs),
-						data: Buffer.from(ix.data, "base64"),
-					};
-				}),
-				{
-					programId: new PublicKey(cleanupInstructions.programId),
-					accountsIdxs: Buffer.from(
-						cleanupInstructions.accounts.map((acc) => {
-							return remainingAccounts.findIndex(ra => ra === acc);
-						})
-					),
-					data: Buffer.from(cleanupInstructions.data, "base64"),
-				},
-				[usdcData]
-			)
-			.accountsPartial({
-				authority: userKeypair.publicKey,
-				validSignerOfPassword: passwordKeypair.publicKey,
-				sourceMint: new PublicKey(wsolAddress),
-				destinationMint: new PublicKey(usdcAddress),
-				jupiterProgram: new PublicKey(
-					instructionsResponse.swapInstruction.programId
-				),
-				tokenProgram: TOKEN_PROGRAM_ID,
-				treasury: treasuryKeypair.publicKey,
-			})
-			.remainingAccounts(remainingAccounts.map(acc => ({
-				pubkey: new PublicKey(acc.pubkey),
-				isSigner: acc.isSigner,
-				isWritable: acc.isWritable,
-			})))
-			.transaction();
-
-		swapTx.recentBlockhash = (
-			await userProvider.connection.getLatestBlockhash()
-		).blockhash;
-		swapTx.feePayer = userKeypair.publicKey;
-		swapTx.partialSign(userKeypair, passwordKeypair);
-
-		const simulateSwapTx =
-			await userProvider.connection.simulateTransaction(swapTx);
-
+        const simulateSwapTx =
+            await userProvider.connection.simulateTransaction(swapTx);
 		console.log(
 			"Simulation result:\n",
 			JSON.stringify(simulateSwapTx, null, 2)

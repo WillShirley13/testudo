@@ -108,7 +108,6 @@ pub fn process_close_testudo(ctx: Context<CloseTestudo>) -> Result<()> {
     let testudo_ata: &mut InterfaceAccount<'_, TokenAccount> = &mut ctx.accounts.testudo;
     let authority: &Signer<'_> = &ctx.accounts.authority;
     let token_program: &Interface<'_, TokenInterface> = &ctx.accounts.token_program;
-    let password_pubkey: Pubkey = centurion.pubkey_to_password;
 
     // Ensure the token mint is supported by the Centurion
     require_eq!(
@@ -119,14 +118,6 @@ pub fn process_close_testudo(ctx: Context<CloseTestudo>) -> Result<()> {
         true,
         InvalidTokenMint
     );
-
-    // (double check) Ensure the pubkey of the signer is the same as the pubkey of the password (stored in the centurion account)
-    require_eq!(
-        password_pubkey,
-        ctx.accounts.valid_signer_of_password.key(),
-        InvalidPasswordSignature
-    );
-    msg!("Password signature is valid");
 
     let amount_in_decimals = testudo_ata.amount;
 
@@ -218,8 +209,5 @@ pub fn process_close_testudo(ctx: Context<CloseTestudo>) -> Result<()> {
         .collect();
 
     centurion.last_accessed = Clock::get()?.unix_timestamp as u64;
-
-    msg!("Testudo deleted successfully and all tokens transferred to authority");
-
     Ok(())
 }

@@ -49,8 +49,6 @@ pub fn process_init_legate(ctx: Context<InitLegate>, treasury_acc: Pubkey) -> Re
 
     legate_data.treasury_acc = treasury_acc;
     legate_data.percent_for_fees = 15; // where 15 = 0.15%
-
-    msg!("Legate account initialized");
     Ok(())
 }
 
