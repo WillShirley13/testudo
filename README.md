@@ -266,6 +266,16 @@ pnpm dev
 ```
 
 ---
+<<<<<<< HEAD
+=======
+
+## License
+
+MIT — see [LICENSE](./LICENSE) for details.
+
+
+Build the web app
+>>>>>>> 33e191ce7573f456c61b779042b32bb779030ccd
 
 ## License
 
